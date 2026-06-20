@@ -4,7 +4,8 @@
 import type { Editor } from "../tiptap-runtime";
 import { registerButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
-import { colorControl, selectControl } from "./controls";
+import { colorControl, commandMenuControl, selectControl } from "./controls";
+import type { MenuItem } from "./controls";
 import { ICONS } from "./icons";
 
 const FONT_SIZES = ["12px", "14px", "16px", "18px", "24px", "30px", "36px"];
@@ -142,6 +143,43 @@ const BUILTIN: Record<string, ButtonSpec> = {
   alignCenter: align("center"),
   alignRight: align("right"),
   alignJustify: align("justify"),
+  image: {
+    icon: ICONS.image,
+    title: "Insert image",
+    onClick: (e) => {
+      const url = window.prompt("Image URL");
+      if (!url) {
+        return;
+      }
+      e.chain().focus().setImage({ src: url }).run();
+    },
+  },
+  table: commandMenuControl({
+    title: "Table",
+    triggerHTML: `${ICONS.table}${caret}`,
+    items: (e): MenuItem[] => {
+      const items: MenuItem[] = [
+        {
+          label: "Insert table",
+          run: () => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+        },
+      ];
+      if (e.isActive("table")) {
+        items.push(
+          "separator",
+          { label: "Add row above", run: () => e.chain().focus().addRowBefore().run() },
+          { label: "Add row below", run: () => e.chain().focus().addRowAfter().run() },
+          { label: "Add column left", run: () => e.chain().focus().addColumnBefore().run() },
+          { label: "Add column right", run: () => e.chain().focus().addColumnAfter().run() },
+          "separator",
+          { label: "Delete row", run: () => e.chain().focus().deleteRow().run() },
+          { label: "Delete column", run: () => e.chain().focus().deleteColumn().run() },
+          { label: "Delete table", run: () => e.chain().focus().deleteTable().run() },
+        );
+      }
+      return items;
+    },
+  }),
   link: {
     icon: ICONS.link,
     title: "Insert / edit link",

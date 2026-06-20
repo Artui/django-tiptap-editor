@@ -67,6 +67,46 @@ export function selectControl(opts: {
   };
 }
 
+export type MenuItem = { label: string; run: () => void } | "separator";
+
+// A dropdown of command actions, rebuilt on open so items can reflect editor
+// state (e.g. table-edit actions only appear inside a table).
+export function commandMenuControl(opts: {
+  title: string;
+  triggerHTML: string;
+  items: (editor: Editor) => MenuItem[];
+}): ButtonSpec {
+  return {
+    title: opts.title,
+    render(editor: Editor): RenderedControl {
+      const dd = createDropdown({
+        title: opts.title,
+        triggerHTML: opts.triggerHTML,
+        buildPanel(close) {
+          const menu = document.createElement("div");
+          menu.className = "django-tiptap__menu";
+          for (const entry of opts.items(editor)) {
+            if (entry === "separator") {
+              const sep = document.createElement("div");
+              sep.className = "django-tiptap__sep";
+              menu.appendChild(sep);
+              continue;
+            }
+            menu.appendChild(
+              menuItem(entry.label, false, () => {
+                entry.run();
+                close();
+              }),
+            );
+          }
+          return menu;
+        },
+      });
+      return { el: dd.el };
+    },
+  };
+}
+
 // Text color / highlight: a swatch grid plus "Remove".
 export function colorControl(opts: {
   title: string;
