@@ -44,7 +44,7 @@ jobs:
         run: DJANGO_SETTINGS_MODULE=tests.conftest_settings uv run mkdocs build --strict
 
   js-build:
-    name: js build (committed artifacts fresh)
+    name: js (typecheck + tests + fresh artifacts)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -57,6 +57,9 @@ jobs:
       - name: typecheck
         working-directory: js
         run: npm run typecheck
+      - name: unit tests (corpus round-trip fidelity)
+        working-directory: js
+        run: npm test
       - name: Rebuild bundles
         working-directory: js
         run: npm run build

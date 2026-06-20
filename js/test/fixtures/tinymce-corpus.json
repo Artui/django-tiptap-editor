@@ -1,0 +1,245 @@
+{
+  "source": "TinyMCE 7.9.3",
+  "results": [
+    {
+      "id": "paragraphs-basic",
+      "method": "normalize",
+      "output": "<p>Hello</p>\n<p>World</p>"
+    },
+    {
+      "id": "inline-marks",
+      "method": "normalize",
+      "output": "<p><strong>bold</strong> <em>italic</em> <u>under</u> <s>strike</s></p>"
+    },
+    {
+      "id": "nested-marks",
+      "method": "normalize",
+      "output": "<p><strong><em>bold italic</em></strong></p>"
+    },
+    {
+      "id": "font-size-span",
+      "method": "normalize",
+      "output": "<p><span style=\"font-size: 24px;\">big text</span></p>"
+    },
+    {
+      "id": "font-family-span",
+      "method": "normalize",
+      "output": "<p><span style=\"font-family: Arial, sans-serif;\">arial</span></p>"
+    },
+    {
+      "id": "color-span",
+      "method": "normalize",
+      "output": "<p><span style=\"color: #ff0000;\">red</span></p>"
+    },
+    {
+      "id": "highlight-span",
+      "method": "normalize",
+      "output": "<p><span style=\"background-color: #ffff00;\">highlighted</span></p>"
+    },
+    {
+      "id": "text-align-center",
+      "method": "normalize",
+      "output": "<p style=\"text-align: center;\">centered</p>"
+    },
+    {
+      "id": "text-align-justify",
+      "method": "normalize",
+      "output": "<p style=\"text-align: justify;\">justified body copy here</p>"
+    },
+    {
+      "id": "paragraph-margin-email",
+      "method": "normalize",
+      "output": "<p style=\"margin: 0px 0px 12px 0px;\">email paragraph</p>"
+    },
+    {
+      "id": "margin-block-modern",
+      "method": "normalize",
+      "output": "<p style=\"margin-block-end: 12px;\">modern margin</p>"
+    },
+    {
+      "id": "ul-nested",
+      "method": "normalize",
+      "output": "<ul>\n<li>a\n<ul>\n<li>a-1</li>\n</ul>\n</li>\n<li>b</li>\n</ul>"
+    },
+    {
+      "id": "ol-basic",
+      "method": "normalize",
+      "output": "<ol>\n<li>one</li>\n<li>two</li>\n</ol>"
+    },
+    {
+      "id": "link-basic",
+      "method": "normalize",
+      "output": "<p><a href=\"https://example.com\">link</a></p>"
+    },
+    {
+      "id": "link-target-rel",
+      "method": "normalize",
+      "output": "<p><a href=\"https://example.com\" target=\"_blank\" rel=\"noopener\">link</a></p>"
+    },
+    {
+      "id": "link-mailto",
+      "method": "normalize",
+      "output": "<p><a href=\"mailto:a@b.com\">mail</a></p>"
+    },
+    {
+      "id": "link-tel",
+      "method": "normalize",
+      "output": "<p><a href=\"tel:+15551234\">call</a></p>"
+    },
+    {
+      "id": "link-javascript",
+      "method": "normalize",
+      "output": "<p><a>xss</a></p>"
+    },
+    {
+      "id": "image-basic",
+      "method": "normalize",
+      "output": "<p><img src=\"https://placehold.co/120x60\" alt=\"alt text\" width=\"120\" height=\"60\"></p>"
+    },
+    {
+      "id": "image-style",
+      "method": "normalize",
+      "output": "<p><img style=\"float: right; margin: 8px;\" src=\"https://placehold.co/120x60\"></p>"
+    },
+    {
+      "id": "table-basic",
+      "method": "normalize",
+      "output": "<table>\n<tbody>\n<tr>\n<td>a</td>\n<td>b</td>\n</tr>\n</tbody>\n</table>"
+    },
+    {
+      "id": "table-styled",
+      "method": "normalize",
+      "output": "<table style=\"border-collapse: collapse; width: 100%;\" border=\"1\">\n<tbody>\n<tr>\n<th>H1</th>\n<th>H2</th>\n</tr>\n<tr>\n<td colspan=\"2\">span</td>\n</tr>\n</tbody>\n</table>"
+    },
+    {
+      "id": "headings",
+      "method": "normalize",
+      "output": "<h1>Heading 1</h1>\n<h2>Heading 2</h2>\n<h3>Heading 3</h3>"
+    },
+    {
+      "id": "blockquote",
+      "method": "normalize",
+      "output": "<blockquote>\n<p>quoted</p>\n</blockquote>"
+    },
+    {
+      "id": "sub-sup",
+      "method": "normalize",
+      "output": "<p>H<sub>2</sub>O and x<sup>2</sup></p>"
+    },
+    {
+      "id": "hr",
+      "method": "normalize",
+      "output": "<p>before</p>\n<hr>\n<p>after</p>"
+    },
+    {
+      "id": "line-break",
+      "method": "normalize",
+      "output": "<p>line one<br>line two</p>"
+    },
+    {
+      "id": "messy-script",
+      "method": "normalize",
+      "output": "<p>ok</p>"
+    },
+    {
+      "id": "messy-divs",
+      "method": "normalize",
+      "output": "<div>raw div span</div>"
+    },
+    {
+      "id": "messy-style-attr",
+      "method": "normalize",
+      "output": "<p style=\"color: red; font-weight: bold; some-bogus: 1;\">x</p>"
+    },
+    {
+      "id": "combined-email",
+      "method": "normalize",
+      "output": "<p style=\"text-align: center; margin: 0 0 16px 0;\"><span style=\"font-family: Georgia; font-size: 18px; color: #333333;\">Newsletter <strong>title</strong></span></p>"
+    },
+    {
+      "id": "cmd-bold",
+      "method": "command",
+      "output": "<p><strong>hello</strong></p>"
+    },
+    {
+      "id": "cmd-italic",
+      "method": "command",
+      "output": "<p><em>hello</em></p>"
+    },
+    {
+      "id": "cmd-underline",
+      "method": "command",
+      "output": "<p><span style=\"text-decoration: underline;\">hello</span></p>"
+    },
+    {
+      "id": "cmd-strikethrough",
+      "method": "command",
+      "output": "<p><s>hello</s></p>"
+    },
+    {
+      "id": "cmd-align-center",
+      "method": "command",
+      "output": "<p style=\"text-align: center;\">hello</p>"
+    },
+    {
+      "id": "cmd-align-right",
+      "method": "command",
+      "output": "<p style=\"text-align: right;\">hello</p>"
+    },
+    {
+      "id": "cmd-align-justify",
+      "method": "command",
+      "output": "<p style=\"text-align: justify;\">some longer body text</p>"
+    },
+    {
+      "id": "cmd-bullet-list",
+      "method": "command",
+      "output": "<ul>\n<li>one</li>\n<li>two</li>\n</ul>"
+    },
+    {
+      "id": "cmd-numbered-list",
+      "method": "command",
+      "output": "<ol>\n<li>one</li>\n<li>two</li>\n</ol>"
+    },
+    {
+      "id": "cmd-heading-h2",
+      "method": "command",
+      "output": "<h2>title</h2>"
+    },
+    {
+      "id": "cmd-blockquote",
+      "method": "command",
+      "output": "<blockquote>\n<p>quote me</p>\n</blockquote>"
+    },
+    {
+      "id": "cmd-fontsize",
+      "method": "command",
+      "output": "<p><span style=\"font-size: 24px;\">sized</span></p>"
+    },
+    {
+      "id": "cmd-fontname",
+      "method": "command",
+      "output": "<p><span style=\"font-family: Arial;\">named</span></p>"
+    },
+    {
+      "id": "cmd-forecolor",
+      "method": "command",
+      "output": "<p><span style=\"color: #e03e2d;\">colored</span></p>"
+    },
+    {
+      "id": "cmd-backcolor",
+      "method": "command",
+      "output": "<p><span style=\"background-color: #fbeeb8;\">highlit</span></p>"
+    },
+    {
+      "id": "cmd-indent",
+      "method": "command",
+      "output": "<p style=\"padding-left: 40px;\">indented</p>"
+    },
+    {
+      "id": "cmd-bold-then-italic",
+      "method": "command",
+      "output": "<p><em><strong>both</strong></em></p>"
+    }
+  ]
+}
