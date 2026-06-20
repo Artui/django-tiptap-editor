@@ -81,3 +81,7 @@ node_modules/
 
 # AI-specific items (local design notes, not committed)
 .ai/
+
+# Dev-only corpus-generation scratchpad (TinyMCE harness + raw dumps).
+# The curated, committed fidelity fixtures land elsewhere under js/ later.
+corpus-lab/
