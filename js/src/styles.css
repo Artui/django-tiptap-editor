@@ -191,10 +191,42 @@
   outline-offset: 1px;
 }
 
+/* Disable the rest of the toolbar while editing raw source. */
+.django-tiptap__toolbar.is-source-mode [data-key]:not([data-key="sourceView"]) {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* Editing surface */
 .django-tiptap__content {
   flex: 1 1 auto;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.django-tiptap__source-note {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--tiptap-btn-fg);
+  background: var(--tiptap-toolbar-bg);
+  border-bottom: 1px solid var(--tiptap-border);
+}
+
+.django-tiptap__source {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: var(--tiptap-height);
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tiptap-fg);
+  background: var(--tiptap-bg);
 }
 
 .django-tiptap .ProseMirror {

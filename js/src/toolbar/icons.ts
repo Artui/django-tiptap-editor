@@ -41,4 +41,5 @@ export const ICONS: Record<string, string> = {
   link: svg('<path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/>'),
   unlink: svg('<path d="M9 17H7a5 5 0 0 1 0-10h2"/><path d="M15 7h2a5 5 0 0 1 4 8"/><line x1="3" y1="3" x2="21" y2="21"/>'),
   clearFormatting: glyph("T&#215;", "font-size:0.82em"),
+  sourceView: svg('<polyline points="8 6 3 12 8 18"/><polyline points="16 6 21 12 16 18"/>'),
 };
