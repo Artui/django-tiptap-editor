@@ -3,6 +3,7 @@
 // stores HTML it can't model), so what you see equals what gets saved. While in
 // source view the bound form <textarea> is kept in sync, and the rest of the
 // toolbar is disabled.
+import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 
 interface SourceState {
@@ -51,8 +52,7 @@ export function toggleSourceView(editor: Editor): void {
 
   const note = document.createElement("div");
   note.className = "django-tiptap__source-note";
-  note.textContent =
-    "Editing raw HTML — unsupported markup is normalized when you switch back.";
+  note.textContent = translatorFor(editor)("sourceNote");
 
   const textarea = document.createElement("textarea");
   textarea.className = "django-tiptap__source";

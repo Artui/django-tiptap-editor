@@ -1,8 +1,9 @@
 // Builds the toolbar DOM for an editor and returns a refresh() that syncs every
 // button's active / enabled state. Buttons preserve the editor selection on
 // click (mousedown preventDefault) so commands apply to the current range.
-import type { TipTapConfig } from "../default-config";
 import { DEFAULT_TOOLBAR } from "../default-config";
+import type { TipTapConfig } from "../default-config";
+import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 import { getButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
@@ -12,13 +13,18 @@ export interface RenderedToolbar {
   refresh: () => void;
 }
 
-function renderButton(key: string, spec: ButtonSpec, onClick: () => void): HTMLButtonElement {
+function renderButton(
+  key: string,
+  spec: ButtonSpec,
+  label: string,
+  onClick: () => void,
+): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "django-tiptap__btn";
   button.innerHTML = spec.icon ?? "";
-  button.title = spec.title;
-  button.setAttribute("aria-label", spec.title);
+  button.title = label;
+  button.setAttribute("aria-label", label);
   button.setAttribute("data-key", key);
   // Keep the editor selection when the button is pressed.
   button.addEventListener("mousedown", (event) => event.preventDefault());
@@ -31,6 +37,7 @@ function renderButton(key: string, spec: ButtonSpec, onClick: () => void): HTMLB
 
 export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToolbar {
   const groups = config.toolbar ?? DEFAULT_TOOLBAR;
+  const t = translatorFor(editor);
   const toolbar = document.createElement("div");
   toolbar.className = "django-tiptap__toolbar";
   toolbar.setAttribute("role", "toolbar");
@@ -62,7 +69,7 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
       const onClick = spec.onClick;
       // Refresh after the command runs: most commands fire a transaction (which
       // refreshes anyway), but some — e.g. source-view's setEditable — don't.
-      const button = renderButton(key, spec, () => {
+      const button = renderButton(key, spec, t(spec.title), () => {
         onClick(editor);
         refresh();
       });

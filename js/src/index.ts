@@ -5,6 +5,7 @@
 // controls (font/color/image/table), and explicit-init (Path B) layer on later.
 import { buildExtensions } from "./build-extensions";
 import type { TipTapConfig } from "./default-config";
+import { getTranslator, registerLocale, setTranslator } from "./i18n";
 import { registerExtension } from "./registry";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
@@ -68,11 +69,9 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   element.style.display = "none";
   element.parentNode?.insertBefore(shell, element.nextSibling);
 
-  const ctx: ExtensionContext = {
-    tiptap,
-    locale: config.locale ?? "en",
-    t: (key: string) => key,
-  };
+  const locale = config.locale ?? "en";
+  const t = getTranslator(locale);
+  const ctx: ExtensionContext = { tiptap, locale, t };
 
   const editor = new Editor({
     element: content,
@@ -82,6 +81,8 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
       element.value = editor.getHTML();
     },
   });
+  // Make the translator resolvable from any onClick(editor) / the toolbar.
+  setTranslator(editor, t);
 
   const toolbar = renderToolbar(editor, config);
   shell.insertBefore(toolbar.el, content);
@@ -132,6 +133,7 @@ const DjangoTipTap = {
   destroy,
   autoMount,
   registerExtension,
+  registerLocale,
   ui,
   tiptap,
 };
