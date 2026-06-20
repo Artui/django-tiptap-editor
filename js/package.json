@@ -1,0 +1,19 @@
+{
+  "name": "django-tiptap-editor-js",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Embedded TipTap glue + esbuild dual-output build for django-tiptap-editor. Built artifacts are committed under django_tiptap_editor/static/ so consumers stay Python-only.",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tiptap/core": "2.27.2",
+    "@tiptap/starter-kit": "2.27.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "typescript": "5.7.3"
+  }
+}

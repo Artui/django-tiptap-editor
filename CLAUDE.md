@@ -30,9 +30,8 @@ roadmap. This file governs *how* code is written.
 | `make docs-serve` / `make docs-build` | live docs / strict build |
 | `make release-bump VERSION=X.Y.Z` | bump `version.py` + promote CHANGELOG |
 | `make release-publish` | workstation release (prepare → publish → finalize) |
-
-A `make build-js` target (and `make build` depending on it) is added in phase TT-3 when
-the esbuild pipeline lands; it is **not** present yet.
+| `make build-js` | rebuild the committed JS bundles (esbuild, in `js/`) |
+| `make build` | `build-js` + `uv build` (sdist + wheel) |
 
 ## Structural rules
 
@@ -87,13 +86,19 @@ Python-only. Every TipTap primitive is obtained through **one resolution point**
 (`js/src/tiptap-runtime.ts`), never via scattered direct imports — that single seam is
 what makes "bring your own TipTap" a build-config variant rather than a rewrite.
 
-- One esbuild config emits **both** outputs: `tiptap.bundle.js` (IIFE, self-contained,
-  default) and `tiptap.glue.esm.js` (glue only, `@tiptap/*` external).
-- `make build-js` rebuilds both; `make build` depends on it.
-- A CI job (with node, pinned via committed lockfile) rebuilds and **diffs** the
-  committed artifacts, failing if stale.
+- One esbuild config (`js/esbuild.config.mjs`) emits **both** outputs:
+  `tiptap.bundle.js` (IIFE, self-contained, default) and `tiptap.glue.esm.js` (glue
+  only, `@tiptap/*` external). Both ship a matching `.css`.
+- `make build-js` rebuilds both; `make build` depends on it. Outputs land in
+  `django_tiptap_editor/static/django_tiptap_editor/` and are **committed**.
+- The `js-build` CI job (`actions/setup-node`, `npm ci` against the committed
+  lockfile) rebuilds and `git diff --exit-code`s the artifacts — a stale commit fails
+  CI. esbuild output is deterministic for the pinned version, so the diff is reliable.
+- After changing anything in `js/src/`, run `make build-js` and commit the regenerated
+  bundles in the same change, or CI goes red.
 
-This pipeline is introduced in phase TT-3. Until then the package is Python-only.
+In place today: the build pipeline, the runtime seam, and a minimal auto-mount editor.
+The full extension set, registry, toolbar, and theming build on top of this seam.
 
 ## Tests
 
@@ -104,7 +109,7 @@ This pipeline is introduced in phase TT-3. Until then the package is Python-only
 - Test layout mirrors the source tree under `tests/`. `django_tiptap_editor/foo/bar.py`
   → `tests/foo/test_bar.py`.
 - `DJANGO_SETTINGS_MODULE=tests.conftest_settings`. DB tests use `@pytest.mark.django_db`.
-- The **fidelity corpus** (phase TT-2) is the schema's test of record: a node/jsdom
+- The **fidelity corpus** is the schema's test of record: a node/jsdom
   harness loads real, production-dumped TinyMCE HTML through the configured editor and
   serializes back, asserting no meaningful loss. It is built *first* and drives the
   schema design.

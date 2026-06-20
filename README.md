@@ -30,10 +30,10 @@ and its own config schema.
 
 ## Status
 
-🔨 **Early development.** The package is being built schema-first across eight
-phases — see the [design plan](https://github.com/Artui/django-tiptap-editor) and the
-progress tracker. The first published release will be `0.1.0`; the source tree carries
-`0.0.0` until then. APIs are not yet stable.
+🔨 **Early development.** The package is being built schema-first — the editor's
+ProseMirror schema is designed to round-trip real-world authored HTML without loss
+before the surrounding Django plumbing is finalized. The first published release will be
+`0.1.0`; the source tree carries `0.0.0` until then. APIs are not yet stable.
 
 ## Installation
 
