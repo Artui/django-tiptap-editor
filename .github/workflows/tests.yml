@@ -43,6 +43,32 @@ jobs:
         # settings module to keep the build hermetic.
         run: DJANGO_SETTINGS_MODULE=tests.conftest_settings uv run mkdocs build --strict
 
+  js-build:
+    name: js build (committed artifacts fresh)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install (npm ci — pinned lockfile)
+        working-directory: js
+        run: npm ci
+      - name: typecheck
+        working-directory: js
+        run: npm run typecheck
+      - name: Rebuild bundles
+        working-directory: js
+        run: npm run build
+      - name: Fail if committed artifacts are stale
+        run: |
+          if ! git diff --quiet -- django_tiptap_editor/static; then
+            echo "::error::Committed JS artifacts are stale — run 'make build-js' and commit the result."
+            git --no-pager diff --stat -- django_tiptap_editor/static
+            exit 1
+          fi
+          echo "Committed JS artifacts are up to date."
+
   test:
     name: ${{ matrix.python-version }} / Django ${{ matrix.django-version }}
     runs-on: ubuntu-latest

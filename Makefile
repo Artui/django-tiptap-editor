@@ -1,4 +1,4 @@
-.PHONY: help init test lint lint-fix format format-check type-check deps-bump docs-serve docs-build release-bump release-publish release-publish-prepare release-publish-finalize
+.PHONY: help init test lint lint-fix format format-check type-check deps-bump build-js build docs-serve docs-build release-bump release-publish release-publish-prepare release-publish-finalize
 
 help:
 	@echo "Available targets:"
@@ -10,6 +10,8 @@ help:
 	@echo "  format-check     Verify formatting"
 	@echo "  type-check       Run ty over the package"
 	@echo "  deps-bump        Upgrade pinned dependencies"
+	@echo "  build-js         Rebuild the committed JS bundles (esbuild, in js/)"
+	@echo "  build            build-js + uv build (sdist + wheel)"
 	@echo "  docs-serve       Live-reload docs at http://localhost:8000 (needs mkdocs.yml)"
 	@echo "  docs-build       Build docs into ./site (strict — fails on broken links)"
 	@echo "  release-bump     Bump version files + CHANGELOG. Usage: make release-bump VERSION=X.Y.Z"
@@ -42,6 +44,15 @@ type-check:
 
 deps-bump:
 	uvx uv-upx upgrade run --profile with_pinned
+
+# Embedded esbuild build. The node toolchain lives inside js/; the built
+# bundles are committed under django_tiptap_editor/static/ so consumers and
+# their CI stay Python-only. CI rebuilds and diffs them to catch staleness.
+build-js:
+	cd js && npm install && npm run build
+
+build: build-js
+	uv build
 
 docs-serve:
 	uv run --group docs mkdocs serve
