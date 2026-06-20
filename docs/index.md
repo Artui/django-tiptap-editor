@@ -1,28 +1,31 @@
 # django-tiptap-editor
 
-A reusable, pip-installable Django package providing a drop-in rich-text editor backed
-by [TipTap](https://tiptap.dev) (headless ProseMirror): a form `Widget`, an admin
-widget, a `ModelAdmin` mixin, a settings default, and vendored static assets — node-free
-for consumers.
+A reusable rich-text editor for Django, backed by [TipTap](https://tiptap.dev)
+(headless ProseMirror): a form `Widget`, an admin widget, a `ModelAdmin` mixin, a
+settings-driven config, and committed static assets — **node-free for consumers**.
 
-!!! warning "Early development"
-    This package is being built schema-first. APIs are not yet stable and the first
-    published release will be `0.1.0`. See the
-    [GitHub repository](https://github.com/Artui/django-tiptap-editor) for the design
-    plan and progress.
+## Highlights
 
-## Installation
+- **Stores HTML** (render with `|safe`), never JSON.
+- **Safe by construction** — ProseMirror's schema drops scripts and unknown nodes on
+  parse; link and image protocols are allowlisted. See [Security](security.md).
+- **Node-free** — ships a committed, self-contained bundle. An optional glue-only ESM
+  build supports bring-your-own-TipTap via CDN / import maps. See [Asset modes](asset-modes.md).
+- **Full editor** — formatting, font size/family, colour, highlight, headings, lists,
+  alignment, links, images, tables, and a raw-HTML source view.
+- **Image upload + library picker**, **merge tags**, and **en/sv i18n** built in.
+- **Extensible without a build step** — register custom extensions and toolbar buttons,
+  and re-theme via CSS variables. See [Extending](extending.md) and [Theming](theming.md).
 
-```bash
-pip install django-tiptap-editor
-```
+## Get started
 
-## Why this exists
+- [Installation](installation.md)
+- [Quickstart](quickstart.md) — a form field and the admin mixin
+- [Configuration](configuration.md) — the config schema and Django settings
+- [API reference](api.md) — widgets, admin mixin, form field, views, and the JS API
 
-- Stored value is **HTML** (render with `|safe`), never JSON.
-- ProseMirror's schema *is* a sanitizer — scripts and unknown nodes are dropped on
-  parse; link/image protocols are allowlisted.
-- Two committed asset modes: a self-contained **bundle** (default) and a **glue-only**
-  ESM build for bring-your-own-TipTap via CDN / import maps.
-- Custom extensions, toolbar buttons, and layered theming — all without a node
-  toolchain in the consuming app.
+## Coming from another editor?
+
+Swapping editors is a content-validation exercise, not an automatic conversion — see
+[Migrating](recipes/migrating-from-tinymce.md), which centers on running the fidelity
+corpus over your real content first.
