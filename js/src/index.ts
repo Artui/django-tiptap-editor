@@ -1,18 +1,20 @@
 // window.DjangoTipTap — the public glue entry. In place today: the build
-// pipeline, the runtime seam, and a minimal-but-real auto-mounting editor
-// (Path A). The extension registry, custom extensions, toolbar, theming, and
-// explicit-init (Path B) build on top of this.
-import { Editor, StarterKit } from "./tiptap-runtime";
+// pipeline, the runtime seam, the fidelity extension set, the extension
+// registry, and a minimal-but-real auto-mounting editor (Path A). The toolbar,
+// theming tiers, i18n, source view, and explicit-init (Path B) build on top of
+// this.
+import { buildExtensions } from "./build-extensions";
+import type { TipTapConfig } from "./default-config";
+import { registerExtension } from "./registry";
+import type { ExtensionContext, ExtensionFactory } from "./registry";
+import { Editor, Extension, Mark, Node, mergeAttributes } from "./tiptap-runtime";
 import "./styles.css";
-
-interface TipTapConfig {
-  height?: string;
-  manualMount?: boolean;
-  [key: string]: unknown;
-}
 
 const CONFIG_ATTR = "data-tiptap-config";
 const BOUND_ATTR = "data-tiptap-bound";
+
+// Re-exported primitives for extension authors (no bundler of their own needed).
+const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
 
 const instances = new Map<string, Editor>();
 let uid = 0;
@@ -37,13 +39,6 @@ function readConfig(textarea: HTMLTextAreaElement): TipTapConfig {
   }
 }
 
-function buildExtensions(_config: TipTapConfig) {
-  // StarterKit baseline for now. config.extensions will later be resolved
-  // through the extension registry (custom paragraph, font-size,
-  // background-color, …).
-  return [StarterKit];
-}
-
 function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
@@ -59,9 +54,15 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   element.style.display = "none";
   element.parentNode?.insertBefore(mount, element.nextSibling);
 
+  const ctx: ExtensionContext = {
+    tiptap,
+    locale: config.locale ?? "en",
+    t: (key: string) => key,
+  };
+
   const editor = new Editor({
     element: mount,
-    extensions: buildExtensions(config),
+    extensions: buildExtensions(config, ctx),
     content: element.value || "",
     onUpdate({ editor }) {
       element.value = editor.getHTML();
@@ -110,8 +111,8 @@ const DjangoTipTap = {
   get,
   destroy,
   autoMount,
-  // Re-exported primitives for extension authors (expanded as extensions land).
-  tiptap: { Editor },
+  registerExtension,
+  tiptap,
 };
 
 declare global {
@@ -121,4 +122,5 @@ declare global {
 }
 window.DjangoTipTap = DjangoTipTap;
 
+export type { ExtensionContext, ExtensionFactory, TipTapConfig };
 export default DjangoTipTap;
