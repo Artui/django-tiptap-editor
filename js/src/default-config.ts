@@ -6,9 +6,22 @@ export interface TipTapConfig {
   locale?: string;
   manualMount?: boolean;
   extensions?: string[];
+  toolbar?: string[][];
   linkProtocols?: string[];
   [key: string]: unknown;
 }
+
+// Toolbar groups (arrays of button keys). Only buttons backed by a plain
+// command are built in so far; richer controls (font size/family, color,
+// image, table) arrive with their dropdown UI later.
+export const DEFAULT_TOOLBAR: string[][] = [
+  ["undo", "redo"],
+  ["bold", "italic", "underline", "strike", "code"],
+  ["h1", "h2", "h3", "paragraph"],
+  ["bulletList", "orderedList", "blockquote"],
+  ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
+  ["link", "unlink", "clearFormatting"],
+];
 
 // Canonical built-in set, in render order. The fidelity layer (margins/indent,
 // font-size, background-color highlight, inline image, link) is always present;
