@@ -60,7 +60,12 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
         continue;
       }
       const onClick = spec.onClick;
-      const button = renderButton(key, spec, () => onClick(editor));
+      // Refresh after the command runs: most commands fire a transaction (which
+      // refreshes anyway), but some — e.g. source-view's setEditable — don't.
+      const button = renderButton(key, spec, () => {
+        onClick(editor);
+        refresh();
+      });
       groupEl.appendChild(button);
       refreshers.push(() => {
         if (spec.isActive) {

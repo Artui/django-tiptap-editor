@@ -23,6 +23,7 @@ export const DEFAULT_TOOLBAR: string[][] = [
   ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
   ["image", "table"],
   ["link", "unlink", "clearFormatting"],
+  ["sourceView"],
 ];
 
 // Canonical built-in set, in render order. The fidelity layer (margins/indent,

@@ -7,6 +7,7 @@ import type { ButtonSpec } from "./button-registry";
 import { colorControl, commandMenuControl, selectControl } from "./controls";
 import type { MenuItem } from "./controls";
 import { ICONS } from "./icons";
+import { isSourceActive, toggleSourceView } from "./source-view";
 
 const FONT_SIZES = ["12px", "14px", "16px", "18px", "24px", "30px", "36px"];
 const FONT_FAMILIES = [
@@ -207,6 +208,12 @@ const BUILTIN: Record<string, ButtonSpec> = {
     icon: ICONS.clearFormatting,
     title: "Clear formatting",
     onClick: (e) => e.chain().focus().clearNodes().unsetAllMarks().run(),
+  },
+  sourceView: {
+    icon: ICONS.sourceView,
+    title: "Source code",
+    isActive: (e) => isSourceActive(e),
+    onClick: (e) => toggleSourceView(e),
   },
 };
 
