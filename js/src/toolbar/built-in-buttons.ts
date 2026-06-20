@@ -1,6 +1,7 @@
 // Built-in toolbar buttons, each backed by a single editor command. Registered
 // once at startup; consumers can override any key or add new ones via
 // ui.registerButton. Titles are plain labels for now (i18n keys later).
+import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 import { registerButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
@@ -29,7 +30,7 @@ const caret = '<span class="django-tiptap__caret">&#9662;</span>';
 function heading(level: 1 | 2 | 3): ButtonSpec {
   return {
     icon: ICONS[`h${level}`],
-    title: `Heading ${level}`,
+    title: `heading${level}`,
     isActive: (e: Editor) => e.isActive("heading", { level }),
     onClick: (e: Editor) => e.chain().focus().toggleHeading({ level }).run(),
   };
@@ -39,7 +40,7 @@ function align(dir: "left" | "center" | "right" | "justify"): ButtonSpec {
   const key = `align${dir[0].toUpperCase()}${dir.slice(1)}`;
   return {
     icon: ICONS[key],
-    title: `Align ${dir}`,
+    title: key,
     isActive: (e: Editor) => e.isActive({ textAlign: dir }),
     onClick: (e: Editor) => e.chain().focus().setTextAlign(dir).run(),
   };
@@ -48,67 +49,67 @@ function align(dir: "left" | "center" | "right" | "justify"): ButtonSpec {
 const BUILTIN: Record<string, ButtonSpec> = {
   undo: {
     icon: ICONS.undo,
-    title: "Undo",
+    title: "undo",
     isEnabled: (e) => e.can().undo(),
     onClick: (e) => e.chain().focus().undo().run(),
   },
   redo: {
     icon: ICONS.redo,
-    title: "Redo",
+    title: "redo",
     isEnabled: (e) => e.can().redo(),
     onClick: (e) => e.chain().focus().redo().run(),
   },
   bold: {
     icon: ICONS.bold,
-    title: "Bold",
+    title: "bold",
     isActive: (e) => e.isActive("bold"),
     onClick: (e) => e.chain().focus().toggleBold().run(),
   },
   italic: {
     icon: ICONS.italic,
-    title: "Italic",
+    title: "italic",
     isActive: (e) => e.isActive("italic"),
     onClick: (e) => e.chain().focus().toggleItalic().run(),
   },
   underline: {
     icon: ICONS.underline,
-    title: "Underline",
+    title: "underline",
     isActive: (e) => e.isActive("underline"),
     onClick: (e) => e.chain().focus().toggleUnderline().run(),
   },
   strike: {
     icon: ICONS.strike,
-    title: "Strikethrough",
+    title: "strike",
     isActive: (e) => e.isActive("strike"),
     onClick: (e) => e.chain().focus().toggleStrike().run(),
   },
   code: {
     icon: ICONS.code,
-    title: "Inline code",
+    title: "code",
     isActive: (e) => e.isActive("code"),
     onClick: (e) => e.chain().focus().toggleCode().run(),
   },
   fontSize: selectControl({
-    title: "Font size",
+    title: "fontSize",
     attr: "fontSize",
     triggerHTML: `<span class="django-tiptap__glyph">A<small>A</small></span>${caret}`,
     options: FONT_SIZES.map((v) => ({ label: v.replace("px", ""), value: v })),
   }),
   fontFamily: selectControl({
-    title: "Font family",
+    title: "fontFamily",
     attr: "fontFamily",
     triggerHTML: `<span class="django-tiptap__glyph">Aa</span>${caret}`,
     options: FONT_FAMILIES.map((v) => ({ label: v.split(",")[0].replace(/'/g, ""), value: v })),
     styleOption: true,
   }),
   color: colorControl({
-    title: "Text color",
+    title: "color",
     attr: "color",
     triggerHTML: `<span class="django-tiptap__glyph django-tiptap__glyph--color">A</span>${caret}`,
     swatches: TEXT_COLORS,
   }),
   highlight: colorControl({
-    title: "Highlight",
+    title: "highlight",
     attr: "backgroundColor",
     triggerHTML: `<span class="django-tiptap__glyph django-tiptap__glyph--highlight">A</span>${caret}`,
     swatches: HIGHLIGHTS,
@@ -118,25 +119,25 @@ const BUILTIN: Record<string, ButtonSpec> = {
   h3: heading(3),
   paragraph: {
     icon: ICONS.paragraph,
-    title: "Paragraph",
+    title: "paragraph",
     isActive: (e) => e.isActive("paragraph"),
     onClick: (e) => e.chain().focus().setParagraph().run(),
   },
   bulletList: {
     icon: ICONS.bulletList,
-    title: "Bullet list",
+    title: "bulletList",
     isActive: (e) => e.isActive("bulletList"),
     onClick: (e) => e.chain().focus().toggleBulletList().run(),
   },
   orderedList: {
     icon: ICONS.orderedList,
-    title: "Numbered list",
+    title: "orderedList",
     isActive: (e) => e.isActive("orderedList"),
     onClick: (e) => e.chain().focus().toggleOrderedList().run(),
   },
   blockquote: {
     icon: ICONS.blockquote,
-    title: "Blockquote",
+    title: "blockquote",
     isActive: (e) => e.isActive("blockquote"),
     onClick: (e) => e.chain().focus().toggleBlockquote().run(),
   },
@@ -146,9 +147,9 @@ const BUILTIN: Record<string, ButtonSpec> = {
   alignJustify: align("justify"),
   image: {
     icon: ICONS.image,
-    title: "Insert image",
+    title: "image",
     onClick: (e) => {
-      const url = window.prompt("Image URL");
+      const url = window.prompt(translatorFor(e)("imagePrompt"));
       if (!url) {
         return;
       }
@@ -156,26 +157,26 @@ const BUILTIN: Record<string, ButtonSpec> = {
     },
   },
   table: commandMenuControl({
-    title: "Table",
+    title: "table",
     triggerHTML: `${ICONS.table}${caret}`,
     items: (e): MenuItem[] => {
       const items: MenuItem[] = [
         {
-          label: "Insert table",
+          label: "insertTable",
           run: () => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
         },
       ];
       if (e.isActive("table")) {
         items.push(
           "separator",
-          { label: "Add row above", run: () => e.chain().focus().addRowBefore().run() },
-          { label: "Add row below", run: () => e.chain().focus().addRowAfter().run() },
-          { label: "Add column left", run: () => e.chain().focus().addColumnBefore().run() },
-          { label: "Add column right", run: () => e.chain().focus().addColumnAfter().run() },
+          { label: "addRowBefore", run: () => e.chain().focus().addRowBefore().run() },
+          { label: "addRowAfter", run: () => e.chain().focus().addRowAfter().run() },
+          { label: "addColumnBefore", run: () => e.chain().focus().addColumnBefore().run() },
+          { label: "addColumnAfter", run: () => e.chain().focus().addColumnAfter().run() },
           "separator",
-          { label: "Delete row", run: () => e.chain().focus().deleteRow().run() },
-          { label: "Delete column", run: () => e.chain().focus().deleteColumn().run() },
-          { label: "Delete table", run: () => e.chain().focus().deleteTable().run() },
+          { label: "deleteRow", run: () => e.chain().focus().deleteRow().run() },
+          { label: "deleteColumn", run: () => e.chain().focus().deleteColumn().run() },
+          { label: "deleteTable", run: () => e.chain().focus().deleteTable().run() },
         );
       }
       return items;
@@ -183,11 +184,11 @@ const BUILTIN: Record<string, ButtonSpec> = {
   }),
   link: {
     icon: ICONS.link,
-    title: "Insert / edit link",
+    title: "link",
     isActive: (e) => e.isActive("link"),
     onClick: (e) => {
       const prev = (e.getAttributes("link").href as string | undefined) ?? "";
-      const url = window.prompt("Link URL", prev);
+      const url = window.prompt(translatorFor(e)("linkPrompt"), prev);
       if (url === null) {
         return;
       }
@@ -200,18 +201,18 @@ const BUILTIN: Record<string, ButtonSpec> = {
   },
   unlink: {
     icon: ICONS.unlink,
-    title: "Remove link",
+    title: "unlink",
     isEnabled: (e) => e.isActive("link"),
     onClick: (e) => e.chain().focus().extendMarkRange("link").unsetLink().run(),
   },
   clearFormatting: {
     icon: ICONS.clearFormatting,
-    title: "Clear formatting",
+    title: "clearFormatting",
     onClick: (e) => e.chain().focus().clearNodes().unsetAllMarks().run(),
   },
   sourceView: {
     icon: ICONS.sourceView,
-    title: "Source code",
+    title: "sourceView",
     isActive: (e) => isSourceActive(e),
     onClick: (e) => toggleSourceView(e),
   },
