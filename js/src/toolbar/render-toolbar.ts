@@ -12,13 +12,30 @@ export interface RenderedToolbar {
   refresh: () => void;
 }
 
+function renderButton(key: string, spec: ButtonSpec, onClick: () => void): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "django-tiptap__btn";
+  button.innerHTML = spec.icon ?? "";
+  button.title = spec.title;
+  button.setAttribute("aria-label", spec.title);
+  button.setAttribute("data-key", key);
+  // Keep the editor selection when the button is pressed.
+  button.addEventListener("mousedown", (event) => event.preventDefault());
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    onClick();
+  });
+  return button;
+}
+
 export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToolbar {
   const groups = config.toolbar ?? DEFAULT_TOOLBAR;
   const toolbar = document.createElement("div");
   toolbar.className = "django-tiptap__toolbar";
   toolbar.setAttribute("role", "toolbar");
 
-  const wired: Array<{ el: HTMLButtonElement; spec: ButtonSpec }> = [];
+  const refreshers: Array<() => void> = [];
 
   for (const group of groups) {
     const groupEl = document.createElement("div");
@@ -29,21 +46,30 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
         console.error(`[DjangoTipTap] unknown toolbar button "${key}"`);
         continue;
       }
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "django-tiptap__btn";
-      button.innerHTML = spec.icon;
-      button.title = spec.title;
-      button.setAttribute("aria-label", spec.title);
-      button.setAttribute("data-key", key);
-      // Keep the editor selection when the button is pressed.
-      button.addEventListener("mousedown", (event) => event.preventDefault());
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        spec.onClick(editor);
-      });
+      if (spec.render) {
+        const control = spec.render(editor);
+        control.el.setAttribute("data-key", key);
+        groupEl.appendChild(control.el);
+        if (control.refresh) {
+          refreshers.push(control.refresh);
+        }
+        continue;
+      }
+      if (!spec.icon || !spec.onClick) {
+        console.error(`[DjangoTipTap] toolbar button "${key}" needs an icon + onClick (or render)`);
+        continue;
+      }
+      const onClick = spec.onClick;
+      const button = renderButton(key, spec, () => onClick(editor));
       groupEl.appendChild(button);
-      wired.push({ el: button, spec });
+      refreshers.push(() => {
+        if (spec.isActive) {
+          button.classList.toggle("is-active", spec.isActive(editor));
+        }
+        if (spec.isEnabled) {
+          button.toggleAttribute("disabled", !spec.isEnabled(editor));
+        }
+      });
     }
     if (groupEl.childElementCount > 0) {
       toolbar.appendChild(groupEl);
@@ -51,13 +77,8 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
   }
 
   function refresh(): void {
-    for (const { el, spec } of wired) {
-      if (spec.isActive) {
-        el.classList.toggle("is-active", spec.isActive(editor));
-      }
-      if (spec.isEnabled) {
-        el.toggleAttribute("disabled", !spec.isEnabled(editor));
-      }
+    for (const r of refreshers) {
+      r();
     }
   }
 

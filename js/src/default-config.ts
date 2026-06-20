@@ -17,6 +17,7 @@ export interface TipTapConfig {
 export const DEFAULT_TOOLBAR: string[][] = [
   ["undo", "redo"],
   ["bold", "italic", "underline", "strike", "code"],
+  ["fontSize", "fontFamily", "color", "highlight"],
   ["h1", "h2", "h3", "paragraph"],
   ["bulletList", "orderedList", "blockquote"],
   ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
