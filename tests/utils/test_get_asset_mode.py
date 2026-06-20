@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
-from django_tiptap_editor.get_asset_mode import get_asset_mode
+from django_tiptap_editor.utils.get_asset_mode import get_asset_mode
 
 
 def test_default_is_bundle() -> None:

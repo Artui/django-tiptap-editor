@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.test import override_settings
 
-from django_tiptap_editor.get_import_map import get_import_map
+from django_tiptap_editor.utils.get_import_map import get_import_map
 
 
 def test_default_is_empty() -> None:

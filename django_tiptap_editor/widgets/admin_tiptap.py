@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from django_tiptap_editor.get_default_config import get_default_config
-from django_tiptap_editor.validate_config import validate_config
+from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.validate_config import validate_config
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 

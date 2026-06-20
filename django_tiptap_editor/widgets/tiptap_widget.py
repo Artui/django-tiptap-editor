@@ -8,8 +8,8 @@ from typing import Any
 from django import forms
 
 from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR
-from django_tiptap_editor.get_default_config import get_default_config
-from django_tiptap_editor.validate_config import validate_config
+from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.validate_config import validate_config
 
 
 class TipTapWidget(forms.Textarea):

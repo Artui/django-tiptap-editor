@@ -20,9 +20,9 @@ from django_tiptap_editor.constants import (
     GLUE_CSS,
     GLUE_JS,
 )
-from django_tiptap_editor.get_asset_mode import get_asset_mode
-from django_tiptap_editor.get_default_config import get_default_config
-from django_tiptap_editor.get_import_map import get_import_map
+from django_tiptap_editor.utils.get_asset_mode import get_asset_mode
+from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.get_import_map import get_import_map
 
 register = template.Library()
 

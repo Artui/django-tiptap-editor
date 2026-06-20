@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
-from django_tiptap_editor.validate_config import validate_config
+from django_tiptap_editor.utils.validate_config import validate_config
 
 
 def test_valid_config_passes_through() -> None:

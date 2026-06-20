@@ -7,7 +7,7 @@ from typing import Any
 from django.core.exceptions import ImproperlyConfigured
 
 from django_tiptap_editor.constants import BUILTIN_EXTENSIONS, KNOWN_CONFIG_KEYS
-from django_tiptap_editor.get_extra_extensions import get_extra_extensions
+from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
 
 
 def validate_config(config: dict[str, Any]) -> dict[str, Any]:
