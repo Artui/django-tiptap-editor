@@ -41,8 +41,12 @@ roadmap. This file governs *how* code is written.
    **Exception:** a single `constants.py` per package is the only file allowed to export
    multiple symbols (enums, frozen settings defaults, reserved-key sets).
 2. **Private helpers used in only one file** stay there with a leading `_`.
-3. **Non-exported helpers shared across files** go into a sibling `utils.py`. Internal
-   infrastructure classes are allowed in `utils.py`.
+3. **Helpers shared across files** go under `utils/`. Non-exported infrastructure may sit
+   in a sibling `utils.py`; the **exported config / settings readers and validators**
+   (`get_default_config`, `get_asset_mode`, `get_extra_extensions`, `get_import_map`,
+   `validate_config`, …) live one-per-file in the `utils/` subpackage and are re-exported
+   from `utils/__init__.py`. Import them from their leaf path internally
+   (`django_tiptap_editor.utils.get_default_config`).
 4. **Top-level imports only.** No function-local / lazy imports unless a circular import
    is genuine and documented inline at the import site, or the dependency is optional —
    those imports go inside the function body with a clear `ImportError` message.
