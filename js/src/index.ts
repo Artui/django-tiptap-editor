@@ -14,12 +14,14 @@ import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
 import { renderToolbar } from "./toolbar/render-toolbar";
 import { Editor, Extension, Mark, Node, mergeAttributes } from "./tiptap-runtime";
 import { ui } from "./ui";
+import { checkTipTapVersion, SUPPORTED_TIPTAP_VERSION } from "./version-check";
 import "./styles.css";
 
 const CONFIG_ATTR = "data-tiptap-config";
 const BOUND_ATTR = "data-tiptap-bound";
 
 registerBuiltInButtons();
+checkTipTapVersion();
 
 // Re-exported primitives for extension authors (no bundler of their own needed).
 const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
@@ -134,6 +136,7 @@ document.addEventListener("htmx:afterSwap", () => autoMount());
 
 const DjangoTipTap = {
   version: "0.0.0",
+  supportedTipTapVersion: SUPPORTED_TIPTAP_VERSION,
   init,
   get,
   destroy,

@@ -81,3 +81,33 @@ BUILTIN_EXTENSIONS = frozenset(
 # Empty base config: JS fills defaults for omitted keys, so Python keeps no
 # duplicate default toolbar/extension lists that could drift from the glue.
 DEFAULT_CONFIG: dict[str, object] = {}
+
+# TipTap version the committed glue is built + validated against. Keep in sync
+# with js/package.json (the build also bakes it into the glue for the
+# external-mode startup version check).
+TIPTAP_VERSION = "2.27.2"
+
+# Bare `@tiptap/*` specifiers the glue ESM imports — the import map external mode
+# must resolve. (Matches the externalised imports in tiptap.glue.esm.js.)
+GLUE_IMPORT_SPECIFIERS = (
+    "@tiptap/core",
+    "@tiptap/starter-kit",
+    "@tiptap/extension-underline",
+    "@tiptap/extension-text-style",
+    "@tiptap/extension-font-family",
+    "@tiptap/extension-color",
+    "@tiptap/extension-text-align",
+    "@tiptap/extension-link",
+    "@tiptap/extension-image",
+    "@tiptap/extension-table",
+    "@tiptap/extension-table-row",
+    "@tiptap/extension-table-cell",
+    "@tiptap/extension-table-header",
+    "@tiptap/extension-subscript",
+    "@tiptap/extension-superscript",
+    "@tiptap/extension-character-count",
+)
+
+# CDN base for the default external-mode import map (verified to mount + edit
+# without ProseMirror duplication when every specifier is pinned to one version).
+ESM_CDN = "https://esm.sh"

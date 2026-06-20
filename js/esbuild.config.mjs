@@ -9,7 +9,15 @@
 // src/tiptap-runtime.ts are inlined or left external. esbuild output is
 // deterministic for a pinned version, so CI rebuilds and diffs the committed
 // artifacts to catch staleness.
+import { readFileSync } from "node:fs";
+
 import { build } from "esbuild";
+
+// The TipTap version the bundle was built + the fidelity corpus validated
+// against. Baked into the glue so it can warn on external-mode version skew.
+const TIPTAP_VERSION = JSON.parse(
+  readFileSync("node_modules/@tiptap/core/package.json", "utf8"),
+).version;
 
 const OUTDIR = "../django_tiptap_editor/static/django_tiptap_editor";
 
@@ -22,12 +30,18 @@ const shared = {
   logLevel: "info",
 };
 
+const defines = (buildKind) => ({
+  __DTT_TIPTAP_VERSION__: JSON.stringify(TIPTAP_VERSION),
+  __DTT_BUILD__: JSON.stringify(buildKind),
+});
+
 // 1) Self-contained IIFE bundle (default).
 await build({
   ...shared,
   entryPoints: ["src/index.ts"],
   outfile: `${OUTDIR}/tiptap.bundle.js`,
   format: "iife",
+  define: defines("bundle"),
 });
 
 // 2) Glue-only ESM with TipTap externalised (bring-your-own-TipTap).
@@ -37,6 +51,7 @@ await build({
   outfile: `${OUTDIR}/tiptap.glue.esm.js`,
   format: "esm",
   external: ["@tiptap/*"],
+  define: defines("glue"),
 });
 
-console.log("built tiptap.bundle.{js,css} + tiptap.glue.esm.{js,css}");
+console.log(`built tiptap.bundle.{js,css} + tiptap.glue.esm.{js,css} (TipTap ${TIPTAP_VERSION})`);
