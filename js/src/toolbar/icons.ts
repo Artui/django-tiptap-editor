@@ -42,4 +42,5 @@ export const ICONS: Record<string, string> = {
   unlink: svg('<path d="M9 17H7a5 5 0 0 1 0-10h2"/><path d="M15 7h2a5 5 0 0 1 4 8"/><line x1="3" y1="3" x2="21" y2="21"/>'),
   clearFormatting: glyph("T&#215;", "font-size:0.82em"),
   sourceView: svg('<polyline points="8 6 3 12 8 18"/><polyline points="16 6 21 12 16 18"/>'),
+  mergeTags: glyph("{&nbsp;}", "font-family:ui-monospace,monospace;font-size:0.9em"),
 };

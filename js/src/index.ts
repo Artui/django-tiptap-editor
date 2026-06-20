@@ -5,8 +5,10 @@
 // controls (font/color/image/table), and explicit-init (Path B) layer on later.
 import { buildExtensions } from "./build-extensions";
 import type { TipTapConfig } from "./default-config";
+import { setEditorConfig } from "./editor-config";
 import { getTranslator, registerLocale, setTranslator } from "./i18n";
 import { registerExtension } from "./registry";
+import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
 import { renderToolbar } from "./toolbar/render-toolbar";
@@ -78,11 +80,15 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
     extensions: buildExtensions(config, ctx),
     content: element.value || "",
     onUpdate({ editor }) {
-      element.value = editor.getHTML();
+      const html = editor.getHTML();
+      element.value = html;
+      config.onChange?.(html);
     },
   });
-  // Make the translator resolvable from any onClick(editor) / the toolbar.
+  // Make the translator + config resolvable from any onClick(editor) / control.
   setTranslator(editor, t);
+  setEditorConfig(editor, config);
+  wireImageDropPaste(editor);
 
   const toolbar = renderToolbar(editor, config);
   shell.insertBefore(toolbar.el, content);

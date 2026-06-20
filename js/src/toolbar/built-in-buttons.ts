@@ -1,8 +1,11 @@
 // Built-in toolbar buttons, each backed by a single editor command. Registered
 // once at startup; consumers can override any key or add new ones via
 // ui.registerButton. Titles are plain labels for now (i18n keys later).
+import { configFor } from "../editor-config";
 import { translatorFor } from "../i18n";
+import { openImagePicker } from "../image-picker";
 import type { Editor } from "../tiptap-runtime";
+import { insertImage, uploadViaFileDialog } from "../upload";
 import { registerButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
 import { colorControl, commandMenuControl, selectControl } from "./controls";
@@ -145,17 +148,40 @@ const BUILTIN: Record<string, ButtonSpec> = {
   alignCenter: align("center"),
   alignRight: align("right"),
   alignJustify: align("justify"),
-  image: {
-    icon: ICONS.image,
+  image: commandMenuControl({
     title: "image",
-    onClick: (e) => {
-      const url = window.prompt(translatorFor(e)("imagePrompt"));
-      if (!url) {
-        return;
+    triggerHTML: `${ICONS.image}${caret}`,
+    items: (e): MenuItem[] => {
+      const cfg = configFor(e);
+      const items: MenuItem[] = [
+        {
+          label: "imageByUrl",
+          run: () => {
+            const url = window.prompt(translatorFor(e)("imagePrompt"));
+            if (url) {
+              insertImage(e, url);
+            }
+          },
+        },
+      ];
+      if (cfg.imageUploadUrl) {
+        items.push({ label: "imageUpload", run: () => uploadViaFileDialog(e) });
       }
-      e.chain().focus().setImage({ src: url }).run();
+      if (cfg.imageListUrl) {
+        items.push({ label: "imageLibrary", run: () => void openImagePicker(e) });
+      }
+      return items;
     },
-  },
+  }),
+  mergeTags: commandMenuControl({
+    title: "mergeTags",
+    triggerHTML: `${ICONS.mergeTags}${caret}`,
+    items: (e): MenuItem[] =>
+      (configFor(e).mergeTags ?? []).map((tag) => ({
+        label: tag.label,
+        run: () => e.chain().focus().insertContent(tag.value).run(),
+      })),
+  }),
   table: commandMenuControl({
     title: "table",
     triggerHTML: `${ICONS.table}${caret}`,

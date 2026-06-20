@@ -49,6 +49,14 @@ const EN: Record<string, string> = {
   sourceNote: "Editing raw HTML — unsupported markup is normalized when you switch back.",
   linkPrompt: "Link URL",
   imagePrompt: "Image URL",
+  imageByUrl: "Insert by URL",
+  imageUpload: "Upload…",
+  imageLibrary: "From library…",
+  mergeTags: "Merge tags",
+  pickerTitle: "Select an image",
+  pickerEmpty: "No images.",
+  pickerError: "Could not load images.",
+  close: "Close",
 };
 
 const SV: Record<string, string> = {
@@ -93,6 +101,14 @@ const SV: Record<string, string> = {
   sourceNote: "Redigerar rå HTML — okänd markup normaliseras när du växlar tillbaka.",
   linkPrompt: "Länkadress",
   imagePrompt: "Bildadress",
+  imageByUrl: "Infoga via URL",
+  imageUpload: "Ladda upp…",
+  imageLibrary: "Från bibliotek…",
+  mergeTags: "Sammanfogningstaggar",
+  pickerTitle: "Välj en bild",
+  pickerEmpty: "Inga bilder.",
+  pickerError: "Kunde inte ladda bilder.",
+  close: "Stäng",
 };
 
 const locales: Record<string, Record<string, string>> = { en: EN, sv: SV };
