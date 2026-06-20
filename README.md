@@ -14,26 +14,20 @@ admin widget, a `ModelAdmin` mixin, a settings default, and vendored static asse
 
 ## What this is
 
-`django-tiptap-editor` fills the same integration role as `django-tinymce` — a form
-widget with a config hook, an admin widget, a settings default, and committed static
-assets — but it is **not** an API clone. It has its own clean, options-object surface
-and its own config schema.
+A reusable rich-text editor for Django: a form `Widget`, an admin widget, a
+`ModelAdmin` mixin, a settings-driven config, and committed static assets — with a
+clean, options-object surface and its own config schema.
 
-- Stored value is **HTML** (consumers render with `|safe`), never JSON.
+- Stored value is **HTML** (render it with `|safe`), never JSON.
 - ProseMirror's schema *is* a sanitizer: scripts and unknown nodes are dropped on
-  parse, and link/image protocols are allowlisted.
-- Two committed asset modes: a self-contained **bundle** (default, fully node-free)
-  and a **glue-only** ESM build for consumers who bring their own TipTap via CDN /
-  import maps.
-- Extensible without a node toolchain: a runtime registry for custom extensions,
-  toolbar buttons, and layered theming.
-
-## Status
-
-🔨 **Early development.** The package is being built schema-first — the editor's
-ProseMirror schema is designed to round-trip real-world authored HTML without loss
-before the surrounding Django plumbing is finalized. The first published release will be
-`0.1.0`; the source tree carries `0.0.0` until then. APIs are not yet stable.
+  parse, and link/image protocols are allowlisted — so `|safe` is justified.
+- **Node-free for consumers**: the editor ships as a committed, self-contained bundle.
+  An optional glue-only ESM build lets you bring your own TipTap via CDN / import maps.
+- Extensible without a build step: a runtime registry for custom extensions, toolbar
+  buttons, and layered (CSS-variable) theming.
+- Full toolbar (formatting, font size/family, colour, highlight, lists, alignment,
+  links, images, tables, source view), image upload + library picker, merge tags, and
+  en/sv i18n out of the box.
 
 ## Installation
 
@@ -41,7 +35,41 @@ before the surrounding Django plumbing is finalized. The first published release
 pip install django-tiptap-editor
 ```
 
-(Not yet on PyPI — published at the `0.1.0` milestone.)
+Add the app to `INSTALLED_APPS` (it ships the static bundle):
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "django_tiptap_editor",
+]
+```
+
+## Quickstart
+
+```python
+from django import forms
+from django_tiptap_editor.forms.fields import TipTapFormField
+
+class ArticleForm(forms.Form):
+    body = TipTapFormField()
+```
+
+In the admin:
+
+```python
+from django.contrib import admin
+from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
+
+@admin.register(Article)
+class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
+    pass  # every TextField becomes a TipTap editor
+```
+
+Render the field with `{{ form.media }}` (or `{% tiptap_media %}`) in your template, and
+display the stored HTML with `{{ article.body|safe }}`. See the
+[documentation](https://artui.github.io/django-tiptap-editor/) for configuration,
+the upload/image-list contracts, theming, extension authoring, asset modes, and the
+migration guide.
 
 ## Documentation
 

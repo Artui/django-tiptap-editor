@@ -73,3 +73,16 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Installation: installation.md
+  - Quickstart: quickstart.md
+  - Configuration: configuration.md
+  - API reference: api.md
+  - Client contracts: contracts.md
+  - Security: security.md
+  - Asset modes: asset-modes.md
+  - Extending: extending.md
+  - Theming: theming.md
+  - Recipes:
+      - Live preview: recipes/preview.md
+      - Migrating from another editor: recipes/migrating-from-tinymce.md
+  - Versioning & stability: semver.md
