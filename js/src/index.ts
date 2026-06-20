@@ -1,22 +1,32 @@
 // window.DjangoTipTap — the public glue entry. In place today: the build
 // pipeline, the runtime seam, the fidelity extension set, the extension
-// registry, and a minimal-but-real auto-mounting editor (Path A). The toolbar,
-// theming tiers, i18n, source view, and explicit-init (Path B) build on top of
-// this.
+// registry, a clickable toolbar + button registry, design-token theming, and
+// Path-A auto-mount. Region/shell renderers, i18n, source view, dropdown
+// controls (font/color/image/table), and explicit-init (Path B) layer on later.
 import { buildExtensions } from "./build-extensions";
 import type { TipTapConfig } from "./default-config";
 import { registerExtension } from "./registry";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
+import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
+import { renderToolbar } from "./toolbar/render-toolbar";
 import { Editor, Extension, Mark, Node, mergeAttributes } from "./tiptap-runtime";
+import { ui } from "./ui";
 import "./styles.css";
 
 const CONFIG_ATTR = "data-tiptap-config";
 const BOUND_ATTR = "data-tiptap-bound";
 
+registerBuiltInButtons();
+
 // Re-exported primitives for extension authors (no bundler of their own needed).
 const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
 
-const instances = new Map<string, Editor>();
+interface Instance {
+  editor: Editor;
+  shell: HTMLElement;
+}
+
+const instances = new Map<string, Instance>();
 let uid = 0;
 
 function ensureId(textarea: HTMLTextAreaElement): string {
@@ -43,16 +53,20 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
   if (existing) {
-    return existing;
+    return existing.editor;
   }
 
-  const mount = document.createElement("div");
-  mount.className = "django-tiptap";
+  const shell = document.createElement("div");
+  shell.className = "django-tiptap";
   if (config.height) {
-    mount.style.setProperty("--tiptap-height", config.height);
+    shell.style.setProperty("--tiptap-height", config.height);
   }
+  const content = document.createElement("div");
+  content.className = "django-tiptap__content";
+  shell.appendChild(content);
+
   element.style.display = "none";
-  element.parentNode?.insertBefore(mount, element.nextSibling);
+  element.parentNode?.insertBefore(shell, element.nextSibling);
 
   const ctx: ExtensionContext = {
     tiptap,
@@ -61,7 +75,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   };
 
   const editor = new Editor({
-    element: mount,
+    element: content,
     extensions: buildExtensions(config, ctx),
     content: element.value || "",
     onUpdate({ editor }) {
@@ -69,21 +83,27 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
     },
   });
 
+  const toolbar = renderToolbar(editor, config);
+  shell.insertBefore(toolbar.el, content);
+  toolbar.refresh();
+  editor.on("transaction", () => toolbar.refresh());
+
   element.setAttribute(BOUND_ATTR, "true");
-  instances.set(id, editor);
+  instances.set(id, { editor, shell });
   return editor;
 }
 
 function get(id: string): Editor | null {
-  return instances.get(id) ?? null;
+  return instances.get(id)?.editor ?? null;
 }
 
 function destroy(id: string): void {
-  const editor = instances.get(id);
-  if (!editor) {
+  const instance = instances.get(id);
+  if (!instance) {
     return;
   }
-  editor.destroy();
+  instance.editor.destroy();
+  instance.shell.remove();
   instances.delete(id);
 }
 
@@ -112,6 +132,7 @@ const DjangoTipTap = {
   destroy,
   autoMount,
   registerExtension,
+  ui,
   tiptap,
 };
 

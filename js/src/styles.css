@@ -1,19 +1,101 @@
-/* Base editor chrome. The full design-token (--tiptap-*) contract, toolbar,
-   and theming tiers layer on top of this. */
+/* Design-token contract (the stable, default theming path). Override any of
+   these via DjangoTipTap.ui.setTokens({...}) or plain CSS on :root. */
 .django-tiptap {
   --tiptap-height: 360px;
+  --tiptap-font: inherit;
+  --tiptap-fg: #1f2329;
+  --tiptap-bg: #ffffff;
   --tiptap-border: #d0d5dd;
-  --tiptap-radius: 6px;
+  --tiptap-radius: 8px;
+  --tiptap-toolbar-bg: #f7f8fa;
+  --tiptap-btn-fg: #3a4151;
+  --tiptap-btn-hover-bg: #e7eaef;
+  --tiptap-btn-active-bg: #e0e7ff;
+  --tiptap-btn-active-fg: #3538cd;
+  --tiptap-accent: #3538cd;
+
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--tiptap-border);
   border-radius: var(--tiptap-radius);
-  background: #fff;
+  background: var(--tiptap-bg);
+  color: var(--tiptap-fg);
+  font-family: var(--tiptap-font);
+  overflow: hidden;
+}
+
+/* Toolbar */
+.django-tiptap__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  padding: 6px 8px;
+  background: var(--tiptap-toolbar-bg);
+  border-bottom: 1px solid var(--tiptap-border);
+}
+
+.django-tiptap__group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.django-tiptap__group + .django-tiptap__group {
+  margin-left: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--tiptap-border);
+}
+
+.django-tiptap__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tiptap-btn-fg);
+  cursor: pointer;
+  line-height: 1;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.django-tiptap__btn:hover:not([disabled]) {
+  background: var(--tiptap-btn-hover-bg);
+}
+
+.django-tiptap__btn.is-active {
+  background: var(--tiptap-btn-active-bg);
+  color: var(--tiptap-btn-active-fg);
+}
+
+.django-tiptap__btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.django-tiptap__btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.django-tiptap__glyph {
+  font-size: 15px;
+}
+
+/* Editing surface */
+.django-tiptap__content {
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
 
 .django-tiptap .ProseMirror {
   min-height: var(--tiptap-height);
   padding: 12px 14px;
   outline: none;
-  overflow-y: auto;
 }
 
 .django-tiptap .ProseMirror:focus,
@@ -27,4 +109,18 @@
 
 .django-tiptap .ProseMirror p {
   margin: 0;
+}
+
+.django-tiptap .ProseMirror table {
+  border-collapse: collapse;
+}
+
+.django-tiptap .ProseMirror th,
+.django-tiptap .ProseMirror td {
+  border: 1px solid var(--tiptap-border);
+  padding: 4px 8px;
+}
+
+.django-tiptap .ProseMirror a {
+  color: var(--tiptap-accent);
 }
