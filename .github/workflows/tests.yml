@@ -1,0 +1,220 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --all-groups
+      - name: ruff check
+        run: uv run ruff check .
+      - name: ruff format check
+        run: uv run ruff format --check --diff .
+      - name: ty
+        run: uv run ty check django_tiptap_editor
+
+  docs:
+    name: docs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install with docs group
+        run: uv sync --all-groups
+      - name: mkdocs build --strict
+        # mkdocstrings imports the package, which transitively imports Django;
+        # Django reads settings at import time, so we point at the test
+        # settings module to keep the build hermetic.
+        run: DJANGO_SETTINGS_MODULE=tests.conftest_settings uv run mkdocs build --strict
+
+  test:
+    name: ${{ matrix.python-version }} / Django ${{ matrix.django-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        django-version: ["4.2", "5.0", "5.1", "5.2", "6.0"]
+        exclude:
+          # Django 4.2 supports Python 3.8–3.12
+          - python-version: "3.13"
+            django-version: "4.2"
+          - python-version: "3.14"
+            django-version: "4.2"
+          # Django 5.0 supports Python 3.10–3.12
+          - python-version: "3.13"
+            django-version: "5.0"
+          - python-version: "3.14"
+            django-version: "5.0"
+          # Django 5.1 supports Python 3.10–3.13
+          - python-version: "3.14"
+            django-version: "5.1"
+          # Django 6.0 requires Python 3.12+
+          - python-version: "3.10"
+            django-version: "6.0"
+          - python-version: "3.11"
+            django-version: "6.0"
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      - name: Sync dev deps
+        run: uv sync --all-groups --python ${{ matrix.python-version }}
+      - name: Pin Django ${{ matrix.django-version }}
+        run: uv pip install --reinstall-package django "django~=${{ matrix.django-version }}.0"
+      - name: pytest
+        run: |
+          uv run --no-sync pytest \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-py${{ matrix.python-version }}-django${{ matrix.django-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+          if-no-files-found: ignore
+
+  coverage-badge:
+    name: coverage badge
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Need the parent commit so the gate step below can diff
+          # version.py against ${{ github.event.before }}. The default
+          # shallow checkout (depth 1) would make `git show "$before:…"`
+          # fail with exit 128 and turn the whole job red.
+          fetch-depth: 2
+      # release.yml runs in parallel on the same push and owns gh-pages
+      # publishing on release commits (it bundles coverage.json into the
+      # mkdocs gh-deploy). If we also push here we get a second built-in
+      # "pages build and deployment" run that the first one cancels. The
+      # version-diff against ${{ github.event.before }} is the reliable
+      # signal — release.yml's tag isn't pushed until after PyPI publish,
+      # so a tag-existence check would race.
+      - name: Skip when release.yml owns this push
+        id: gate
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          if [[ -z "$before" || "$before" =~ ^0+$ ]]; then
+              # First push to main on a brand-new repo — no prior state to diff.
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+              exit 0
+          fi
+          # `before` may not be in the local object DB if the push
+          # contained more than one commit (fetch-depth: 2 only guarantees
+          # HEAD + 1 parent). Try to fetch just that commit; if it's not
+          # reachable, fall back to "don't skip" — better to double-push
+          # to gh-pages once than to turn the pipeline red.
+          if ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+              git fetch --depth=1 origin "$before" 2>/dev/null || true
+          fi
+          old=""
+          if git cat-file -e "$before:django_tiptap_editor/version.py" 2>/dev/null; then
+              old="$(git show "$before:django_tiptap_editor/version.py" \
+                     | awk -F'"' '/^__version__/ { print $2; exit }')"
+          fi
+          new="$(awk -F'"' '/^__version__/ { print $2; exit }' \
+                 django_tiptap_editor/version.py)"
+          if [[ -n "$old" && "$old" != "$new" ]]; then
+              echo "Version bumped $old → $new; release.yml will deploy gh-pages."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download canonical coverage artifact
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/download-artifact@v5
+        with:
+          name: coverage-py3.13-django5.2
+          path: coverage-artifact/
+      - name: Render coverage.json
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          python - <<'PY'
+          import json
+          import xml.etree.ElementTree as ET
+
+          tree = ET.parse("coverage-artifact/coverage.xml")
+          pct = round(float(tree.getroot().attrib["line-rate"]) * 100, 1)
+          if pct >= 95:
+              color = "brightgreen"
+          elif pct >= 85:
+              color = "green"
+          elif pct >= 70:
+              color = "yellow"
+          else:
+              color = "red"
+          payload = {
+              "schemaVersion": 1,
+              "label": "coverage",
+              "message": f"{pct}%",
+              "color": color,
+          }
+          with open("coverage.json", "w") as fh:
+              json.dump(payload, fh)
+              fh.write("\n")
+          print(json.dumps(payload))
+          PY
+      - name: Publish coverage.json to gh-pages
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          tmp="$(mktemp -d)"
+          cp coverage.json "$tmp/coverage.json"
+
+          git fetch origin gh-pages --depth=1 2>/dev/null || true
+          if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
+              git worktree add gh-pages origin/gh-pages
+              cp "$tmp/coverage.json" gh-pages/coverage.json
+              cd gh-pages
+              if [[ -n "$(git status --porcelain coverage.json)" ]]; then
+                  git add coverage.json
+                  git commit -m "coverage badge: update from ${GITHUB_SHA::7}"
+                  git push origin HEAD:gh-pages
+              else
+                  echo "coverage.json unchanged, skipping push"
+              fi
+          else
+              git worktree add --detach gh-pages
+              cd gh-pages
+              git checkout --orphan gh-pages
+              git rm -rf . >/dev/null 2>&1 || true
+              cp "$tmp/coverage.json" coverage.json
+              git add coverage.json
+              git commit -m "coverage badge: initial publish from ${GITHUB_SHA::7}"
+              git push origin gh-pages
+          fi
