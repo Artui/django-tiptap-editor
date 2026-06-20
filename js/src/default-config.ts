@@ -21,6 +21,7 @@ export const DEFAULT_TOOLBAR: string[][] = [
   ["h1", "h2", "h3", "paragraph"],
   ["bulletList", "orderedList", "blockquote"],
   ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
+  ["image", "table"],
   ["link", "unlink", "clearFormatting"],
 ];
 
