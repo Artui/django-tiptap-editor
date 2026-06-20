@@ -4,7 +4,25 @@
 import type { Editor } from "../tiptap-runtime";
 import { registerButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
+import { colorControl, selectControl } from "./controls";
 import { ICONS } from "./icons";
+
+const FONT_SIZES = ["12px", "14px", "16px", "18px", "24px", "30px", "36px"];
+const FONT_FAMILIES = [
+  "Arial, sans-serif",
+  "Georgia, serif",
+  "'Times New Roman', serif",
+  "'Courier New', monospace",
+  "Verdana, sans-serif",
+  "system-ui, sans-serif",
+];
+const TEXT_COLORS = [
+  "#1f2329", "#5c6370", "#e03e2d", "#e8710a", "#f1c40f",
+  "#2dc26b", "#3598db", "#3538cd", "#9b59b6", "#ffffff",
+];
+const HIGHLIGHTS = ["#fff3a3", "#c8f7c5", "#bfe3ff", "#ffd6e7", "#ffe0b2"];
+
+const caret = '<span class="django-tiptap__caret">&#9662;</span>';
 
 function heading(level: 1 | 2 | 3): ButtonSpec {
   return {
@@ -68,6 +86,31 @@ const BUILTIN: Record<string, ButtonSpec> = {
     isActive: (e) => e.isActive("code"),
     onClick: (e) => e.chain().focus().toggleCode().run(),
   },
+  fontSize: selectControl({
+    title: "Font size",
+    attr: "fontSize",
+    triggerHTML: `<span class="django-tiptap__glyph">A<small>A</small></span>${caret}`,
+    options: FONT_SIZES.map((v) => ({ label: v.replace("px", ""), value: v })),
+  }),
+  fontFamily: selectControl({
+    title: "Font family",
+    attr: "fontFamily",
+    triggerHTML: `<span class="django-tiptap__glyph">Aa</span>${caret}`,
+    options: FONT_FAMILIES.map((v) => ({ label: v.split(",")[0].replace(/'/g, ""), value: v })),
+    styleOption: true,
+  }),
+  color: colorControl({
+    title: "Text color",
+    attr: "color",
+    triggerHTML: `<span class="django-tiptap__glyph django-tiptap__glyph--color">A</span>${caret}`,
+    swatches: TEXT_COLORS,
+  }),
+  highlight: colorControl({
+    title: "Highlight",
+    attr: "backgroundColor",
+    triggerHTML: `<span class="django-tiptap__glyph django-tiptap__glyph--highlight">A</span>${caret}`,
+    swatches: HIGHLIGHTS,
+  }),
   h1: heading(1),
   h2: heading(2),
   h3: heading(3),
