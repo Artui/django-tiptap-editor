@@ -1,6 +1,11 @@
 // Config shape carried on the textarea's data-tiptap-config attribute (and the
 // Django TIPTAP_DEFAULT_CONFIG setting). The Python side validates structure;
 // extension names are resolved here at mount time.
+export interface MergeTag {
+  label: string;
+  value: string;
+}
+
 export interface TipTapConfig {
   height?: string;
   locale?: string;
@@ -8,6 +13,12 @@ export interface TipTapConfig {
   extensions?: string[];
   toolbar?: string[][];
   linkProtocols?: string[];
+  imageUploadUrl?: string;
+  imageListUrl?: string;
+  imageFileTypes?: string;
+  mergeTags?: MergeTag[];
+  // Path B only (passed to init(); not serializable via data-tiptap-config).
+  onChange?: (html: string) => void;
   [key: string]: unknown;
 }
 
