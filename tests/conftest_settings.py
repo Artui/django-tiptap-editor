@@ -8,6 +8,9 @@ USE_TZ = True
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "django.contrib.staticfiles",
+    "django_tiptap_editor",
+    "tests.testapp",
 ]
 
 DATABASES = {
@@ -19,6 +22,8 @@ DATABASES = {
 
 MIDDLEWARE: list[str] = []
 
+STATIC_URL = "/static/"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -28,10 +33,4 @@ TEMPLATES = [
     }
 ]
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    }
-}
-
-DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
