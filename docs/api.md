@@ -87,7 +87,7 @@ DjangoTipTap.htmlToJSON(html)        // HTML -> ProseMirror JSON
 DjangoTipTap.htmlToStored(html)      // HTML -> { doc, html } envelope (migration)
 DjangoTipTap.ui.registerButton(key, spec)
 DjangoTipTap.ui.setTokens(tokens)
-DjangoTipTap.ui.setRenderer(region, fn)  // replace a region: "toolbar" | "statusbar"
+DjangoTipTap.ui.setRenderer(region, fn)  // "toolbar" | "statusbar" | "bubbleMenu" | "floatingMenu"
 DjangoTipTap.ui.setShellRenderer(fn)     // replace the whole shell (experimental)
 DjangoTipTap.tiptap                  // re-exported primitives for authors
 DjangoTipTap.supportedTipTapVersion  // the validated TipTap version

@@ -6,7 +6,7 @@ that does the job and keep the smallest possible exposure to change:
 | Tier | API | Stability |
 | --- | --- | --- |
 | 1 | `ui.setTokens` / CSS variables + `ui.registerButton` | **stable** |
-| 2 | `ui.setRenderer(region, fn)` — `"toolbar"` \| `"statusbar"` | **semi-stable** |
+| 2 | `ui.setRenderer(region, fn)` — `"toolbar"` \| `"statusbar"` \| `"bubbleMenu"` \| `"floatingMenu"` | **semi-stable** |
 | 3 | `ui.setShellRenderer(fn)` | **advanced / experimental** |
 
 The default, stable customization path is **design tokens** — a set of `--tiptap-*` CSS
@@ -58,11 +58,14 @@ When tokens and classes aren't enough, replace a whole chrome **region** while k
 rest of the editor. `ui.setRenderer(region, fn)` registers a renderer for one region; `fn(ctx)`
 returns a DOM node that *is* that region (a full replacement, not a wrapper).
 
-Supported regions:
+Supported regions — **chrome** (laid out by the shell) and **floating** (selection-anchored
+overlays):
 
 - **`"toolbar"`** — replaces the default toolbar.
 - **`"statusbar"`** — adds a bottom region (there is no default statusbar; nothing renders unless
   you register one). Add the `django-tiptap__statusbar` class for the built-in chrome look.
+- **`"bubbleMenu"`** — shown over a **non-empty selection**.
+- **`"floatingMenu"`** — shown at the cursor on an **empty text line**.
 
 `ctx` exposes:
 
@@ -87,6 +90,38 @@ DjangoTipTap.ui.setRenderer("statusbar", (ctx) => {
 
 A region renderer returns a static node — wire your own reactivity off `ctx.editor` (as above).
 The built-in toolbar's button-state refresh only applies to the *default* toolbar.
+
+### Selection-anchored menus (bubble / floating)
+
+`"bubbleMenu"` and `"floatingMenu"` are overlays positioned over the editor by the package (a
+lean built-in positioner — no `tippy.js`). Your renderer supplies the contents; it's shown/hidden
+and positioned automatically as the selection changes, and clamped within the editor box.
+
+```js
+// A bubble toolbar over selected text, reusing built-in button specs.
+DjangoTipTap.ui.setRenderer("bubbleMenu", (ctx) => {
+  const bar = document.createElement("div");
+  for (const key of ["bold", "italic", "link"]) {
+    const spec = ctx.getButton(key);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "django-tiptap__btn";
+    btn.innerHTML = spec.icon;
+    btn.addEventListener("mousedown", (e) => e.preventDefault()); // keep the selection
+    btn.addEventListener("click", () => spec.onClick(ctx.editor));
+    bar.appendChild(btn);
+  }
+  return bar;
+});
+```
+
+!!! warning "Keep the selection on click"
+    A click that moves focus out of the editor dismisses the menu. Call `preventDefault` on
+    `mousedown` in your controls (as above) — the same rule the built-in toolbar follows.
+
+The built-in positioner is intentionally simple (it favours a tiny bundle over pixel-perfect
+edge handling). For full control, render your own menu via [explicit init](api.md) and TipTap's
+bubble/floating-menu extensions.
 
 ## Shell renderer (tier 3, experimental)
 
@@ -113,10 +148,3 @@ Renderers (like extensions and buttons) must be registered **before** auto-mount
 registration script *after* the bundle/glue, both with `defer` — deferred scripts run in document
 order before `DOMContentLoaded`, so the registry is populated before mounting. For non-`defer`
 setups, set `manualMount: true` and call `DjangoTipTap.autoMount()` after registering.
-
-## Not yet supported
-
-Selection-anchored menus (`"bubbleMenu"`, `"floatingMenu"`) are reserved region names but not yet
-wired — registering one logs a console warning and does nothing. They're a tracked follow-up
-(they need TipTap's bubble/floating-menu extensions). Until then, `"toolbar"` and `"statusbar"`
-are the supported regions.
