@@ -377,6 +377,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../api/" class="md-nav__link">
         
   
@@ -622,10 +649,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#stability" class="md-nav__link">
+  <a href="#region-renderers-tier-2-semi-stable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stability
+        Region renderers (tier 2, semi-stable)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Region renderers (tier 2, semi-stable)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selection-anchored-menus-bubble-floating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection-anchored menus (bubble / floating)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-renderer-tier-3-experimental" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell renderer (tier 3, experimental)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load order
       
     </span>
   </a>
@@ -668,10 +734,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_12" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -689,8 +755,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -867,10 +933,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#stability" class="md-nav__link">
+  <a href="#region-renderers-tier-2-semi-stable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stability
+        Region renderers (tier 2, semi-stable)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Region renderers (tier 2, semi-stable)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selection-anchored-menus-bubble-floating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection-anchored menus (bubble / floating)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-renderer-tier-3-experimental" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell renderer (tier 3, experimental)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load order
       
     </span>
   </a>
@@ -903,6 +1008,34 @@
 
 
 <h1 id="theming">Theming<a class="headerlink" href="#theming" title="Permanent link">&para;</a></h1>
+<p>Theming is layered into tiers, <strong>descending in stability</strong>, so you lean on the lowest tier
+that does the job and keep the smallest possible exposure to change:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>API</th>
+<th>Stability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>ui.setTokens</code> / CSS variables + <code>ui.registerButton</code></td>
+<td><strong>stable</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>ui.setRenderer(region, fn)</code> — <code>"toolbar"</code> | <code>"statusbar"</code> | <code>"bubbleMenu"</code> | <code>"floatingMenu"</code></td>
+<td><strong>semi-stable</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>ui.setShellRenderer(fn)</code></td>
+<td><strong>advanced / experimental</strong></td>
+</tr>
+</tbody>
+</table>
 <p>The default, stable customization path is <strong>design tokens</strong> — a set of <code>--tiptap-*</code> CSS
 custom properties. Set them in CSS or via JS; near-zero churn risk across minor releases.</p>
 <h2 id="tokens">Tokens<a class="headerlink" href="#tokens" title="Permanent link">&para;</a></h2>
@@ -970,12 +1103,108 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 <h2 id="targeting-parts">Targeting parts<a class="headerlink" href="#targeting-parts" title="Permanent link">&para;</a></h2>
 <p>The shell uses stable, namespaced classes you can style directly: <code>.django-tiptap</code>
 (shell), <code>.django-tiptap__toolbar</code>, <code>.django-tiptap__group</code>, <code>.django-tiptap__btn</code>
-(<code>.is-active</code>), <code>.django-tiptap__content</code>, <code>.django-tiptap .ProseMirror</code> (the editing
-surface), and the dropdown/menu/swatch/modal classes.</p>
-<h2 id="stability">Stability<a class="headerlink" href="#stability" title="Permanent link">&para;</a></h2>
-<p>Tokens and namespaced classes are the <strong>stable</strong> tier. Deeper region/shell renderer
-overrides are on the roadmap and will ship flagged as evolving — see the
-<a href="../semver/">stability policy</a>.</p>
+(<code>.is-active</code>), <code>.django-tiptap__content</code>, <code>.django-tiptap__statusbar</code>,
+<code>.django-tiptap .ProseMirror</code> (the editing surface), and the dropdown/menu/swatch/modal
+classes.</p>
+<h2 id="region-renderers-tier-2-semi-stable">Region renderers (tier 2, semi-stable)<a class="headerlink" href="#region-renderers-tier-2-semi-stable" title="Permanent link">&para;</a></h2>
+<p>When tokens and classes aren't enough, replace a whole chrome <strong>region</strong> while keeping the
+rest of the editor. <code>ui.setRenderer(region, fn)</code> registers a renderer for one region; <code>fn(ctx)</code>
+returns a DOM node that <em>is</em> that region (a full replacement, not a wrapper).</p>
+<p>Supported regions — <strong>chrome</strong> (laid out by the shell) and <strong>floating</strong> (selection-anchored
+overlays):</p>
+<ul>
+<li><strong><code>"toolbar"</code></strong> — replaces the default toolbar.</li>
+<li><strong><code>"statusbar"</code></strong> — adds a bottom region (there is no default statusbar; nothing renders unless
+  you register one). Add the <code>django-tiptap__statusbar</code> class for the built-in chrome look.</li>
+<li><strong><code>"bubbleMenu"</code></strong> — shown over a <strong>non-empty selection</strong>.</li>
+<li><strong><code>"floatingMenu"</code></strong> — shown at the cursor on an <strong>empty text line</strong>.</li>
+</ul>
+<p><code>ctx</code> exposes:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ctx.editor</code></td>
+<td>the live TipTap <code>Editor</code> — read state, run commands, subscribe with <code>editor.on(...)</code></td>
+</tr>
+<tr>
+<td><code>ctx.config</code></td>
+<td>the resolved per-editor config</td>
+</tr>
+<tr>
+<td><code>ctx.t</code></td>
+<td>the active translator (<code>ctx.t("bold")</code>)</td>
+</tr>
+<tr>
+<td><code>ctx.getButton(key)</code></td>
+<td>resolve a registered toolbar button spec, to reuse built-in controls</td>
+</tr>
+</tbody>
+</table>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// A custom statusbar showing a live character count.</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;statusbar&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">el</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nx">el</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;django-tiptap__statusbar&quot;</span><span class="p">;</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">el</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">getText</span><span class="p">().</span><span class="nx">length</span><span class="si">}</span><span class="sb"> characters`</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="p">);</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="nx">update</span><span class="p">();</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">el</span><span class="p">;</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">});</span>
+</span></code></pre></div>
+<p>A region renderer returns a static node — wire your own reactivity off <code>ctx.editor</code> (as above).
+The built-in toolbar's button-state refresh only applies to the <em>default</em> toolbar.</p>
+<h3 id="selection-anchored-menus-bubble-floating">Selection-anchored menus (bubble / floating)<a class="headerlink" href="#selection-anchored-menus-bubble-floating" title="Permanent link">&para;</a></h3>
+<p><code>"bubbleMenu"</code> and <code>"floatingMenu"</code> are overlays positioned over the editor by the package (a
+lean built-in positioner — no <code>tippy.js</code>). Your renderer supplies the contents; it's shown/hidden
+and positioned automatically as the selection changes, and clamped within the editor box.</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// A bubble toolbar over selected text, reusing built-in button specs.</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;bubbleMenu&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">key</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;italic&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;link&quot;</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">spec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">getButton</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">btn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;button&quot;</span><span class="p">);</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;button&quot;</span><span class="p">;</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;django-tiptap__btn&quot;</span><span class="p">;</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">innerHTML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">spec</span><span class="p">.</span><span class="nx">icon</span><span class="p">;</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;mousedown&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">());</span><span class="w"> </span><span class="c1">// keep the selection</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">spec</span><span class="p">.</span><span class="nx">onClick</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">));</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nx">bar</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">btn</span><span class="p">);</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">bar</span><span class="p">;</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="p">});</span>
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Keep the selection on click</p>
+<p>A click that moves focus out of the editor dismisses the menu. Call <code>preventDefault</code> on
+<code>mousedown</code> in your controls (as above) — the same rule the built-in toolbar follows.</p>
+</div>
+<p>The built-in positioner is intentionally simple (it favours a tiny bundle over pixel-perfect
+edge handling). For full control, render your own menu via <a href="../api/">explicit init</a> and TipTap's
+bubble/floating-menu extensions.</p>
+<h2 id="shell-renderer-tier-3-experimental">Shell renderer (tier 3, experimental)<a class="headerlink" href="#shell-renderer-tier-3-experimental" title="Permanent link">&para;</a></h2>
+<p><code>ui.setShellRenderer(fn)</code> hands you the <strong>entire</strong> editor shell. <code>fn(ctx)</code> gets everything a
+region renderer does <strong>plus <code>ctx.content</code></strong> — the ProseMirror host element — and must return the
+shell root with <code>ctx.content</code> placed somewhere inside it, or the editor won't be visible.</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setShellRenderer</span><span class="p">((</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;section&quot;</span><span class="p">);</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-editor-shell&quot;</span><span class="p">;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="c1">// ... build your own toolbar/chrome here ...</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">content</span><span class="p">);</span><span class="w"> </span><span class="c1">// REQUIRED: the editing surface</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">root</span><span class="p">;</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">});</span>
+</span></code></pre></div>
+<p>This is the most powerful and the <strong>most likely to change</strong> across minor releases — treat it as
+experimental and pin your supported version range. See the <a href="../semver/">stability policy</a>.</p>
+<h2 id="load-order">Load order<a class="headerlink" href="#load-order" title="Permanent link">&para;</a></h2>
+<p>Renderers (like extensions and buttons) must be registered <strong>before</strong> auto-mount. Load your
+registration script <em>after</em> the bundle/glue, both with <code>defer</code> — deferred scripts run in document
+order before <code>DOMContentLoaded</code>, so the registry is populated before mounting. For non-<code>defer</code>
+setups, set <code>manualMount: true</code> and call <code>DjangoTipTap.autoMount()</code> after registering.</p>
 
 
 

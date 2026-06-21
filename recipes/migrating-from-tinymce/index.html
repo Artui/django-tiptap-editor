@@ -377,6 +377,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../api/" class="md-nav__link">
         
   
@@ -560,10 +587,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -581,8 +608,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -730,6 +757,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#migrating-into-tiptapjsonfield" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating into TipTapJSONField
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating into TipTapJSONField">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-lazy-recommended-no-nodebrowser-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A — lazy (recommended, no Node/browser job)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-eager-convert-every-row-up-front" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — eager (convert every row up front)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate-first-either-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate first, either way
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -843,6 +920,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#migrating-into-tiptapjsonfield" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating into TipTapJSONField
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating into TipTapJSONField">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-lazy-recommended-no-nodebrowser-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A — lazy (recommended, no Node/browser job)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-eager-convert-every-row-up-front" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — eager (convert every row up front)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate-first-either-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate first, either way
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -917,6 +1044,68 @@ validation pass until the diff is only the defined normalizations. For email con
 inline <code>margin</code>/<code>padding</code> on paragraphs (preserved) and validate in your target clients.</p>
 <p>If you use <a href="../../asset-modes/">external asset mode</a>, re-run this pass against <em>your</em>
 TipTap version — the shipped fidelity guarantee covers the bundled version only.</p>
+<h2 id="migrating-into-tiptapjsonfield">Migrating into <code>TipTapJSONField</code><a class="headerlink" href="#migrating-into-tiptapjsonfield" title="Permanent link">&para;</a></h2>
+<p>The steps above keep your HTML column. If you'd rather store the canonical ProseMirror
+document (see <a href="../../storage/">Storage format</a>), migrate the same content into a
+<code>TipTapJSONField</code>. Conversion runs through the package's exact schema, so it's the same
+content-validation exercise — just with a <code>{doc, html}</code> envelope as the target.</p>
+<p>Add the new field alongside the old column (don't drop the old one until you've verified):</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_tiptap_editor.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">TipTapJSONField</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">body</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>                 <span class="c1"># legacy TinyMCE HTML</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">body_doc</span> <span class="o">=</span> <span class="n">TipTapJSONField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="option-a-lazy-recommended-no-nodebrowser-job">Option A — lazy (recommended, no Node/browser job)<a class="headerlink" href="#option-a-lazy-recommended-no-nodebrowser-job" title="Permanent link">&para;</a></h3>
+<p>Seed each row's <strong>HTML mirror</strong> from the legacy column in a plain data migration (pure
+Python — no conversion needed yet), leaving the <code>doc</code> empty:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">migrations</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">seed_mirror</span><span class="p">(</span><span class="n">apps</span><span class="p">,</span> <span class="n">schema_editor</span><span class="p">):</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">Article</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;yourapp&quot;</span><span class="p">,</span> <span class="s2">&quot;Article&quot;</span><span class="p">)</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">Article</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">row</span><span class="o">.</span><span class="n">body_doc</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;doc&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">body</span><span class="p">}</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">row</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;body_doc&quot;</span><span class="p">])</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">Migration</span><span class="p">(</span><span class="n">migrations</span><span class="o">.</span><span class="n">Migration</span><span class="p">):</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;yourapp&quot;</span><span class="p">,</span> <span class="s2">&quot;0002_article_body_doc&quot;</span><span class="p">)]</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">operations</span> <span class="o">=</span> <span class="p">[</span><span class="n">migrations</span><span class="o">.</span><span class="n">RunPython</span><span class="p">(</span><span class="n">seed_mirror</span><span class="p">,</span> <span class="n">migrations</span><span class="o">.</span><span class="n">RunPython</span><span class="o">.</span><span class="n">noop</span><span class="p">)]</span>
+</span></code></pre></div>
+<p>Now:</p>
+<ul>
+<li><strong>Display works immediately</strong> — <code>{{ article.body_doc }}</code> renders the mirror (your legacy
+  HTML), no <code>|safe</code> needed.</li>
+<li><strong>Editing converts faithfully</strong> — when a record is opened, the editor hydrates from the
+  mirror (the schema parses it, exactly like HTML mode), and the first save writes a real
+  <code>{doc, html}</code> envelope. Content normalizes to the schema as records are edited.</li>
+</ul>
+<p>The trade-off: an un-edited row has an <strong>empty <code>.doc</code></strong> until its first save (its <code>.html</code>
+mirror is the legacy content). If you need a populated <code>.doc</code> for every row right away,
+use Option B.</p>
+<h3 id="option-b-eager-convert-every-row-up-front">Option B — eager (convert every row up front)<a class="headerlink" href="#option-b-eager-convert-every-row-up-front" title="Permanent link">&para;</a></h3>
+<p>Faithful HTML→JSON conversion needs the package's schema, which lives in the committed
+browser bundle, so a one-time bulk conversion runs that bundle in a browser via
+<code>DjangoTipTap.htmlToStored(html)</code> (it returns the <code>{doc, html}</code> envelope). Load the bundle
+on a throwaway page (or drive it with a headless browser), then convert rows fetched from a
+small endpoint:</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// runs where tiptap.bundle.js is loaded</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">rowsToConvert</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">            </span><span class="c1">// [{id, html}, …] from your API</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">envelope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">htmlToStored</span><span class="p">(</span><span class="nx">row</span><span class="p">.</span><span class="nx">html</span><span class="p">);</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="sb">`/admin-convert/</span><span class="si">${</span><span class="nx">row</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">/`</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// your endpoint: save envelope to body_doc</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nx">method</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;X-CSRFToken&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">csrf</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">envelope</span><span class="p">),</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p">});</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The companion converters <code>DjangoTipTap.htmlToJSON(html)</code> and <code>DjangoTipTap.renderHTML(doc)</code>
+are available for custom pipelines.</p>
+<h3 id="validate-first-either-way">Validate first, either way<a class="headerlink" href="#validate-first-either-way" title="Permanent link">&para;</a></h3>
+<p>Before migrating for real, run a representative sample through <code>htmlToStored</code> and compare
+<code>envelope.html</code> against your originals (normalize whitespace) — the same content-validation
+pass as step 2, now landing in JSON. The defined normalizations in step 3 apply identically;
+the <a href="../../security/#json-storage">security boundary</a> (render-time protocol allowlisting)
+covers the stored document.</p>
 
 
 

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://artui.github.io/django-tiptap-editor/api/">
+        <link rel="canonical" href="https://artui.github.io/django-tiptap-editor/storage/">
       
       
-        <link rel="prev" href="../storage/">
+        <link rel="prev" href="../configuration/">
       
       
-        <link rel="next" href="../contracts/">
+        <link rel="next" href="../api/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>API reference - django-tiptap-editor</title>
+        <title>Storage format - django-tiptap-editor</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-reference" class="md-skip">
+        <a href="#storage-format-html-or-json" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              API reference
+              Storage format
             
           </span>
         </div>
@@ -374,33 +374,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Storage format
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -420,7 +393,7 @@
   <span class="md-ellipsis">
     
   
-    API reference
+    Storage format
   
 
     
@@ -438,7 +411,7 @@
   <span class="md-ellipsis">
     
   
-    API reference
+    Storage format
   
 
     
@@ -464,157 +437,79 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#python" class="md-nav__link">
+  <a href="#opting-in" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python
+        Opting in
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Python">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tiptapwidgetformstextarea" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapWidget(forms.Textarea)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#admintiptapwidgettiptapwidget" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AdminTipTapWidget(TipTapWidget)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapmodeladminmixin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapModelAdminMixin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapformfieldformscharfield" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapFormField(forms.CharField)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapjsonfieldmodelsjsonfield" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapJSONField(models.JSONField)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapvalue" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapValue
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#render_doc" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        render_doc
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#baseimageuploadview-imageuploaderror" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseImageUploadView / ImageUploadError
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#template-tags" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Template tags
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#javascript-windowdjangotiptap" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JavaScript — window.DjangoTipTap
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="JavaScript — window.DjangoTipTap">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#auto-mount-path-a" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Auto-mount (Path A)
+        How it works
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#explicit-init-path-b" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Explicit init (Path B)
+        Settings
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#converting-rendering-in-the-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Converting &amp; rendering in the browser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#server-side-rendering-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server-side rendering (Python)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a format
+      
+    </span>
+  </a>
   
 </li>
       
@@ -622,6 +517,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -938,157 +860,79 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#python" class="md-nav__link">
+  <a href="#opting-in" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python
+        Opting in
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Python">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tiptapwidgetformstextarea" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapWidget(forms.Textarea)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#admintiptapwidgettiptapwidget" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AdminTipTapWidget(TipTapWidget)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapmodeladminmixin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapModelAdminMixin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapformfieldformscharfield" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapFormField(forms.CharField)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapjsonfieldmodelsjsonfield" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapJSONField(models.JSONField)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tiptapvalue" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TipTapValue
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#render_doc" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        render_doc
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#baseimageuploadview-imageuploaderror" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseImageUploadView / ImageUploadError
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#template-tags" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Template tags
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#javascript-windowdjangotiptap" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JavaScript — window.DjangoTipTap
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="JavaScript — window.DjangoTipTap">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#auto-mount-path-a" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Auto-mount (Path A)
+        How it works
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#explicit-init-path-b" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Explicit init (Path B)
+        Settings
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#converting-rendering-in-the-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Converting &amp; rendering in the browser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#server-side-rendering-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server-side rendering (Python)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-a-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a format
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1109,7 +953,7 @@
 
 
   
-    <a href="https://github.com/Artui/django-tiptap-editor/edit/main/docs/api.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/Artui/django-tiptap-editor/edit/main/docs/storage.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1117,92 +961,127 @@
   
 
 
-<h1 id="api-reference">API reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
-<h2 id="python">Python<a class="headerlink" href="#python" title="Permanent link">&para;</a></h2>
-<h3 id="tiptapwidgetformstextarea"><code>TipTapWidget(forms.Textarea)</code><a class="headerlink" href="#tiptapwidgetformstextarea" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.widgets.tiptap_widget.TipTapWidget</code></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">TipTapWidget</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">storage</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<h1 id="storage-format-html-or-json">Storage format — HTML or JSON<a class="headerlink" href="#storage-format-html-or-json" title="Permanent link">&para;</a></h1>
+<p>By default the editor stores <strong>HTML</strong>: the widget posts <code>editor.getHTML()</code>, you render it with
+<code>|safe</code>. That's the zero-config path and is right for most Django sites.</p>
+<p>Optionally you can store <strong>ProseMirror JSON</strong> instead. JSON is the lossless canonical
+representation of the document — better for programmatic transforms, diffing, and feeding a
+separate frontend — while still giving you HTML to render server-side.</p>
+<h2 id="opting-in">Opting in<a class="headerlink" href="#opting-in" title="Permanent link">&para;</a></h2>
+<p>Use <code>TipTapJSONField</code> — a <code>JSONField</code> that stores a <code>{doc, html}</code> envelope and hands your code a
+typed value:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_tiptap_editor.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">TipTapJSONField</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">body</span> <span class="o">=</span> <span class="n">TipTapJSONField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
-<p>Renders a <code>&lt;textarea&gt;</code> carrying <code>data-tiptap-config</code>. Config resolution (last wins):
-<code>get_default_config()</code> → the per-instance <code>config=</code> → subclass overrides
-(<code>get_config(self, attrs)</code>). <code>class Media</code> emits the committed bundle. <code>storage</code> is
-<code>"html"</code> (default) or <code>"json"</code>; when <code>None</code> it resolves from
-<code>settings.TIPTAP_STORAGE_FORMAT</code>. See <a href="../storage/">Storage format</a>.</p>
-<h3 id="admintiptapwidgettiptapwidget"><code>AdminTipTapWidget(TipTapWidget)</code><a class="headerlink" href="#admintiptapwidgettiptapwidget" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.widgets.admin_tiptap.AdminTipTapWidget</code> — admin-sized variant
-(taller default via <code>admin_defaults</code>).</p>
-<h3 id="tiptapmodeladminmixin"><code>TipTapModelAdminMixin</code><a class="headerlink" href="#tiptapmodeladminmixin" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.admin.mixin.TipTapModelAdminMixin</code> — mix in before
-<code>admin.ModelAdmin</code>. Swaps <code>AdminTipTapWidget</code> onto <code>TextField</code>s.
-<code>tiptap_fields = "__all__"</code> (default) or an explicit list of field names.</p>
-<h3 id="tiptapformfieldformscharfield"><code>TipTapFormField(forms.CharField)</code><a class="headerlink" href="#tiptapformfieldformscharfield" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.forms.fields.TipTapFormField</code> — a <code>CharField</code> whose default widget
-is <code>TipTapWidget</code>.</p>
-<h3 id="tiptapjsonfieldmodelsjsonfield"><code>TipTapJSONField(models.JSONField)</code><a class="headerlink" href="#tiptapjsonfieldmodelsjsonfield" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.fields.tiptap_json_field.TipTapJSONField</code> — a model field storing a
-<code>{doc, html}</code> envelope. The Python value is a <code>TipTapValue</code>; the <code>doc</code> is protocol-allowlisted
-on save. Optional <code>link_protocols</code> / <code>image_protocols</code> tuples override the allowlists. Its form
-field is <code>TipTapJSONFormField</code> (a <code>forms.Field</code> whose widget is <code>TipTapWidget(storage="json")</code>).
-See <a href="../storage/">Storage format</a>.</p>
-<h3 id="tiptapvalue"><code>TipTapValue</code><a class="headerlink" href="#tiptapvalue" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.types.tiptap_value.TipTapValue</code> — frozen value with <code>.doc</code> (canonical
-ProseMirror JSON) and <code>.html</code> (the editor-derived, safe HTML mirror). <code>str(value)</code> / <code>{{ value }}</code>
-render the mirror. <code>TipTapValue.from_stored({...})</code> builds one from a <code>{doc, html}</code> mapping.</p>
-<h3 id="render_doc"><code>render_doc</code><a class="headerlink" href="#render_doc" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…)</code>
-— renders a ProseMirror <code>doc</code> dict to a safe HTML string in pure Python (no Node), covering the
-package's node/mark set with protocol allowlisting + CSS validation. The
-<code>{{ value|tiptap_html }}</code> filter wraps it (and uses a <code>TipTapValue</code>'s mirror when given one). See
-<a href="../storage/#server-side-rendering-python">Storage format</a>.</p>
-<h3 id="baseimageuploadview-imageuploaderror"><code>BaseImageUploadView</code> / <code>ImageUploadError</code><a class="headerlink" href="#baseimageuploadview-imageuploaderror" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.views</code> — subclass <code>BaseImageUploadView</code> and implement
-<code>save(self, file) -&gt; str</code> to wire storage; see <a href="../contracts/">Contracts</a>.</p>
-<h3 id="template-tags">Template tags<a class="headerlink" href="#template-tags" title="Permanent link">&para;</a></h3>
-<div class="language-html highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{% load tiptap %}
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{% tiptap_media %}            {# editor assets for the active asset mode #}
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{% tiptap_config %}           {# the default config as a JSON string #}
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{{ value|tiptap_html }}       {# render a TipTapValue / doc to safe HTML #}
+<p>In a template, render the editor-derived HTML mirror — <strong>no <code>|safe</code> needed</strong> (the field marks it
+safe; the trust model matches HTML mode — see <a href="../security/">Security</a>):</p>
+<div class="language-django highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">{{</span> <span class="nv">article.body</span> <span class="cp">}}</span><span class="x">            </span><span class="c">{# the HTML mirror #}</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cp">{{</span> <span class="nv">article.body.html</span> <span class="cp">}}</span><span class="x">       </span><span class="c">{# same thing, explicit #}</span>
 </span></code></pre></div>
-<p>All of <code>TipTapWidget</code>, <code>AdminTipTapWidget</code>, <code>TipTapModelAdminMixin</code>, <code>TipTapFormField</code>,
-<code>TipTapJSONField</code>, <code>TipTapJSONFormField</code>, <code>TipTapValue</code>, <code>BaseImageUploadView</code>,
-<code>ImageUploadError</code>, <code>get_default_config</code>, <code>render_doc</code>, and <code>validate_config</code> are re-exported from
-the package root.</p>
-<h2 id="javascript-windowdjangotiptap">JavaScript — <code>window.DjangoTipTap</code><a class="headerlink" href="#javascript-windowdjangotiptap" title="Permanent link">&para;</a></h2>
-<div class="language-ts highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span><span class="w">   </span><span class="c1">// explicit mount; returns the editor</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w">                 </span><span class="c1">// editor handle | null</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">destroy</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w">             </span><span class="c1">// unmount + tear down the shell</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">autoMount</span><span class="p">(</span><span class="nx">root</span><span class="o">?</span><span class="p">)</span><span class="w">        </span><span class="c1">// idempotent; mounts unbound textareas</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerExtension</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">factory</span><span class="p">)</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerLocale</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span><span class="w"> </span><span class="nx">strings</span><span class="p">)</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">renderHTML</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span><span class="w">         </span><span class="c1">// ProseMirror JSON -&gt; HTML string</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">htmlToJSON</span><span class="p">(</span><span class="nx">html</span><span class="p">)</span><span class="w">        </span><span class="c1">// HTML -&gt; ProseMirror JSON</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">htmlToStored</span><span class="p">(</span><span class="nx">html</span><span class="p">)</span><span class="w">      </span><span class="c1">// HTML -&gt; { doc, html } envelope (migration)</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">registerButton</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">spec</span><span class="p">)</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setTokens</span><span class="p">(</span><span class="nx">tokens</span><span class="p">)</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="nx">region</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="p">)</span><span class="w">  </span><span class="c1">// &quot;toolbar&quot; | &quot;statusbar&quot; | &quot;bubbleMenu&quot; | &quot;floatingMenu&quot;</span>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setShellRenderer</span><span class="p">(</span><span class="nx">fn</span><span class="p">)</span><span class="w">     </span><span class="c1">// replace the whole shell (experimental)</span>
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">tiptap</span><span class="w">                  </span><span class="c1">// re-exported primitives for authors</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">supportedTipTapVersion</span><span class="w">  </span><span class="c1">// the validated TipTap version</span>
+<p>In Python, work with the canonical document:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">doc</span>    <span class="c1"># the ProseMirror JSON (dict) — canonical, lossless</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">html</span>   <span class="c1"># the editor-derived HTML mirror (SafeString)</span>
 </span></code></pre></div>
-<h3 id="auto-mount-path-a">Auto-mount (Path A)<a class="headerlink" href="#auto-mount-path-a" title="Permanent link">&para;</a></h3>
-<p>By default, textareas rendered by the widget mount automatically (on load and on
-<code>formset:added</code> / <code>django:added</code> / <code>htmx:afterSwap</code>). The textarea is hidden and kept in
-sync; removing it is handled by <code>destroy</code>.</p>
-<h3 id="explicit-init-path-b">Explicit init (Path B)<a class="headerlink" href="#explicit-init-path-b" title="Permanent link">&para;</a></h3>
-<p>For full control — and for the <code>onChange</code> callback, which can't travel through the JSON
-<code>data-tiptap-config</code> attribute:</p>
-<div class="language-html highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;ed&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">editor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;ed&quot;</span><span class="p">),</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;400px&quot;</span><span class="p">,</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nx">imageUploadUrl</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/editor/upload/&quot;</span><span class="p">,</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nx">mergeTags</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;First name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;{{ first_name }}&quot;</span><span class="w"> </span><span class="p">}],</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nx">onChange</span><span class="p">(</span><span class="nx">html</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* live preview, autosave, … */</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="p">});</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<p><code>article.body</code> is a <code>TipTapValue</code> (<code>.doc</code> + <code>.html</code>). Assign one when writing programmatically:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_tiptap_editor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TipTapValue</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">TipTapValue</span><span class="o">.</span><span class="n">from_stored</span><span class="p">({</span><span class="s2">&quot;doc&quot;</span><span class="p">:</span> <span class="n">some_doc</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;p&gt;…&lt;/p&gt;&quot;</span><span class="p">})</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">article</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </span></code></pre></div>
-<p>See <a href="../extending/">Extending</a> for <code>registerExtension</code> / <code>registerButton</code> and the load
-order rules, and <a href="../theming/">Theming</a> for <code>setTokens</code>, <code>setRenderer</code>, and <code>setShellRenderer</code>.</p>
+<h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<p>The editor is the <strong>only authoritative renderer</strong> of the document, so in JSON mode it writes both
+sides on every change — <code>editor.getJSON()</code> → <code>doc</code> and <code>editor.getHTML()</code> → <code>html</code> — into one
+JSON column. Server-side display reads the stored <code>html</code>; no JavaScript and no Node are required.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>edit ──▶ editor ──┬─▶ doc  (canonical, stored)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                  └─▶ html (mirror, stored, rendered with |safe)
+</span></code></pre></div>
+<p>When you write only the <code>doc</code> from Python (no editor involved), the field <strong>renders the mirror
+for you on save</strong> with the built-in <a href="#server-side-rendering-python">server-side renderer</a> — so
+<code>{{ obj.body }}</code> still works with no JavaScript. An editor-produced <code>html</code> is kept as-is (it's the
+exact WYSIWYG output); the server renderer only fills a missing mirror.</p>
+<h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TIPTAP_STORAGE_FORMAT</code></td>
+<td><code>"html"</code></td>
+<td>Default storage mode for a <code>TipTapWidget</code> when no explicit <code>storage=</code> is given. <code>TipTapJSONField</code> always uses <code>"json"</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>You can also set the mode per widget: <code>TipTapWidget(storage="json")</code>.</p>
+<h2 id="converting-rendering-in-the-browser">Converting &amp; rendering in the browser<a class="headerlink" href="#converting-rendering-in-the-browser" title="Permanent link">&para;</a></h2>
+<p>The bundle exposes converters that use the package's exact schema (no Node, no extra
+dependency):</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">renderHTML</span><span class="p">(</span><span class="nx">doc</span><span class="p">);</span><span class="w">     </span><span class="c1">// ProseMirror JSON → HTML string (SPA / dynamic display)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">htmlToJSON</span><span class="p">(</span><span class="nx">html</span><span class="p">);</span><span class="w">    </span><span class="c1">// HTML → ProseMirror JSON</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">htmlToStored</span><span class="p">(</span><span class="nx">html</span><span class="p">);</span><span class="w">  </span><span class="c1">// HTML → { doc, html } envelope (for migration)</span>
+</span></code></pre></div>
+<p>Use <code>renderHTML</code> to display JSON-stored content client-side without a server round-trip, and
+<code>htmlToStored</code> / <code>htmlToJSON</code> to convert existing HTML — see
+<a href="../recipes/migrating-from-tinymce/#migrating-into-tiptapjsonfield">Migrating from another editor</a>.</p>
+<h2 id="server-side-rendering-python">Server-side rendering (Python)<a class="headerlink" href="#server-side-rendering-python" title="Permanent link">&para;</a></h2>
+<p>For zero-JavaScript display of a document the editor never produced (e.g. JSON written by an API
+or import), render it in Python with <code>render_doc</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_tiptap_editor</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_doc</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">html</span> <span class="o">=</span> <span class="n">render_doc</span><span class="p">(</span><span class="n">article</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">doc</span><span class="p">)</span>   <span class="c1"># a safe HTML string</span>
+</span></code></pre></div>
+<p>It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,
+and validates inline CSS — so the result is safe to render directly. The output is <strong>faithful to,
+but not byte-identical with</strong>, the editor's <code>getHTML()</code> (the browser normalizes some CSS).
+<code>TipTapJSONField</code> uses it automatically to fill a missing mirror on save.</p>
+<p>A template filter is also available:</p>
+<div class="language-django highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cp">{%</span> <span class="k">load</span> <span class="nv">tiptap</span> <span class="cp">%}</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="cp">{{</span> <span class="nv">article.body</span><span class="o">|</span><span class="nf">tiptap_html</span> <span class="cp">}}</span><span class="x">   </span><span class="c">{# TipTapValue → its mirror; a raw doc dict → render_doc #}</span>
+</span></code></pre></div>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<p>Rendering <strong>arbitrary</strong> stored JSON to HTML is not automatically safe — protocol allowlisting
+happens on <em>parse</em>, which a stored-JSON path never runs. <code>TipTapJSONField</code> therefore validates the
+<code>doc</code> on every save (the link/image protocol allowlist is enforced in pure Python; disallowed
+<code>javascript:</code>/<code>vbscript:</code> URLs are stripped), so the canonical value is always safe regardless of
+who wrote it. See <a href="../security/">Security</a> for the full boundary.</p>
+<h2 id="choosing-a-format">Choosing a format<a class="headerlink" href="#choosing-a-format" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>HTML (default)</th>
+<th>JSON (<code>TipTapJSONField</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column</td>
+<td><code>TextField</code></td>
+<td><code>JSONField</code></td>
+</tr>
+<tr>
+<td>Server display</td>
+<td><code>{{ body|safe }}</code></td>
+<td><code>{{ body }}</code> (mirror)</td>
+</tr>
+<tr>
+<td>Programmatic editing</td>
+<td>parse HTML</td>
+<td>work on <code>.doc</code> directly</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>most Django sites</td>
+<td>transforms, diffing, headless/SPA frontends</td>
+</tr>
+</tbody>
+</table>
 
 
 

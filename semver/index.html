@@ -375,6 +375,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../api/" class="md-nav__link">
         
   
@@ -558,10 +585,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_12" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -579,8 +606,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -903,8 +930,12 @@ the <a href="https://github.com/Artui/django-tiptap-editor/blob/main/CHANGELOG.m
 <td><strong>Tied to the TipTap major</strong></td>
 </tr>
 <tr>
-<td>Region / shell renderer overrides</td>
-<td><strong>Planned — will ship flagged as evolving</strong></td>
+<td>Region renderers (<code>ui.setRenderer</code> — <code>"toolbar"</code> / <code>"statusbar"</code> / <code>"bubbleMenu"</code> / <code>"floatingMenu"</code>)</td>
+<td><strong>Semi-stable</strong> (the <code>ctx</code> shape may grow additively; the floating-menu positioner may change; breaking changes are called out)</td>
+</tr>
+<tr>
+<td>Shell renderer (<code>ui.setShellRenderer</code>)</td>
+<td><strong>Experimental</strong> — most likely to change across minors</td>
 </tr>
 </tbody>
 </table>
