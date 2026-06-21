@@ -1,5 +1,14 @@
-// DjangoTipTap.ui — the UI customization surface. Tier 1 (design tokens) and the
-// toolbar button registry are here; region / shell renderers layer on later.
+// DjangoTipTap.ui — the UI customization surface, in descending stability order:
+//   tier 1  setTokens / registerButton   — stable, the default path
+//   tier 2  setRenderer(region, fn)       — semi-stable (toolbar | statusbar)
+//   tier 3  setShellRenderer(fn)          — advanced / experimental
+import { setRenderer, setShellRenderer } from "./renderers";
+import type {
+  RegionContext,
+  RegionRenderer,
+  ShellContext,
+  ShellRenderer,
+} from "./renderers";
 import { registerButton } from "./toolbar/button-registry";
 import type { ButtonSpec } from "./toolbar/button-registry";
 
@@ -15,6 +24,8 @@ export function setTokens(tokens: Record<string, string>): void {
 export const ui = {
   registerButton,
   setTokens,
+  setRenderer,
+  setShellRenderer,
 };
 
-export type { ButtonSpec };
+export type { ButtonSpec, RegionContext, RegionRenderer, ShellContext, ShellRenderer };

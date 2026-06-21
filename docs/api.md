@@ -58,6 +58,8 @@ DjangoTipTap.registerExtension(name, factory)
 DjangoTipTap.registerLocale(code, strings)
 DjangoTipTap.ui.registerButton(key, spec)
 DjangoTipTap.ui.setTokens(tokens)
+DjangoTipTap.ui.setRenderer(region, fn)  // replace a region: "toolbar" | "statusbar"
+DjangoTipTap.ui.setShellRenderer(fn)     // replace the whole shell (experimental)
 DjangoTipTap.tiptap                  // re-exported primitives for authors
 DjangoTipTap.supportedTipTapVersion  // the validated TipTap version
 ```
@@ -86,4 +88,4 @@ For full control — and for the `onChange` callback, which can't travel through
 ```
 
 See [Extending](extending.md) for `registerExtension` / `registerButton` and the load
-order rules, and [Theming](theming.md) for `setTokens`.
+order rules, and [Theming](theming.md) for `setTokens`, `setRenderer`, and `setShellRenderer`.

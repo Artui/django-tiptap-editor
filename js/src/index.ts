@@ -1,9 +1,10 @@
 // window.DjangoTipTap — the public glue entry. In place today: the build
 // pipeline, the runtime seam, the fidelity extension set, the extension
-// registry, a clickable toolbar + button registry, design-token theming, and
-// Path-A auto-mount. Region/shell renderers, i18n, source view, dropdown
-// controls (font/color/image/table), and explicit-init (Path B) layer on later.
+// registry, a clickable toolbar + button registry, design-token theming,
+// region/shell renderers, i18n, source view, dropdown controls, and Path-A
+// auto-mount. Explicit-init (Path B) layers on later.
 import { buildExtensions } from "./build-extensions";
+import { buildShell } from "./build-shell";
 import type { TipTapConfig } from "./default-config";
 import { setEditorConfig } from "./editor-config";
 import { getTranslator, registerLocale, setTranslator } from "./i18n";
@@ -11,7 +12,6 @@ import { registerExtension } from "./registry";
 import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
-import { renderToolbar } from "./toolbar/render-toolbar";
 import { Editor, Extension, Mark, Node, mergeAttributes } from "./tiptap-runtime";
 import { ui } from "./ui";
 import { checkTipTapVersion, SUPPORTED_TIPTAP_VERSION } from "./version-check";
@@ -61,17 +61,8 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
     return existing.editor;
   }
 
-  const shell = document.createElement("div");
-  shell.className = "django-tiptap";
-  if (config.height) {
-    shell.style.setProperty("--tiptap-height", config.height);
-  }
   const content = document.createElement("div");
   content.className = "django-tiptap__content";
-  shell.appendChild(content);
-
-  element.style.display = "none";
-  element.parentNode?.insertBefore(shell, element.nextSibling);
 
   const locale = config.locale ?? "en";
   const t = getTranslator(locale);
@@ -92,13 +83,19 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   setEditorConfig(editor, config);
   wireImageDropPaste(editor);
 
-  const toolbar = renderToolbar(editor, config);
-  shell.insertBefore(toolbar.el, content);
-  toolbar.refresh();
-  editor.on("transaction", () => toolbar.refresh());
+  // Default chrome, or a consumer's region / shell override (see build-shell).
+  const shell = buildShell(editor, config, content, t);
+  if (config.height) {
+    shell.el.style.setProperty("--tiptap-height", config.height);
+  }
+
+  element.style.display = "none";
+  element.parentNode?.insertBefore(shell.el, element.nextSibling);
+  shell.refresh();
+  editor.on("transaction", () => shell.refresh());
 
   element.setAttribute(BOUND_ATTR, "true");
-  instances.set(id, { editor, shell });
+  instances.set(id, { editor, shell: shell.el });
   return editor;
 }
 
@@ -154,5 +151,11 @@ declare global {
 }
 window.DjangoTipTap = DjangoTipTap;
 
+export type {
+  RegionContext,
+  RegionRenderer,
+  ShellContext,
+  ShellRenderer,
+} from "./renderers";
 export type { ExtensionContext, ExtensionFactory, TipTapConfig };
 export default DjangoTipTap;
