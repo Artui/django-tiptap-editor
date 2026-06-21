@@ -21,11 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is empty, enabling a pure-Python "seed the mirror, convert on first edit" migration. A
   **migrate-into-`TipTapJSONField`** guide (lazy + eager paths) is included.
 - **Theming tiers 2 & 3 — region & shell renderers.** `DjangoTipTap.ui.setRenderer(region, fn)`
-  replaces a chrome region (`"toolbar"` or `"statusbar"`) while keeping the rest of the editor;
-  `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell (the renderer must place the
-  provided `ctx.content` host). Region renderers are **semi-stable**; the shell renderer is
-  **experimental**. Selection-anchored menus (`"bubbleMenu"` / `"floatingMenu"`) are reserved but
-  not yet wired — registering one warns.
+  replaces a region — chrome (`"toolbar"` / `"statusbar"`) or a selection-anchored overlay
+  (`"bubbleMenu"`, shown over a selection; `"floatingMenu"`, shown on an empty line) — while
+  keeping the rest of the editor; `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell
+  (the renderer must place the provided `ctx.content` host). Region renderers are **semi-stable**;
+  the shell renderer is **experimental**. The bubble/floating menus use a lean built-in positioner
+  (no `tippy.js`).
 
 ## [0.1.0] — 2026-06-20
 

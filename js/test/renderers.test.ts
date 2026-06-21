@@ -150,17 +150,51 @@ describe("region + shell renderers", () => {
     editor.destroy();
   });
 
-  it("warns and ignores deferred regions (bubbleMenu / floatingMenu)", async () => {
+  it("mounts a bubbleMenu renderer as a hidden overlay in the shell", async () => {
     const m = await load();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const fn = () => document.createElement("div");
+    m.registerBuiltInButtons();
+    let ctxSeen = false;
+    m.renderers.setRenderer("bubbleMenu", (ctx) => {
+      ctxSeen = !!ctx.editor;
+      const el = document.createElement("div");
+      el.className = "my-bubble";
+      el.textContent = "B";
+      return el;
+    });
 
-    m.renderers.setRenderer("bubbleMenu", fn);
-    m.renderers.setRenderer("floatingMenu", fn);
+    const content = contentHost();
+    const editor = makeEditor(m, content);
+    const shell = m.buildShell(editor, {}, content, m.getTranslator("en"));
+    document.body.appendChild(shell.el);
 
-    expect(warn).toHaveBeenCalledTimes(2);
-    expect(m.renderers.getRenderer("bubbleMenu" as never)).toBeUndefined();
-    expect(m.renderers.getRenderer("floatingMenu" as never)).toBeUndefined();
+    const bubble = shell.el.querySelector(".my-bubble") as HTMLElement;
+    expect(bubble).not.toBeNull();
+    expect(ctxSeen).toBe(true);
+    // Mounted with the base class and starts hidden (no selection / focus).
+    expect(bubble.classList.contains("django-tiptap__bubble")).toBe(true);
+    expect(bubble.style.display).toBe("none");
+
+    editor.destroy();
+  });
+
+  it("mounts a floatingMenu renderer alongside the default chrome", async () => {
+    const m = await load();
+    m.registerBuiltInButtons();
+    m.renderers.setRenderer("floatingMenu", () => {
+      const el = document.createElement("div");
+      el.className = "my-floating";
+      return el;
+    });
+
+    const content = contentHost();
+    const editor = makeEditor(m, content);
+    const shell = m.buildShell(editor, {}, content, m.getTranslator("en"));
+
+    expect(shell.el.querySelector(".my-floating")).not.toBeNull();
+    // Default toolbar still present (floating is an overlay, not a region swap).
+    expect(shell.el.querySelector(".django-tiptap__toolbar")).not.toBeNull();
+
+    editor.destroy();
   });
 
   it("errors and ignores an unknown region", async () => {

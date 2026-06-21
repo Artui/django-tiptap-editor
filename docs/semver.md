@@ -13,7 +13,7 @@ the [CHANGELOG](https://github.com/Artui/django-tiptap-editor/blob/main/CHANGELO
 | Toolbar button registry (`ui.registerButton`) + button keys | **Stable** |
 | Design tokens (`--tiptap-*`) + namespaced part classes | **Stable** |
 | Custom-extension API (via `DjangoTipTap.tiptap`) | **Tied to the TipTap major** |
-| Region renderers (`ui.setRenderer` — `"toolbar"` / `"statusbar"`) | **Semi-stable** (the `ctx` shape may grow additively; breaking changes are called out) |
+| Region renderers (`ui.setRenderer` — `"toolbar"` / `"statusbar"` / `"bubbleMenu"` / `"floatingMenu"`) | **Semi-stable** (the `ctx` shape may grow additively; the floating-menu positioner may change; breaking changes are called out) |
 | Shell renderer (`ui.setShellRenderer`) | **Experimental** — most likely to change across minors |
 
 ## TipTap coupling
