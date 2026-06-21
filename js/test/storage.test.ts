@@ -57,6 +57,23 @@ describe("JSON storage mode", () => {
     DjangoTipTap.destroy("ed-empty");
   });
 
+  it("falls back to the html mirror when the doc is empty (lazy migration)", () => {
+    // A record seeded with only legacy HTML in the mirror (no doc yet).
+    const ta = makeTextarea(
+      "ed-seed",
+      { "data-tiptap-storage": "json" },
+      JSON.stringify({ doc: {}, html: "<p>legacy content</p>" }),
+    );
+    const editor = DjangoTipTap.init(ta, {});
+    expect(editor.getText()).toBe("legacy content");
+    // First edit persists a real {doc, html} envelope.
+    editor.commands.focus("end");
+    editor.commands.insertContent("!");
+    const env = JSON.parse(ta.value);
+    expect(env.doc.content.length).toBeGreaterThan(0);
+    DjangoTipTap.destroy("ed-seed");
+  });
+
   it("recovers from an invalid JSON value", () => {
     const ta = makeTextarea("ed-bad", { "data-tiptap-storage": "json" }, "{not json");
     const editor = DjangoTipTap.init(ta, {});

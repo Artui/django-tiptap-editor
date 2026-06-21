@@ -5,6 +5,7 @@
 // auto-mount. Explicit-init (Path B) layers on later.
 import { buildExtensions } from "./build-extensions";
 import { buildShell } from "./build-shell";
+import { htmlToJSON, htmlToStored, renderHTML } from "./convert";
 import type { TipTapConfig } from "./default-config";
 import { setEditorConfig } from "./editor-config";
 import { getTranslator, registerLocale, setTranslator } from "./i18n";
@@ -55,15 +56,21 @@ function readConfig(textarea: HTMLTextAreaElement): TipTapConfig {
   }
 }
 
-// JSON storage mode: the textarea holds a {doc, html} envelope. Return the
-// ProseMirror doc for the editor's initial content; "" for an empty/invalid
-// field (a fresh form), so the editor starts blank rather than throwing.
-function readJSONDoc(raw: string): object | string {
+// JSON storage mode: the textarea holds a {doc, html} envelope. Use the doc when
+// it has content; otherwise fall back to the html mirror (so a record seeded with
+// only legacy HTML — e.g. a migration that copied a TinyMCE column into the
+// mirror — is still editable, and converts to a real doc on first save). "" for
+// an empty/invalid field (a fresh form), so the editor starts blank.
+function readInitialContent(raw: string): object | string {
   if (!raw) {
     return "";
   }
   try {
-    return (JSON.parse(raw) as { doc?: object }).doc ?? "";
+    const env = JSON.parse(raw) as { doc?: { content?: unknown[] }; html?: string };
+    if (env.doc && Array.isArray(env.doc.content) && env.doc.content.length > 0) {
+      return env.doc;
+    }
+    return typeof env.html === "string" ? env.html : "";
   } catch (err) {
     console.error("[DjangoTipTap] invalid JSON-storage value", err);
     return "";
@@ -92,7 +99,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const editor = new Editor({
     element: content,
     extensions: buildExtensions(config, ctx),
-    content: json ? readJSONDoc(element.value) : element.value || "",
+    content: json ? readInitialContent(element.value) : element.value || "",
     onUpdate({ editor }) {
       const html = editor.getHTML();
       element.value = json
@@ -163,6 +170,9 @@ const DjangoTipTap = {
   autoMount,
   registerExtension,
   registerLocale,
+  htmlToJSON,
+  renderHTML,
+  htmlToStored,
   ui,
   tiptap,
 };

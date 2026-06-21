@@ -60,3 +60,82 @@ inline `margin`/`padding` on paragraphs (preserved) and validate in your target 
 
 If you use [external asset mode](../asset-modes.md), re-run this pass against *your*
 TipTap version — the shipped fidelity guarantee covers the bundled version only.
+
+## Migrating into `TipTapJSONField`
+
+The steps above keep your HTML column. If you'd rather store the canonical ProseMirror
+document (see [Storage format](../storage.md)), migrate the same content into a
+`TipTapJSONField`. Conversion runs through the package's exact schema, so it's the same
+content-validation exercise — just with a `{doc, html}` envelope as the target.
+
+Add the new field alongside the old column (don't drop the old one until you've verified):
+
+```python
+from django_tiptap_editor.fields import TipTapJSONField
+
+class Article(models.Model):
+    body = models.TextField()                 # legacy TinyMCE HTML
+    body_doc = TipTapJSONField(null=True, blank=True)
+```
+
+### Option A — lazy (recommended, no Node/browser job)
+
+Seed each row's **HTML mirror** from the legacy column in a plain data migration (pure
+Python — no conversion needed yet), leaving the `doc` empty:
+
+```python
+from django.db import migrations
+
+def seed_mirror(apps, schema_editor):
+    Article = apps.get_model("yourapp", "Article")
+    for row in Article.objects.exclude(body=""):
+        row.body_doc = {"doc": {}, "html": row.body}
+        row.save(update_fields=["body_doc"])
+
+class Migration(migrations.Migration):
+    dependencies = [("yourapp", "0002_article_body_doc")]
+    operations = [migrations.RunPython(seed_mirror, migrations.RunPython.noop)]
+```
+
+Now:
+
+- **Display works immediately** — `{{ article.body_doc }}` renders the mirror (your legacy
+  HTML), no `|safe` needed.
+- **Editing converts faithfully** — when a record is opened, the editor hydrates from the
+  mirror (the schema parses it, exactly like HTML mode), and the first save writes a real
+  `{doc, html}` envelope. Content normalizes to the schema as records are edited.
+
+The trade-off: an un-edited row has an **empty `.doc`** until its first save (its `.html`
+mirror is the legacy content). If you need a populated `.doc` for every row right away,
+use Option B.
+
+### Option B — eager (convert every row up front)
+
+Faithful HTML→JSON conversion needs the package's schema, which lives in the committed
+browser bundle, so a one-time bulk conversion runs that bundle in a browser via
+`DjangoTipTap.htmlToStored(html)` (it returns the `{doc, html}` envelope). Load the bundle
+on a throwaway page (or drive it with a headless browser), then convert rows fetched from a
+small endpoint:
+
+```js
+// runs where tiptap.bundle.js is loaded
+for (const row of rowsToConvert) {            // [{id, html}, …] from your API
+  const envelope = DjangoTipTap.htmlToStored(row.html);
+  await fetch(`/admin-convert/${row.id}/`, {  // your endpoint: save envelope to body_doc
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+    body: JSON.stringify(envelope),
+  });
+}
+```
+
+The companion converters `DjangoTipTap.htmlToJSON(html)` and `DjangoTipTap.renderHTML(doc)`
+are available for custom pipelines.
+
+### Validate first, either way
+
+Before migrating for real, run a representative sample through `htmlToStored` and compare
+`envelope.html` against your originals (normalize whitespace) — the same content-validation
+pass as step 2, now landing in JSON. The defined normalizations in step 3 apply identically;
+the [security boundary](../security.md#json-storage) (render-time protocol allowlisting)
+covers the stored document.

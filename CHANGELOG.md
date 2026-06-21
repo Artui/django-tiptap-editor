@@ -14,8 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TipTapValue` (`.doc` / `.html`). Render `{{ obj.body }}` server-side with no `|safe` needed.
   Opt in per field, or globally via `TIPTAP_STORAGE_FORMAT="json"` / `TipTapWidget(storage="json")`.
   HTML stays the default. The stored document's link/image protocols are allowlisted in pure
-  Python on every save (no new dependency). A `renderHTML` client helper + HTML↔JSON migration
-  recipe follow.
+  Python on every save (no new dependency).
+- **JSON converters + migration.** `DjangoTipTap.renderHTML(doc)`, `htmlToJSON(html)`, and
+  `htmlToStored(html)` convert between HTML and ProseMirror JSON using the bundled schema (no Node,
+  no new dependency). In JSON mode the editor falls back to the stored HTML mirror when the `doc`
+  is empty, enabling a pure-Python "seed the mirror, convert on first edit" migration. A
+  **migrate-into-`TipTapJSONField`** guide (lazy + eager paths) is included.
 - **Theming tiers 2 & 3 — region & shell renderers.** `DjangoTipTap.ui.setRenderer(region, fn)`
   replaces a chrome region (`"toolbar"` or `"statusbar"`) while keeping the rest of the editor;
   `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell (the renderer must place the

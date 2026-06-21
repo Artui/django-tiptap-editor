@@ -73,6 +73,9 @@ DjangoTipTap.destroy(id)             // unmount + tear down the shell
 DjangoTipTap.autoMount(root?)        // idempotent; mounts unbound textareas
 DjangoTipTap.registerExtension(name, factory)
 DjangoTipTap.registerLocale(code, strings)
+DjangoTipTap.renderHTML(doc)         // ProseMirror JSON -> HTML string
+DjangoTipTap.htmlToJSON(html)        // HTML -> ProseMirror JSON
+DjangoTipTap.htmlToStored(html)      // HTML -> { doc, html } envelope (migration)
 DjangoTipTap.ui.registerButton(key, spec)
 DjangoTipTap.ui.setTokens(tokens)
 DjangoTipTap.ui.setRenderer(region, fn)  // replace a region: "toolbar" | "statusbar"

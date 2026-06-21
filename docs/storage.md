@@ -66,19 +66,20 @@ browser with the client helper (below), or re-save through a form.
 
 You can also set the mode per widget: `TipTapWidget(storage="json")`.
 
-## Rendering JSON in the browser (SPA / dynamic)
+## Converting & rendering in the browser
 
-For dynamic display without a server round-trip (or when you store JSON-only and have no mirror),
-render the document client-side:
+The bundle exposes converters that use the package's exact schema (no Node, no extra
+dependency):
 
 ```js
-const html = DjangoTipTap.renderHTML(doc); // ProseMirror JSON → HTML string
+DjangoTipTap.renderHTML(doc);     // ProseMirror JSON → HTML string (SPA / dynamic display)
+DjangoTipTap.htmlToJSON(html);    // HTML → ProseMirror JSON
+DjangoTipTap.htmlToStored(html);  // HTML → { doc, html } envelope (for migration)
 ```
 
-!!! note "Availability"
-    `DjangoTipTap.renderHTML` and the HTML↔JSON migration recipe ship in a follow-up
-    (TT-10b/TT-10d). This page documents the storage field and the server-side mirror, which are
-    available now.
+Use `renderHTML` to display JSON-stored content client-side without a server round-trip, and
+`htmlToStored` / `htmlToJSON` to convert existing HTML — see
+[Migrating from another editor](recipes/migrating-from-tinymce.md#migrating-into-tiptapjsonfield).
 
 ## Security
 
