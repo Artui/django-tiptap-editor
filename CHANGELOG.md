@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Theming tiers 2 & 3 — region & shell renderers.** `DjangoTipTap.ui.setRenderer(region, fn)`
+  replaces a chrome region (`"toolbar"` or `"statusbar"`) while keeping the rest of the editor;
+  `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell (the renderer must place the
+  provided `ctx.content` host). Region renderers are **semi-stable**; the shell renderer is
+  **experimental**. Selection-anchored menus (`"bubbleMenu"` / `"floatingMenu"`) are reserved but
+  not yet wired — registering one warns.
+
 ## [0.1.0] — 2026-06-20
 
 ### Added

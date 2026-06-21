@@ -205,6 +205,19 @@
   flex-direction: column;
 }
 
+/* Statusbar region (opt-in, tier-2 setRenderer("statusbar", …)). A custom
+   statusbar node IS the region; add this class for the default chrome look. */
+.django-tiptap__statusbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--tiptap-btn-fg);
+  background: var(--tiptap-toolbar-bg);
+  border-top: 1px solid var(--tiptap-border);
+}
+
 .django-tiptap__source-note {
   padding: 6px 14px;
   font-size: 12px;
