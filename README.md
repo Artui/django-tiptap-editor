@@ -4,8 +4,10 @@
 [![PyPI](https://img.shields.io/pypi/v/django-tiptap-editor.svg)](https://pypi.org/project/django-tiptap-editor/)
 [![Python versions](https://img.shields.io/pypi/pyversions/django-tiptap-editor.svg)](https://pypi.org/project/django-tiptap-editor/)
 [![Django versions](https://img.shields.io/pypi/djversions/django-tiptap-editor.svg)](https://pypi.org/project/django-tiptap-editor/)
-[![License](https://img.shields.io/pypi/l/django-tiptap-editor.svg)](https://github.com/Artui/django-tiptap-editor/blob/main/LICENSE)
+[![Docs](https://img.shields.io/badge/docs-artui.github.io-blue.svg)](https://artui.github.io/django-tiptap-editor/)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Artui/django-tiptap-editor/gh-pages/coverage.json)](https://github.com/Artui/django-tiptap-editor/actions/workflows/tests.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License](https://img.shields.io/pypi/l/django-tiptap-editor.svg)](LICENSE)
 
 A reusable, pip-installable Django package providing a **drop-in rich-text editor**
 backed by [TipTap](https://tiptap.dev) (headless ProseMirror): a form `Widget`, an
