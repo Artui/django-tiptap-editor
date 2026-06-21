@@ -1,4 +1,5 @@
-"""Template tags: ``{% tiptap_media %}`` and ``{% tiptap_config %}``.
+"""Template tags: ``{% tiptap_media %}``, ``{% tiptap_config %}``, and the
+``tiptap_html`` filter.
 
 (A template-tag module groups its tags by Django convention, like the
 ``constants`` module groups constants.)
@@ -7,6 +8,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from django import template
 from django.templatetags.static import static
@@ -20,9 +22,11 @@ from django_tiptap_editor.constants import (
     GLUE_CSS,
     GLUE_JS,
 )
+from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.get_asset_mode import get_asset_mode
 from django_tiptap_editor.utils.get_default_config import get_default_config
 from django_tiptap_editor.utils.get_import_map import get_import_map
+from django_tiptap_editor.utils.render_doc import render_doc
 
 register = template.Library()
 
@@ -60,3 +64,15 @@ def tiptap_config() -> SafeString:
     ``<textarea data-tiptap-config='{% tiptap_config %}'>``.
     """
     return mark_safe(json.dumps(get_default_config()))
+
+
+@register.filter
+def tiptap_html(value: Any) -> SafeString:
+    """Render a stored TipTap value or raw ProseMirror ``doc`` to safe HTML.
+
+    ``{{ article.body|tiptap_html }}`` — accepts a ``TipTapValue`` (uses its
+    mirror) or a bare ``doc`` dict (renders it server-side via ``render_doc``).
+    """
+    if isinstance(value, TipTapValue):
+        return mark_safe(str(value.html))
+    return render_doc(value)

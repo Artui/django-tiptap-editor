@@ -5,10 +5,12 @@ from __future__ import annotations
 from typing import Any
 
 from django.db import models
+from django.utils.safestring import mark_safe
 
 from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK_PROTOCOLS
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
 from django_tiptap_editor.types.tiptap_value import TipTapValue
+from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
 
 
@@ -50,14 +52,20 @@ class TipTapJSONField(models.JSONField):
         if value is None:
             return super().get_prep_value(None)
         coerced = value if isinstance(value, TipTapValue) else TipTapValue.from_stored(value)
-        clean = TipTapValue(
-            doc=sanitize_doc(
-                coerced.doc,
-                link_protocols=self.link_protocols,
-                image_protocols=self.image_protocols,
-            ),
-            html=coerced.html,
+        doc = sanitize_doc(
+            coerced.doc,
+            link_protocols=self.link_protocols,
+            image_protocols=self.image_protocols,
         )
+        # Derive the HTML mirror server-side when it's missing — e.g. a
+        # programmatic write that set only `doc` (no editor to produce it). The
+        # doc is already protocol-allowlisted, so render_doc's output is safe.
+        html = coerced.html
+        if not html and isinstance(doc.get("content"), list) and doc["content"]:
+            html = render_doc(
+                doc, link_protocols=self.link_protocols, image_protocols=self.image_protocols
+            )
+        clean = TipTapValue(doc=doc, html=mark_safe(str(html)))
         return super().get_prep_value(clean.to_stored())
 
     def formfield(self, **kwargs: Any) -> Any:

@@ -46,6 +46,14 @@ See [Storage format](storage.md).
 ProseMirror JSON) and `.html` (the editor-derived, safe HTML mirror). `str(value)` / `{{ value }}`
 render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}` mapping.
 
+### `render_doc`
+
+`django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…)`
+— renders a ProseMirror `doc` dict to a safe HTML string in pure Python (no Node), covering the
+package's node/mark set with protocol allowlisting + CSS validation. The
+`{{ value|tiptap_html }}` filter wraps it (and uses a `TipTapValue`'s mirror when given one). See
+[Storage format](storage.md#server-side-rendering-python).
+
 ### `BaseImageUploadView` / `ImageUploadError`
 
 `django_tiptap_editor.views` — subclass `BaseImageUploadView` and implement
@@ -55,14 +63,15 @@ render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, htm
 
 ```html
 {% load tiptap %}
-{% tiptap_media %}   {# editor assets for the active asset mode #}
-{% tiptap_config %}  {# the default config as a JSON string #}
+{% tiptap_media %}            {# editor assets for the active asset mode #}
+{% tiptap_config %}           {# the default config as a JSON string #}
+{{ value|tiptap_html }}       {# render a TipTapValue / doc to safe HTML #}
 ```
 
 All of `TipTapWidget`, `AdminTipTapWidget`, `TipTapModelAdminMixin`, `TipTapFormField`,
 `TipTapJSONField`, `TipTapJSONFormField`, `TipTapValue`, `BaseImageUploadView`,
-`ImageUploadError`, `get_default_config`, and `validate_config` are re-exported from the package
-root.
+`ImageUploadError`, `get_default_config`, `render_doc`, and `validate_config` are re-exported from
+the package root.
 
 ## JavaScript — `window.DjangoTipTap`
 

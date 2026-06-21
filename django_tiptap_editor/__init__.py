@@ -8,6 +8,7 @@ from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
 from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.validate_config import validate_config
 from django_tiptap_editor.version import __version__
 from django_tiptap_editor.views.base_image_upload_view import BaseImageUploadView
@@ -27,5 +28,6 @@ __all__ = [
     "TipTapWidget",
     "__version__",
     "get_default_config",
+    "render_doc",
     "validate_config",
 ]
