@@ -16,12 +16,27 @@
 
   display: flex;
   flex-direction: column;
+  position: relative; /* positioning context for floating menus */
   border: 1px solid var(--tiptap-border);
   border-radius: var(--tiptap-radius);
   background: var(--tiptap-bg);
   color: var(--tiptap-fg);
   font-family: var(--tiptap-font);
   overflow: hidden;
+}
+
+/* Selection-anchored menus (tier-2 floating regions). The renderer supplies the
+   contents; these give the default card chrome. Positioned inline by the JS. */
+.django-tiptap__bubble,
+.django-tiptap__floating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--tiptap-bg);
+  border: 1px solid var(--tiptap-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
 }
 
 /* Toolbar */
