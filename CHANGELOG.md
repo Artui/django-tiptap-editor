@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-21
+
 ### Added
 
+- **Theming tiers 2 & 3 — region & shell renderers.** `DjangoTipTap.ui.setRenderer(region, fn)`
+  replaces a region — chrome (`"toolbar"` / `"statusbar"`) or a selection-anchored overlay
+  (`"bubbleMenu"`, shown over a selection; `"floatingMenu"`, shown on an empty line) — while
+  keeping the rest of the editor; `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell
+  (the renderer must place the provided `ctx.content` host). Region renderers are **semi-stable**;
+  the shell renderer is **experimental**. The bubble/floating menus use a lean built-in positioner
+  (no `tippy.js`).
 - **Optional JSON storage.** `TipTapJSONField` (a `JSONField`) stores the canonical ProseMirror
   document plus an editor-derived HTML mirror as a `{doc, html}` envelope; its value is a
   `TipTapValue` (`.doc` / `.html`). Render `{{ obj.body }}` server-side with no `|safe` needed.
@@ -24,13 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   safe HTML in pure Python (no Node) — protocol-allowlisted, HTML-escaped, with CSS validation —
   for zero-JS display of programmatically-authored JSON. `TipTapJSONField` uses it to fill a
   missing mirror on save; a `{{ value|tiptap_html }}` template filter is also provided.
-- **Theming tiers 2 & 3 — region & shell renderers.** `DjangoTipTap.ui.setRenderer(region, fn)`
-  replaces a region — chrome (`"toolbar"` / `"statusbar"`) or a selection-anchored overlay
-  (`"bubbleMenu"`, shown over a selection; `"floatingMenu"`, shown on an empty line) — while
-  keeping the rest of the editor; `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell
-  (the renderer must place the provided `ctx.content` host). Region renderers are **semi-stable**;
-  the shell renderer is **experimental**. The bubble/floating menus use a lean built-in positioner
-  (no `tippy.js`).
 
 ## [0.1.0] — 2026-06-20
 
@@ -60,5 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.0.0...v0.1.0
