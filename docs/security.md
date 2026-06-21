@@ -34,8 +34,11 @@ Because protocol allowlisting happens on *parse* — which a stored-JSON documen
   whoever wrote it (form, API, import).
 - The `html` mirror is editor-produced and rendered with the same trust model as HTML mode
   (it came from the editor). The field marks `.html` safe on that basis.
-- If you render JSON the editor didn't produce (a custom client/server renderer over
-  programmatic data), you own re-applying the allowlist at render time before trusting the output.
+- For JSON the editor didn't produce, the built-in **`render_doc`** (used automatically to fill a
+  missing mirror, and available directly / via the `tiptap_html` filter) re-applies the protocol
+  allowlist, HTML-escapes text and attributes, and passes inline `style` values through a
+  conservative CSS allowlist (no `;`/`:` injection, no `url(...:...)`, no `expression`) — so its
+  output is safe to render even for untrusted documents.
 
 ## Caveats
 

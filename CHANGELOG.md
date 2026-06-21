@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no new dependency). In JSON mode the editor falls back to the stored HTML mirror when the `doc`
   is empty, enabling a pure-Python "seed the mirror, convert on first edit" migration. A
   **migrate-into-`TipTapJSONField`** guide (lazy + eager paths) is included.
+- **Server-side JSON rendering (Python).** `render_doc(doc)` renders a ProseMirror document to
+  safe HTML in pure Python (no Node) — protocol-allowlisted, HTML-escaped, with CSS validation —
+  for zero-JS display of programmatically-authored JSON. `TipTapJSONField` uses it to fill a
+  missing mirror on save; a `{{ value|tiptap_html }}` template filter is also provided.
 - **Theming tiers 2 & 3 — region & shell renderers.** `DjangoTipTap.ui.setRenderer(region, fn)`
   replaces a chrome region (`"toolbar"` or `"statusbar"`) while keeping the rest of the editor;
   `DjangoTipTap.ui.setShellRenderer(fn)` hands over the whole shell (the renderer must place the

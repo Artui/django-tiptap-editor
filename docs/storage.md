@@ -54,9 +54,10 @@ edit ──▶ editor ──┬─▶ doc  (canonical, stored)
                   └─▶ html (mirror, stored, rendered with |safe)
 ```
 
-The `html` mirror is only guaranteed fresh when content is written **through the editor**. If you
-mutate `.doc` directly in Python, regenerate the mirror before relying on it — render it in the
-browser with the client helper (below), or re-save through a form.
+When you write only the `doc` from Python (no editor involved), the field **renders the mirror
+for you on save** with the built-in [server-side renderer](#server-side-rendering-python) — so
+`{{ obj.body }}` still works with no JavaScript. An editor-produced `html` is kept as-is (it's the
+exact WYSIWYG output); the server renderer only fills a missing mirror.
 
 ## Settings
 
@@ -80,6 +81,29 @@ DjangoTipTap.htmlToStored(html);  // HTML → { doc, html } envelope (for migrat
 Use `renderHTML` to display JSON-stored content client-side without a server round-trip, and
 `htmlToStored` / `htmlToJSON` to convert existing HTML — see
 [Migrating from another editor](recipes/migrating-from-tinymce.md#migrating-into-tiptapjsonfield).
+
+## Server-side rendering (Python)
+
+For zero-JavaScript display of a document the editor never produced (e.g. JSON written by an API
+or import), render it in Python with `render_doc`:
+
+```python
+from django_tiptap_editor import render_doc
+
+html = render_doc(article.body.doc)   # a safe HTML string
+```
+
+It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,
+and validates inline CSS — so the result is safe to render directly. The output is **faithful to,
+but not byte-identical with**, the editor's `getHTML()` (the browser normalizes some CSS).
+`TipTapJSONField` uses it automatically to fill a missing mirror on save.
+
+A template filter is also available:
+
+```django
+{% load tiptap %}
+{{ article.body|tiptap_html }}   {# TipTapValue → its mirror; a raw doc dict → render_doc #}
+```
 
 ## Security
 
