@@ -7,8 +7,9 @@ from typing import Any
 
 from django import forms
 
-from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR
+from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR, STORAGE_ATTR
 from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.get_storage_format import get_storage_format
 from django_tiptap_editor.utils.validate_config import validate_config
 
 
@@ -19,14 +20,20 @@ class TipTapWidget(forms.Textarea):
     ``editor.getHTML()`` back into ``textarea.value`` on every update, so a normal
     POST submits HTML. Resolution order for the config (last wins):
     ``get_default_config()`` → per-instance ``config=`` → subclass overrides.
+
+    ``storage`` selects what the glue serializes: ``"html"`` (default) or
+    ``"json"`` (a ``{doc, html}`` envelope, used by ``TipTapJSONField``). When
+    ``None`` it resolves from ``settings.TIPTAP_STORAGE_FORMAT`` at render time.
     """
 
     def __init__(
         self,
         config: dict[str, Any] | None = None,
         attrs: dict[str, Any] | None = None,
+        storage: str | None = None,
     ) -> None:
         self.config: dict[str, Any] = config or {}
+        self.storage = storage
         super().__init__(attrs)
 
     def get_config(self, attrs: dict[str, Any]) -> dict[str, Any]:
@@ -38,6 +45,7 @@ class TipTapWidget(forms.Textarea):
         context = super().get_context(name, value, attrs)
         widget_attrs = context["widget"]["attrs"]
         widget_attrs[CONFIG_ATTR] = json.dumps(self.get_config(widget_attrs))
+        widget_attrs[STORAGE_ATTR] = self.storage or get_storage_format()
         return context
 
     @property

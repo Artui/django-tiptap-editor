@@ -4,7 +4,7 @@ import json
 
 from django.test import override_settings
 
-from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR
+from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR, STORAGE_ATTR
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 
@@ -27,6 +27,22 @@ def test_get_context_injects_config_attr() -> None:
     context = widget.get_context("body", "<p>x</p>", {})
     raw = context["widget"]["attrs"][CONFIG_ATTR]
     assert json.loads(raw) == {"height": "300px"}
+
+
+def test_storage_attr_defaults_to_html() -> None:
+    context = TipTapWidget().get_context("body", "", {})
+    assert context["widget"]["attrs"][STORAGE_ATTR] == "html"
+
+
+def test_storage_attr_honours_explicit_json() -> None:
+    context = TipTapWidget(storage="json").get_context("body", "", {})
+    assert context["widget"]["attrs"][STORAGE_ATTR] == "json"
+
+
+@override_settings(TIPTAP_STORAGE_FORMAT="json")
+def test_storage_attr_falls_back_to_setting() -> None:
+    context = TipTapWidget().get_context("body", "", {})
+    assert context["widget"]["attrs"][STORAGE_ATTR] == "json"
 
 
 def test_media_emits_bundle() -> None:

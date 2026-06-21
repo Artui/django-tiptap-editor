@@ -22,6 +22,21 @@ The serialized output is limited to the configured nodes/marks: paragraphs and h
 size/family/colour/highlight (as `<span style>`), links (allowlisted), images, tables,
 lists, blockquotes, and horizontal rules. Everything else normalizes away.
 
+## JSON storage
+
+[JSON storage](storage.md) (`TipTapJSONField`) keeps the same boundary, with one extra rule.
+Because protocol allowlisting happens on *parse* — which a stored-JSON document never runs —
+**rendering arbitrary JSON is not automatically safe.** So:
+
+- The field validates the stored `doc` on **every save**: the link/image protocol allowlist is
+  enforced in pure Python (no extra dependency), and disallowed `javascript:`/`vbscript:`/other
+  schemes on link `href` / image `src` are stripped. The canonical value is always safe,
+  whoever wrote it (form, API, import).
+- The `html` mirror is editor-produced and rendered with the same trust model as HTML mode
+  (it came from the editor). The field marks `.html` safe on that basis.
+- If you render JSON the editor didn't produce (a custom client/server renderer over
+  programmatic data), you own re-applying the allowlist at render time before trusting the output.
+
 ## Caveats
 
 - **You still control the render context.** `|safe` trusts the *stored* HTML; keep

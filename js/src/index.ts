@@ -19,6 +19,7 @@ import "./styles.css";
 
 const CONFIG_ATTR = "data-tiptap-config";
 const BOUND_ATTR = "data-tiptap-bound";
+const STORAGE_ATTR = "data-tiptap-storage";
 
 registerBuiltInButtons();
 checkTipTapVersion();
@@ -54,6 +55,21 @@ function readConfig(textarea: HTMLTextAreaElement): TipTapConfig {
   }
 }
 
+// JSON storage mode: the textarea holds a {doc, html} envelope. Return the
+// ProseMirror doc for the editor's initial content; "" for an empty/invalid
+// field (a fresh form), so the editor starts blank rather than throwing.
+function readJSONDoc(raw: string): object | string {
+  if (!raw) {
+    return "";
+  }
+  try {
+    return (JSON.parse(raw) as { doc?: object }).doc ?? "";
+  } catch (err) {
+    console.error("[DjangoTipTap] invalid JSON-storage value", err);
+    return "";
+  }
+}
+
 function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
@@ -68,13 +84,20 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const t = getTranslator(locale);
   const ctx: ExtensionContext = { tiptap, locale, t };
 
+  // Storage mode: "html" writes editor.getHTML() back into the textarea; "json"
+  // writes a {doc, html} envelope (TipTapJSONField). Driven by the data-* attr
+  // the widget emits; defaults to html for hand-mounted / Path-B elements.
+  const json = element.getAttribute(STORAGE_ATTR) === "json";
+
   const editor = new Editor({
     element: content,
     extensions: buildExtensions(config, ctx),
-    content: element.value || "",
+    content: json ? readJSONDoc(element.value) : element.value || "",
     onUpdate({ editor }) {
       const html = editor.getHTML();
-      element.value = html;
+      element.value = json
+        ? JSON.stringify({ doc: editor.getJSON(), html })
+        : html;
       config.onChange?.(html);
     },
   });

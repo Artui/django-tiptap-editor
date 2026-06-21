@@ -5,6 +5,24 @@ from __future__ import annotations
 # data-* attribute carrying the per-field config JSON the JS glue reads.
 CONFIG_ATTR = "data-tiptap-config"
 
+# data-* attribute telling the glue what to serialize into the textarea:
+# "html" (editor.getHTML()) or "json" (a {doc, html} envelope). See
+# TIPTAP_STORAGE_FORMAT / TipTapJSONField.
+STORAGE_ATTR = "data-tiptap-storage"
+
+# Storage formats (see TIPTAP_STORAGE_FORMAT). "html" is the default, zero-config
+# path; "json" stores the canonical ProseMirror document plus a derived HTML
+# mirror (TipTapJSONField).
+STORAGE_FORMAT_HTML = "html"
+STORAGE_FORMAT_JSON = "json"
+STORAGE_FORMATS = frozenset({STORAGE_FORMAT_HTML, STORAGE_FORMAT_JSON})
+
+# Protocol allowlists enforced when validating a stored ProseMirror document
+# (sanitize_doc). Mirror the JS link/image protocol handling; a scheme outside
+# these is stripped. Relative/anchor URLs (no scheme) are always allowed.
+DEFAULT_LINK_PROTOCOLS = ("http", "https", "mailto", "tel")
+DEFAULT_IMAGE_PROTOCOLS = ("http", "https", "data")
+
 # Asset delivery modes (see TIPTAP_ASSET_MODE).
 ASSET_MODE_BUNDLE = "bundle"
 ASSET_MODE_EXTERNAL = "external"
