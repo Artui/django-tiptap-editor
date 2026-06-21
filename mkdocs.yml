@@ -76,6 +76,7 @@ nav:
   - Installation: installation.md
   - Quickstart: quickstart.md
   - Configuration: configuration.md
+  - Storage format: storage.md
   - API reference: api.md
   - Client contracts: contracts.md
   - Security: security.md

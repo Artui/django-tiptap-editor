@@ -11,6 +11,11 @@
 // Primitives (for custom-extension authors).
 export { Editor, Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
 
+// HTML <-> ProseMirror-JSON converters (browser; the bundle runs in the browser
+// and the glue resolves @tiptap/core via the consumer's import map). Power the
+// JSON storage helpers and the HTML->JSON migration path.
+export { generateHTML, generateJSON } from "@tiptap/core";
+
 // Structural baseline.
 export { default as StarterKit } from "@tiptap/starter-kit";
 

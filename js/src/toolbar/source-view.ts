@@ -59,8 +59,11 @@ export function toggleSourceView(editor: Editor): void {
   textarea.spellcheck = false;
   textarea.value = editor.getHTML();
 
+  // Live-sync raw source into the bound form textarea — but only in HTML mode.
+  // In JSON mode the form holds a {doc, html} envelope, so raw HTML would
+  // corrupt it; the editor re-parses and writes a valid envelope on switch-back.
   const form = boundFormTextarea(editor);
-  if (form) {
+  if (form && form.getAttribute("data-tiptap-storage") !== "json") {
     textarea.addEventListener("input", () => {
       form.value = textarea.value;
     });

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
+from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
 from django_tiptap_editor.forms.fields import TipTapFormField
+from django_tiptap_editor.forms.json_field import TipTapJSONFormField
+from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.get_default_config import get_default_config
 from django_tiptap_editor.utils.validate_config import validate_config
 from django_tiptap_editor.version import __version__
@@ -17,7 +20,10 @@ __all__ = [
     "BaseImageUploadView",
     "ImageUploadError",
     "TipTapFormField",
+    "TipTapJSONField",
+    "TipTapJSONFormField",
     "TipTapModelAdminMixin",
+    "TipTapValue",
     "TipTapWidget",
     "__version__",
     "get_default_config",

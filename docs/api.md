@@ -7,12 +7,14 @@
 `django_tiptap_editor.widgets.tiptap_widget.TipTapWidget`
 
 ```python
-TipTapWidget(config=None, attrs=None)
+TipTapWidget(config=None, attrs=None, storage=None)
 ```
 
 Renders a `<textarea>` carrying `data-tiptap-config`. Config resolution (last wins):
 `get_default_config()` → the per-instance `config=` → subclass overrides
-(`get_config(self, attrs)`). `class Media` emits the committed bundle.
+(`get_config(self, attrs)`). `class Media` emits the committed bundle. `storage` is
+`"html"` (default) or `"json"`; when `None` it resolves from
+`settings.TIPTAP_STORAGE_FORMAT`. See [Storage format](storage.md).
 
 ### `AdminTipTapWidget(TipTapWidget)`
 
@@ -30,6 +32,20 @@ Renders a `<textarea>` carrying `data-tiptap-config`. Config resolution (last wi
 `django_tiptap_editor.forms.fields.TipTapFormField` — a `CharField` whose default widget
 is `TipTapWidget`.
 
+### `TipTapJSONField(models.JSONField)`
+
+`django_tiptap_editor.fields.tiptap_json_field.TipTapJSONField` — a model field storing a
+`{doc, html}` envelope. The Python value is a `TipTapValue`; the `doc` is protocol-allowlisted
+on save. Optional `link_protocols` / `image_protocols` tuples override the allowlists. Its form
+field is `TipTapJSONFormField` (a `forms.Field` whose widget is `TipTapWidget(storage="json")`).
+See [Storage format](storage.md).
+
+### `TipTapValue`
+
+`django_tiptap_editor.types.tiptap_value.TipTapValue` — frozen value with `.doc` (canonical
+ProseMirror JSON) and `.html` (the editor-derived, safe HTML mirror). `str(value)` / `{{ value }}`
+render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}` mapping.
+
 ### `BaseImageUploadView` / `ImageUploadError`
 
 `django_tiptap_editor.views` — subclass `BaseImageUploadView` and implement
@@ -44,8 +60,9 @@ is `TipTapWidget`.
 ```
 
 All of `TipTapWidget`, `AdminTipTapWidget`, `TipTapModelAdminMixin`, `TipTapFormField`,
-`BaseImageUploadView`, `ImageUploadError`, `get_default_config`, and `validate_config`
-are re-exported from the package root.
+`TipTapJSONField`, `TipTapJSONFormField`, `TipTapValue`, `BaseImageUploadView`,
+`ImageUploadError`, `get_default_config`, and `validate_config` are re-exported from the package
+root.
 
 ## JavaScript — `window.DjangoTipTap`
 
@@ -56,6 +73,9 @@ DjangoTipTap.destroy(id)             // unmount + tear down the shell
 DjangoTipTap.autoMount(root?)        // idempotent; mounts unbound textareas
 DjangoTipTap.registerExtension(name, factory)
 DjangoTipTap.registerLocale(code, strings)
+DjangoTipTap.renderHTML(doc)         // ProseMirror JSON -> HTML string
+DjangoTipTap.htmlToJSON(html)        // HTML -> ProseMirror JSON
+DjangoTipTap.htmlToStored(html)      // HTML -> { doc, html } envelope (migration)
 DjangoTipTap.ui.registerButton(key, spec)
 DjangoTipTap.ui.setTokens(tokens)
 DjangoTipTap.ui.setRenderer(region, fn)  // replace a region: "toolbar" | "statusbar"
