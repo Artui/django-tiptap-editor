@@ -6,10 +6,15 @@ export interface MergeTag {
   value: string;
 }
 
+// Enter / Shift-Enter behaviour. "paragraph" (default) keeps StarterKit's
+// semantics; "hardBreak" makes Enter insert a <br>; "swap" exchanges the two.
+export type EnterKeyMode = "paragraph" | "hardBreak" | "swap";
+
 export interface TipTapConfig {
   height?: string;
   locale?: string;
   manualMount?: boolean;
+  enterKey?: EnterKeyMode;
   extensions?: string[];
   toolbar?: string[][];
   linkProtocols?: string[];

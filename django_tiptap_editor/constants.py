@@ -41,6 +41,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "height",
         "locale",
         "manualMount",
+        "enterKey",
         "toolbar",
         "extensions",
         "paragraphStyle",
@@ -51,6 +52,11 @@ KNOWN_CONFIG_KEYS = frozenset(
         "linkProtocols",
     }
 )
+
+# Allowed values for the ``enterKey`` config key (Enter / Shift-Enter behaviour):
+# "paragraph" (default) keeps a paragraph split, "hardBreak" makes Enter a <br>,
+# "swap" exchanges the two. Kept in sync with the JS EnterKeyMode union.
+ENTER_KEY_MODES = frozenset({"paragraph", "hardBreak", "swap"})
 
 # Built-in extension names the JS glue resolves. Consumer-registered extensions
 # are added to the allowlist via TIPTAP_EXTRA_EXTENSIONS. Kept in sync with the

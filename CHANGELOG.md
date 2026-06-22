@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Configurable Enter key.** A new `enterKey` config option controls Enter / Shift-Enter
+  behaviour without writing JS: `"paragraph"` (default — Enter splits into a new paragraph,
+  Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"`
+  (exchange the two). Set it per field (`TipTapWidget(config={"enterKey": "hardBreak"})`) or
+  project-wide via `TIPTAP_DEFAULT_CONFIG`. For arbitrary shortcuts, a new **keyboard
+  shortcuts** recipe documents registering a high-priority keymap extension.
+
 ### Fixed
 
 - **Image-picker overlay no longer trapped behind host modals.** The picker overlay is

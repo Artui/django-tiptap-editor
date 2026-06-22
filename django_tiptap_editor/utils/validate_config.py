@@ -6,22 +6,33 @@ from typing import Any
 
 from django.core.exceptions import ImproperlyConfigured
 
-from django_tiptap_editor.constants import BUILTIN_EXTENSIONS, KNOWN_CONFIG_KEYS
+from django_tiptap_editor.constants import (
+    BUILTIN_EXTENSIONS,
+    ENTER_KEY_MODES,
+    KNOWN_CONFIG_KEYS,
+)
 from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
 
 
 def validate_config(config: dict[str, Any]) -> dict[str, Any]:
     """Return ``config`` unchanged after structural validation.
 
-    Raises ``ImproperlyConfigured`` for unknown top-level keys, or for extension
-    names that are neither built in nor declared in TIPTAP_EXTRA_EXTENSIONS.
-    Extension names are otherwise treated as opaque strings (resolved in JS).
+    Raises ``ImproperlyConfigured`` for unknown top-level keys, an out-of-range
+    ``enterKey`` value, or extension names that are neither built in nor declared
+    in TIPTAP_EXTRA_EXTENSIONS. Extension names are otherwise treated as opaque
+    strings (resolved in JS).
     """
     unknown_keys = set(config) - KNOWN_CONFIG_KEYS
     if unknown_keys:
         raise ImproperlyConfigured(
             f"Unknown TipTap config key(s): {sorted(unknown_keys)}. "
             f"Allowed: {sorted(KNOWN_CONFIG_KEYS)}."
+        )
+
+    enter_key = config.get("enterKey")
+    if enter_key is not None and enter_key not in ENTER_KEY_MODES:
+        raise ImproperlyConfigured(
+            f"Invalid TipTap enterKey {enter_key!r}. Allowed: {sorted(ENTER_KEY_MODES)}."
         )
 
     extensions = config.get("extensions")
