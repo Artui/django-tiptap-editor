@@ -583,6 +583,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard shortcuts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keyboard shortcuts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-enter-key-built-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Enter key (built in)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arbitrary-shortcuts-custom-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arbitrary shortcuts (custom extension)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#toolbar-buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -849,6 +888,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard shortcuts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keyboard shortcuts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-enter-key-built-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Enter key (built in)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arbitrary-shortcuts-custom-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arbitrary shortcuts (custom extension)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#toolbar-buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -945,13 +1023,46 @@ To activate it:</p>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">TipTapWidget</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;extensions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;callout&quot;</span><span class="p">]})</span>
 </span></code></pre></div>
 <p>Built-in names are always active; unknown, unregistered names fail loudly at mount.</p>
+<h2 id="keyboard-shortcuts">Keyboard shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<h3 id="the-enter-key-built-in">The Enter key (built in)<a class="headerlink" href="#the-enter-key-built-in" title="Permanent link">&para;</a></h3>
+<p>Changing what <strong>Enter</strong> does is common enough to be a first-class config key — no JS
+required. Set <a href="../configuration/#config-keys"><code>enterKey</code></a> to <code>"hardBreak"</code> (Enter inserts a
+<code>&lt;br&gt;</code>) or <code>"swap"</code> (exchange Enter and Shift-Enter); the default <code>"paragraph"</code> keeps the
+usual split-into-a-new-paragraph behaviour:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">TipTapWidget</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;enterKey&quot;</span><span class="p">:</span> <span class="s2">&quot;hardBreak&quot;</span><span class="p">})</span>
+</span></code></pre></div>
+<p>To make it the <strong>default for every editor in the project</strong>, set it in the project-wide
+config — it merges into every instance, no per-field repetition:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># settings.py</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">TIPTAP_DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;enterKey&quot;</span><span class="p">:</span> <span class="s2">&quot;hardBreak&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="arbitrary-shortcuts-custom-extension">Arbitrary shortcuts (custom extension)<a class="headerlink" href="#arbitrary-shortcuts-custom-extension" title="Permanent link">&para;</a></h3>
+<p>For anything beyond Enter, register a keymap-only extension. Give it a high <code>priority</code> so
+its bindings win over the built-in keymaps, and return the command's result so unhandled
+cases fall through:</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerExtension</span><span class="p">(</span><span class="s2">&quot;shortcuts&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Extension</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">tiptap</span><span class="p">;</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">Extension</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;shortcuts&quot;</span><span class="p">,</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nx">priority</span><span class="o">:</span><span class="w"> </span><span class="mf">1000</span><span class="p">,</span><span class="w"> </span><span class="c1">// beat the default-100 built-in bindings</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nx">addKeyboardShortcuts</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">        </span><span class="s2">&quot;Mod-Enter&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">commands</span><span class="p">.</span><span class="nx">setHardBreak</span><span class="p">(),</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">        </span><span class="s2">&quot;Mod-s&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="c1">// swallow Ctrl/Cmd-S so the browser doesn&#39;t &quot;Save Page&quot;</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="p">};</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="p">},</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="p">});</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="p">});</span>
+</span></code></pre></div>
+<p>Activate it like any custom extension — list <code>"shortcuts"</code> in <code>config.extensions</code> and add it
+to <code>TIPTAP_EXTRA_EXTENSIONS</code> (and, for a project-wide default, in <code>TIPTAP_DEFAULT_CONFIG</code>).</p>
 <h2 id="toolbar-buttons">Toolbar buttons<a class="headerlink" href="#toolbar-buttons" title="Permanent link">&para;</a></h2>
-<div class="language-js highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">registerButton</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;▣&quot;</span><span class="p">,</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Callout&quot;</span><span class="p">,</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nx">isActive</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">editor</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">editor</span><span class="p">.</span><span class="nx">isActive</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">),</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nx">onClick</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">editor</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">editor</span><span class="p">.</span><span class="nx">chain</span><span class="p">().</span><span class="nx">focus</span><span class="p">().</span><span class="nx">toggleWrap</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">).</span><span class="nx">run</span><span class="p">(),</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">});</span>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">registerButton</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;▣&quot;</span><span class="p">,</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Callout&quot;</span><span class="p">,</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nx">isActive</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">editor</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">editor</span><span class="p">.</span><span class="nx">isActive</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">),</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nx">onClick</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">editor</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">editor</span><span class="p">.</span><span class="nx">chain</span><span class="p">().</span><span class="nx">focus</span><span class="p">().</span><span class="nx">toggleWrap</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">).</span><span class="nx">run</span><span class="p">(),</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">});</span>
 </span></code></pre></div>
 <p>Then reference the key in <code>config.toolbar</code>. A button spec is either a command button
 (<code>icon</code> + <code>onClick</code>, optional <code>isActive</code> / <code>isEnabled</code>) or a custom control
@@ -964,7 +1075,7 @@ bundle (or <code>{% tiptap_media %}</code>) registers in time. For dynamically i
 <code>DjangoTipTap.autoMount(root)</code> after registering, or use
 <a href="../api/#explicit-init-path-b">explicit init</a>.</p>
 <h2 id="custom-locales">Custom locales<a class="headerlink" href="#custom-locales" title="Permanent link">&para;</a></h2>
-<div class="language-js highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerLocale</span><span class="p">(</span><span class="s2">&quot;de&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">bold</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Fett&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">italic</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Kursiv&quot;</span><span class="w"> </span><span class="cm">/* … */</span><span class="w"> </span><span class="p">});</span>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerLocale</span><span class="p">(</span><span class="s2">&quot;de&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">bold</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Fett&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">italic</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Kursiv&quot;</span><span class="w"> </span><span class="cm">/* … */</span><span class="w"> </span><span class="p">});</span>
 </span></code></pre></div>
 <p>Missing keys fall back to English. Select with <code>config.locale</code>.</p>
 <h2 id="semver">Semver<a class="headerlink" href="#semver" title="Permanent link">&para;</a></h2>
