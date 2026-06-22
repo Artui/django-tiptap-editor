@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Image-picker overlay no longer trapped behind host modals.** The picker overlay is
+  portaled to `<body>` and was fixed at `z-index: 1000`, below common modal stacks
+  (Bootstrap 3/4/5 use 1050–1060), so it opened *behind* a host modal the editor was
+  embedded in. It now defaults to `z-index: 2000` and is overridable without `!important`
+  via the new `--tiptap-modal-z` token (set on `:root`/`html`/`body`, since the
+  body-portaled overlay does not inherit from `.django-tiptap`). The in-editor bubble /
+  floating / dropdown menus are unaffected — they render inside the editor shell, not on
+  `<body>`, so they already stack correctly within a host modal.
+
 ## [0.2.0] — 2026-06-21
 
 ### Added

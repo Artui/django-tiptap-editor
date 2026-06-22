@@ -304,7 +304,11 @@
 .django-tiptap__modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  /* Portaled to <body>, so it must clear host modal stacks (Bootstrap 3/4/5 use
+     1050–1060; apps often push higher). 2000 clears the common cases; override
+     via --tiptap-modal-z on :root/html/body — NOT on .django-tiptap, which the
+     body-portaled overlay does not inherit from. */
+  z-index: var(--tiptap-modal-z, 2000);
   display: flex;
   align-items: center;
   justify-content: center;
