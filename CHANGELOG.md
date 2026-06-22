@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-06-22
+
 ### Fixed
 
 - **Image-picker overlay no longer trapped behind host modals.** The picker overlay is
@@ -73,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.0.0...v0.1.0
