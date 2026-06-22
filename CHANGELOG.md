@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-06-22
+
 ### Added
 
 - **Configurable Enter key.** A new `enterKey` config option controls Enter / Shift-Enter
@@ -82,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.0.0...v0.1.0
