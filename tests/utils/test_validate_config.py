@@ -29,3 +29,13 @@ def test_unknown_extension_raises() -> None:
 @override_settings(TIPTAP_EXTRA_EXTENSIONS=["myExt"])
 def test_extra_extension_is_allowed() -> None:
     assert validate_config({"extensions": ["bold", "myExt"]})
+
+
+@pytest.mark.parametrize("mode", ["paragraph", "hardBreak", "swap"])
+def test_valid_enter_key_passes(mode: str) -> None:
+    assert validate_config({"enterKey": mode}) == {"enterKey": mode}
+
+
+def test_invalid_enter_key_raises() -> None:
+    with pytest.raises(ImproperlyConfigured, match="Invalid TipTap enterKey"):
+        validate_config({"enterKey": "newline"})

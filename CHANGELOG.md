@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-06-22
+
+### Added
+
+- **Configurable Enter key.** A new `enterKey` config option controls Enter / Shift-Enter
+  behaviour without writing JS: `"paragraph"` (default — Enter splits into a new paragraph,
+  Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"`
+  (exchange the two). Set it per field (`TipTapWidget(config={"enterKey": "hardBreak"})`) or
+  project-wide via `TIPTAP_DEFAULT_CONFIG`. For arbitrary shortcuts, a new **keyboard
+  shortcuts** recipe documents registering a high-priority keymap extension.
+
+### Fixed
+
+- **Image-picker overlay no longer trapped behind host modals.** The picker overlay is
+  portaled to `<body>` and was fixed at `z-index: 1000`, below common modal stacks
+  (Bootstrap 3/4/5 use 1050–1060), so it opened *behind* a host modal the editor was
+  embedded in. It now defaults to `z-index: 2000` and is overridable without `!important`
+  via the new `--tiptap-modal-z` token (set on `:root`/`html`/`body`, since the
+  body-portaled overlay does not inherit from `.django-tiptap`). The in-editor bubble /
+  floating / dropdown menus are unaffected — they render inside the editor shell, not on
+  `<body>`, so they already stack correctly within a host modal.
+
 ## [0.2.0] — 2026-06-21
 
 ### Added
@@ -62,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.0.0...v0.1.0

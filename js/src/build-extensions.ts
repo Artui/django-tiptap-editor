@@ -8,6 +8,7 @@ import { DEFAULT_EXTENSIONS, DEFAULT_LINK_PROTOCOLS } from "./default-config";
 import type { TipTapConfig } from "./default-config";
 import { BackgroundColor } from "./extensions/background-color";
 import { BlockStyle } from "./extensions/block-style";
+import { EnterKey } from "./extensions/enter-key";
 import { FontSize } from "./extensions/font-size";
 import { InlineImage } from "./extensions/inline-image";
 import { getExtensionFactory } from "./registry";
@@ -79,6 +80,9 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
     // It does NOT include Underline/TextStyle/Link/Image/Table/etc., so the
     // feature extensions below add no duplicates.
     StarterKit,
+    // High-priority Enter/Shift-Enter override; "paragraph" (default) adds no
+    // bindings, so it's a no-op unless config.enterKey opts into another mode.
+    EnterKey.configure({ mode: config.enterKey ?? "paragraph" }),
     BlockStyle,
     Underline,
     TextStyle,

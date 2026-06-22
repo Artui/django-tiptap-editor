@@ -34,6 +34,52 @@ TipTapWidget(config={"extensions": ["callout"]})
 
 Built-in names are always active; unknown, unregistered names fail loudly at mount.
 
+## Keyboard shortcuts
+
+### The Enter key (built in)
+
+Changing what **Enter** does is common enough to be a first-class config key — no JS
+required. Set [`enterKey`](configuration.md#config-keys) to `"hardBreak"` (Enter inserts a
+`<br>`) or `"swap"` (exchange Enter and Shift-Enter); the default `"paragraph"` keeps the
+usual split-into-a-new-paragraph behaviour:
+
+```python
+TipTapWidget(config={"enterKey": "hardBreak"})
+```
+
+To make it the **default for every editor in the project**, set it in the project-wide
+config — it merges into every instance, no per-field repetition:
+
+```python
+# settings.py
+TIPTAP_DEFAULT_CONFIG = {"enterKey": "hardBreak"}
+```
+
+### Arbitrary shortcuts (custom extension)
+
+For anything beyond Enter, register a keymap-only extension. Give it a high `priority` so
+its bindings win over the built-in keymaps, and return the command's result so unhandled
+cases fall through:
+
+```js
+DjangoTipTap.registerExtension("shortcuts", (config, ctx) => {
+  const { Extension } = ctx.tiptap;
+  return Extension.create({
+    name: "shortcuts",
+    priority: 1000, // beat the default-100 built-in bindings
+    addKeyboardShortcuts() {
+      return {
+        "Mod-Enter": () => this.editor.commands.setHardBreak(),
+        "Mod-s": () => true, // swallow Ctrl/Cmd-S so the browser doesn't "Save Page"
+      };
+    },
+  });
+});
+```
+
+Activate it like any custom extension — list `"shortcuts"` in `config.extensions` and add it
+to `TIPTAP_EXTRA_EXTENSIONS` (and, for a project-wide default, in `TIPTAP_DEFAULT_CONFIG`).
+
 ## Toolbar buttons
 
 ```js

@@ -26,6 +26,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-btn-hover-bg` | Button hover background |
 | `--tiptap-btn-active-bg` / `--tiptap-btn-active-fg` | Active button colours |
 | `--tiptap-accent` | Links, focus, selected-image outline |
+| `--tiptap-modal-z` | Image-picker overlay `z-index` (default `2000`) |
 
 ### In CSS
 
@@ -36,6 +37,24 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
   --tiptap-toolbar-bg: #f3f4f6;
 }
 ```
+
+### Stacking the picker over host modals
+
+The image-picker overlay is portaled to `<body>`, so it sits outside the editor's
+stacking context. It defaults to `z-index: 2000`, which clears common modal stacks
+(Bootstrap 3/4/5 use 1050–1060). If your app embeds the editor inside a modal that
+stacks even higher, raise the knob — no `!important` needed:
+
+```css
+:root {
+  --tiptap-modal-z: 12000; /* above your host modal's z-index */
+}
+```
+
+Set `--tiptap-modal-z` on `:root` (or `html`/`body`), **not** on `.django-tiptap`:
+because the overlay is appended to `<body>`, it does not inherit custom properties
+declared on the editor element. Every other token in the table above is read inside
+`.django-tiptap` and can be set there as usual.
 
 ### In JS
 
