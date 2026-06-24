@@ -405,10 +405,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dynamic-forms-htmx-admin-inlines" class="md-nav__link">
+  <a href="#dynamic-forms-htmx-turbo-admin-inlines" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dynamic forms (htmx, admin inlines)
+        Dynamic forms (htmx, Turbo, admin inlines)
       
     </span>
   </a>
@@ -838,10 +838,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dynamic-forms-htmx-admin-inlines" class="md-nav__link">
+  <a href="#dynamic-forms-htmx-turbo-admin-inlines" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dynamic forms (htmx, admin inlines)
+        Dynamic forms (htmx, Turbo, admin inlines)
       
     </span>
   </a>
@@ -910,10 +910,24 @@ back into the textarea on every change, so a normal POST submits HTML.</p>
 </span></code></pre></div>
 <p>Every <code>TextField</code> becomes a TipTap editor. To limit which fields, set
 <code>tiptap_fields = ["body"]</code>. The admin always uses the self-contained bundle.</p>
-<h2 id="dynamic-forms-htmx-admin-inlines">Dynamic forms (htmx, admin inlines)<a class="headerlink" href="#dynamic-forms-htmx-admin-inlines" title="Permanent link">&para;</a></h2>
-<p>Auto-mount re-scans on <code>DOMContentLoaded</code>, Django admin's <code>formset:added</code> /
-<code>django:added</code>, and <code>htmx:afterSwap</code>, so editors added after page load mount
-automatically. For full control, use <a href="../api/#explicit-init-path-b">explicit init (Path B)</a>.</p>
+<h2 id="dynamic-forms-htmx-turbo-admin-inlines">Dynamic forms (htmx, Turbo, admin inlines)<a class="headerlink" href="#dynamic-forms-htmx-turbo-admin-inlines" title="Permanent link">&para;</a></h2>
+<p>Auto-mount is <strong>framework-agnostic</strong>: the editor watches the DOM with a
+<code>MutationObserver</code>, so a widget added after page load mounts automatically no
+matter what inserted it — htmx, Turbo, Unpoly, Livewire, Alpine, Django admin
+inlines (<code>formset:added</code>), or hand-rolled JS. Removing the element tears its
+editor down. No per-framework wiring is required. For full control, use
+<a href="../api/#explicit-init-path-b">explicit init (Path B)</a>.</p>
+<p><strong>Destructive swaps are supported.</strong> When a form is replaced via an <code>outerHTML</code>
+swap (e.g. re-rendering with validation errors), the server emits a fresh
+<code>&lt;textarea&gt;</code> with the same Django <code>id</code>. The stale editor is torn down and the new
+node is mounted in its place — no duplicate editor, no bare textarea left over, no
+orphaned shell.</p>
+<p><strong>Keep <code>{{ form.media }}</code> out of the swapped fragment.</strong> Put the editor assets
+(<code>{{ form.media }}</code> or <code>{% tiptap_media %}</code>) in your non-swapped page <code>&lt;head&gt;</code>,
+never inside a swapped partial. A re-injected <code>&lt;script&gt;</code> re-executes the bundle;
+the glue guards against this (a second execution is a no-op), but loading the
+assets once in the page shell is cleaner and avoids re-downloading them on every
+swap.</p>
 <p>Next: <a href="../configuration/">Configuration</a>.</p>
 
 

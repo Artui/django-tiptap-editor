@@ -1182,12 +1182,19 @@ the package root.</p>
 </span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="nx">region</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="p">)</span><span class="w">  </span><span class="c1">// &quot;toolbar&quot; | &quot;statusbar&quot; | &quot;bubbleMenu&quot; | &quot;floatingMenu&quot;</span>
 </span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setShellRenderer</span><span class="p">(</span><span class="nx">fn</span><span class="p">)</span><span class="w">     </span><span class="c1">// replace the whole shell (experimental)</span>
 </span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">tiptap</span><span class="w">                  </span><span class="c1">// re-exported primitives for authors</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">supportedTipTapVersion</span><span class="w">  </span><span class="c1">// the validated TipTap version</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">version</span><span class="w">                 </span><span class="c1">// the django-tiptap-editor package version</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">supportedTipTapVersion</span><span class="w">  </span><span class="c1">// the validated TipTap version</span>
 </span></code></pre></div>
 <h3 id="auto-mount-path-a">Auto-mount (Path A)<a class="headerlink" href="#auto-mount-path-a" title="Permanent link">&para;</a></h3>
-<p>By default, textareas rendered by the widget mount automatically (on load and on
-<code>formset:added</code> / <code>django:added</code> / <code>htmx:afterSwap</code>). The textarea is hidden and kept in
-sync; removing it is handled by <code>destroy</code>.</p>
+<p>Textareas rendered by the widget mount automatically. A <code>MutationObserver</code> watches the
+DOM, so editors mount when inserted and tear down when removed — by htmx, Turbo, Unpoly,
+Livewire, Alpine, Django admin inlines, or any script — with no framework-specific wiring.
+The textarea is hidden and kept in sync; <code>destroy</code> is also exposed for manual teardown.</p>
+<p>A <strong>destructive swap re-mounts cleanly</strong>: when a textarea is replaced by a fresh one with
+the same <code>id</code> (an <code>outerHTML</code> swap), the stale editor is destroyed and the new node mounted
+— never a duplicate or an orphaned shell. Place <code>{{ form.media }}</code> in the page <code>&lt;head&gt;</code>,
+not inside a swapped partial (see
+<a href="../quickstart/#dynamic-forms-htmx-turbo-admin-inlines">Quickstart</a>).</p>
 <h3 id="explicit-init-path-b">Explicit init (Path B)<a class="headerlink" href="#explicit-init-path-b" title="Permanent link">&para;</a></h3>
 <p>For full control — and for the <code>onChange</code> callback, which can't travel through the JSON
 <code>data-tiptap-config</code> attribute:</p>
