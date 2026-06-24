@@ -53,10 +53,26 @@ class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
 Every `TextField` becomes a TipTap editor. To limit which fields, set
 `tiptap_fields = ["body"]`. The admin always uses the self-contained bundle.
 
-## Dynamic forms (htmx, admin inlines)
+## Dynamic forms (htmx, Turbo, admin inlines)
 
-Auto-mount re-scans on `DOMContentLoaded`, Django admin's `formset:added` /
-`django:added`, and `htmx:afterSwap`, so editors added after page load mount
-automatically. For full control, use [explicit init (Path B)](api.md#explicit-init-path-b).
+Auto-mount is **framework-agnostic**: the editor watches the DOM with a
+`MutationObserver`, so a widget added after page load mounts automatically no
+matter what inserted it — htmx, Turbo, Unpoly, Livewire, Alpine, Django admin
+inlines (`formset:added`), or hand-rolled JS. Removing the element tears its
+editor down. No per-framework wiring is required. For full control, use
+[explicit init (Path B)](api.md#explicit-init-path-b).
+
+**Destructive swaps are supported.** When a form is replaced via an `outerHTML`
+swap (e.g. re-rendering with validation errors), the server emits a fresh
+`<textarea>` with the same Django `id`. The stale editor is torn down and the new
+node is mounted in its place — no duplicate editor, no bare textarea left over, no
+orphaned shell.
+
+**Keep `{{ form.media }}` out of the swapped fragment.** Put the editor assets
+(`{{ form.media }}` or `{% tiptap_media %}`) in your non-swapped page `<head>`,
+never inside a swapped partial. A re-injected `<script>` re-executes the bundle;
+the glue guards against this (a second execution is a no-op), but loading the
+assets once in the page shell is cleaner and avoids re-downloading them on every
+swap.
 
 Next: [Configuration](configuration.md).

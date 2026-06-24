@@ -21,9 +21,10 @@ import "./styles.css";
 const CONFIG_ATTR = "data-tiptap-config";
 const BOUND_ATTR = "data-tiptap-bound";
 const STORAGE_ATTR = "data-tiptap-storage";
-
-registerBuiltInButtons();
-checkTipTapVersion();
+// Marks an editor's shell root. Lets the lifecycle observer cheaply ignore
+// ProseMirror's own DOM churn (mutations inside a shell) instead of treating
+// every keystroke as a potential mount/unmount.
+const SHELL_ATTR = "data-tiptap-shell";
 
 // Re-exported primitives for extension authors (no bundler of their own needed).
 const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
@@ -31,6 +32,10 @@ const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
 interface Instance {
   editor: Editor;
   shell: HTMLElement;
+  // The textarea this editor is bound to. Tracked so liveness can be checked
+  // against the live DOM (document.contains) rather than trusting the map — a
+  // destructive DOM swap can remove the node without ever calling destroy().
+  element: HTMLTextAreaElement;
 }
 
 const instances = new Map<string, Instance>();
@@ -81,7 +86,16 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
   if (existing) {
-    return existing.editor;
+    // Honor the cached instance only while its textarea is still in the live
+    // DOM. A destructive swap can replace the field with a fresh textarea that
+    // reuses the same id (Django emits a stable id_<field>), leaving the old
+    // node and its shell detached. Trusting the map here would return a dead
+    // editor and leave the new textarea unbound, so evict the stale instance and
+    // fall through to mount on the new element.
+    if (document.contains(existing.element)) {
+      return existing.editor;
+    }
+    destroy(id);
   }
 
   const content = document.createElement("div");
@@ -115,6 +129,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
 
   // Default chrome, or a consumer's region / shell override (see build-shell).
   const shell = buildShell(editor, config, content, t);
+  shell.el.setAttribute(SHELL_ATTR, id);
   if (config.height) {
     shell.el.style.setProperty("--tiptap-height", config.height);
   }
@@ -125,7 +140,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   editor.on("transaction", () => shell.refresh());
 
   element.setAttribute(BOUND_ATTR, "true");
-  instances.set(id, { editor, shell: shell.el });
+  instances.set(id, { editor, shell: shell.el, element });
   return editor;
 }
 
@@ -143,26 +158,96 @@ function destroy(id: string): void {
   instances.delete(id);
 }
 
-// Idempotent: mounts every unbound textarea[data-tiptap-config] under `root`.
+// Tear down every editor whose textarea lives inside `root`. Called when content
+// is about to be removed from the DOM, so an editor's shell and ProseMirror view
+// don't linger as orphans when a swap drops the field without re-rendering it.
+// Deleting the current key mid-iteration is safe for a Map's iterator.
+function destroyWithin(root: Element): void {
+  for (const [id, instance] of instances) {
+    if (root === instance.element || root.contains(instance.element)) {
+      destroy(id);
+    }
+  }
+}
+
+// Idempotent: mounts every unbound textarea[data-tiptap-config] at or under
+// `root`. The observer can hand us a swapped-in textarea directly (not just a
+// container), so the root itself is checked, not only its descendants.
 function autoMount(root: ParentNode = document): void {
   const selector = `textarea[${CONFIG_ATTR}]:not([${BOUND_ATTR}])`;
+  if (root instanceof HTMLTextAreaElement && root.matches(selector)) {
+    init(root, readConfig(root));
+  }
   root.querySelectorAll<HTMLTextAreaElement>(selector).forEach((textarea) => {
     init(textarea, readConfig(textarea));
   });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => autoMount());
-} else {
-  autoMount();
+// Framework-agnostic mount / teardown. A single MutationObserver reacts to ANY
+// DOM change — htmx, Turbo, Unpoly, Livewire, Alpine, Django admin inlines, or
+// hand-rolled JS — so no per-framework event wiring is needed. Added subtrees are
+// scanned for unmounted editors; removed subtrees have their editors torn down.
+// Mutations inside an editor's own shell (ProseMirror's DOM churn on every
+// keystroke) are skipped, so the observer stays cheap on a live page.
+function observeDom(): void {
+  const observer = new MutationObserver((records) => {
+    const added: Element[] = [];
+    const removed: Element[] = [];
+    for (const record of records) {
+      const target = record.target;
+      if (target instanceof Element && target.closest(`[${SHELL_ATTR}]`)) {
+        continue; // a mutation inside an editor — not a mount/unmount site
+      }
+      record.removedNodes.forEach((node) => {
+        if (node instanceof Element) {
+          removed.push(node);
+        }
+      });
+      record.addedNodes.forEach((node) => {
+        if (node instanceof Element && !node.hasAttribute(SHELL_ATTR)) {
+          added.push(node); // skip our own shells; they hold no unmounted editor
+        }
+      });
+    }
+    // Teardown before mount: an element removed and re-added in the same batch
+    // (a move) must not be destroyed and then skipped on re-mount.
+    if (instances.size) {
+      removed.forEach((node) => {
+        if (!node.isConnected) {
+          destroyWithin(node);
+        }
+      });
+    }
+    added.forEach((node) => {
+      if (node.isConnected) {
+        autoMount(node);
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
-// Django admin inline + htmx swaps (Path A re-scan).
-document.addEventListener("formset:added", () => autoMount());
-document.addEventListener("django:added", () => autoMount());
-document.addEventListener("htmx:afterSwap", () => autoMount());
+
+// One-time bootstrap: register chrome, scan the initial DOM, and start the
+// lifecycle observer. Guarded (see the bottom of the file) so a re-executed
+// bundle doesn't run it twice. The observer needs document.body, so when the
+// script runs in <head> during parsing we defer both to DOMContentLoaded.
+function bootstrap(): void {
+  registerBuiltInButtons();
+  checkTipTapVersion();
+
+  const start = (): void => {
+    autoMount();
+    observeDom();
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
+  }
+}
 
 const DjangoTipTap = {
-  version: "0.0.0",
+  version: __DTT_VERSION__,
   supportedTipTapVersion: SUPPORTED_TIPTAP_VERSION,
   init,
   get,
@@ -182,7 +267,19 @@ declare global {
     DjangoTipTap: typeof DjangoTipTap;
   }
 }
-window.DjangoTipTap = DjangoTipTap;
+
+// A second execution of the bundle must be a no-op. If the asset is injected and
+// run more than once (e.g. a framework re-inserts the script tag inside swapped-in
+// content), a re-run of this classic-script IIFE would build a fresh, empty glue
+// module — new instances map, new listeners — and clobber the live one, orphaning
+// every mounted editor. Bail if we're already installed and keep the first module.
+// (Read through a cast: the ambient type declares the property as always-present
+// for consumers, but at this point it may genuinely be undefined.)
+const alreadyMounted = (window as { DjangoTipTap?: typeof DjangoTipTap }).DjangoTipTap;
+if (!alreadyMounted) {
+  window.DjangoTipTap = DjangoTipTap;
+  bootstrap();
+}
 
 export type {
   RegionContext,

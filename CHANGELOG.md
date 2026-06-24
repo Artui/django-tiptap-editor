@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-06-24
+
+### Changed
+
+- **Framework-agnostic auto-mount.** Editors now mount and tear down via a single
+  `MutationObserver` instead of a fixed set of framework events. A widget inserted
+  into the DOM by htmx, Turbo, Unpoly, Livewire, Alpine, Django admin inlines, or
+  any script mounts automatically, and removing it disposes its editor — with no
+  per-framework wiring. ProseMirror's own DOM churn is ignored, so the observer
+  stays cheap on a live page. `{% tiptap_media %}` / `{{ form.media }}` placement
+  is unchanged.
+
+### Fixed
+
+- **Editor re-mounts cleanly after a destructive swap.** When a form was
+  re-rendered via an `outerHTML` swap (e.g. returning validation errors), the
+  server emits a fresh `<textarea>` with the same Django `id`, but the glue keyed
+  liveness to its instances map and never tore the old editor down — so a bare,
+  unstyled textarea appeared on top of an orphaned editor that only synced one
+  way ([#25](https://github.com/Artui/django-tiptap-editor/issues/25)). Mounting
+  is now keyed to the live DOM: a stale same-`id` instance whose node has left the
+  document is destroyed and the new textarea is mounted in its place. A re-executed
+  bundle (e.g. `{{ form.media }}` re-injected inside the swapped fragment) is now a
+  no-op instead of clobbering the live glue module.
+- **Image picker overlay no longer lingers after teardown.** The library image
+  picker portals its overlay to `<body>` and registers a `document` key handler;
+  if the editor was removed (e.g. a destructive DOM swap) while the picker was
+  open, both were left orphaned over the page. They are now disposed when the
+  editor is destroyed.
+- **`DjangoTipTap.version` reports the real package version.** It was a hardcoded
+  `0.0.0` placeholder; it is now injected from `version.py` at build time (`make
+  release-bump` rebuilds the bundle, and CI's bundle diff-check keeps it in sync).
+
 ## [0.3.0] — 2026-06-22
 
 ### Added
@@ -84,7 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.0.0...v0.1.0

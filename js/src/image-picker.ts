@@ -45,6 +45,7 @@ export async function openImagePicker(editor: Editor): Promise<void> {
   function close(): void {
     overlay.remove();
     document.removeEventListener("keydown", onKey, true);
+    editor.off("destroy", close);
   }
   function onKey(event: KeyboardEvent): void {
     if (event.key === "Escape") {
@@ -58,6 +59,11 @@ export async function openImagePicker(editor: Editor): Promise<void> {
   });
   closeBtn.addEventListener("click", close);
   document.addEventListener("keydown", onKey, true);
+  // The overlay is portaled to <body> and the keydown listener lives on
+  // `document` — neither sits inside the editor shell, so removing the shell does
+  // not clean them up. Dispose them if the editor is torn down while the picker
+  // is open (e.g. a destructive DOM swap removes the editor mid-pick).
+  editor.on("destroy", close);
   document.body.appendChild(overlay);
 
   try {

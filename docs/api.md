@@ -90,14 +90,22 @@ DjangoTipTap.ui.setTokens(tokens)
 DjangoTipTap.ui.setRenderer(region, fn)  // "toolbar" | "statusbar" | "bubbleMenu" | "floatingMenu"
 DjangoTipTap.ui.setShellRenderer(fn)     // replace the whole shell (experimental)
 DjangoTipTap.tiptap                  // re-exported primitives for authors
+DjangoTipTap.version                 // the django-tiptap-editor package version
 DjangoTipTap.supportedTipTapVersion  // the validated TipTap version
 ```
 
 ### Auto-mount (Path A)
 
-By default, textareas rendered by the widget mount automatically (on load and on
-`formset:added` / `django:added` / `htmx:afterSwap`). The textarea is hidden and kept in
-sync; removing it is handled by `destroy`.
+Textareas rendered by the widget mount automatically. A `MutationObserver` watches the
+DOM, so editors mount when inserted and tear down when removed — by htmx, Turbo, Unpoly,
+Livewire, Alpine, Django admin inlines, or any script — with no framework-specific wiring.
+The textarea is hidden and kept in sync; `destroy` is also exposed for manual teardown.
+
+A **destructive swap re-mounts cleanly**: when a textarea is replaced by a fresh one with
+the same `id` (an `outerHTML` swap), the stale editor is destroyed and the new node mounted
+— never a duplicate or an orphaned shell. Place `{{ form.media }}` in the page `<head>`,
+not inside a swapped partial (see
+[Quickstart](quickstart.md#dynamic-forms-htmx-turbo-admin-inlines)).
 
 ### Explicit init (Path B)
 

@@ -65,9 +65,11 @@ release-bump:
 		echo "Usage: make release-bump VERSION=X.Y.Z"; exit 1; \
 	fi
 	uvx bump-my-version bump --new-version "$(VERSION)" patch
+	$(MAKE) build-js
 	@echo ""
-	@echo "Bumped to $(VERSION). Edit CHANGELOG.md to fill the new section,"
-	@echo "review with 'git diff', then run 'make release-publish'."
+	@echo "Bumped to $(VERSION) and rebuilt JS bundles (version baked in)."
+	@echo "Edit CHANGELOG.md to fill the new section, review with 'git diff',"
+	@echo "then run 'make release-publish'."
 
 # Release pipeline. The version lives in django_tiptap_editor/version.py
 # (pyproject pulls it in via [tool.hatch.version] dynamic). The three targets
