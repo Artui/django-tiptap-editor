@@ -21,6 +21,10 @@ import "./styles.css";
 const CONFIG_ATTR = "data-tiptap-config";
 const BOUND_ATTR = "data-tiptap-bound";
 const STORAGE_ATTR = "data-tiptap-storage";
+// Marks an editor's shell root. Lets the lifecycle observer cheaply ignore
+// ProseMirror's own DOM churn (mutations inside a shell) instead of treating
+// every keystroke as a potential mount/unmount.
+const SHELL_ATTR = "data-tiptap-shell";
 
 // Re-exported primitives for extension authors (no bundler of their own needed).
 const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
@@ -125,6 +129,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
 
   // Default chrome, or a consumer's region / shell override (see build-shell).
   const shell = buildShell(editor, config, content, t);
+  shell.el.setAttribute(SHELL_ATTR, id);
   if (config.height) {
     shell.el.style.setProperty("--tiptap-height", config.height);
   }
@@ -165,43 +170,80 @@ function destroyWithin(root: Element): void {
   }
 }
 
-// Idempotent: mounts every unbound textarea[data-tiptap-config] under `root`.
+// Idempotent: mounts every unbound textarea[data-tiptap-config] at or under
+// `root`. The observer can hand us a swapped-in textarea directly (not just a
+// container), so the root itself is checked, not only its descendants.
 function autoMount(root: ParentNode = document): void {
   const selector = `textarea[${CONFIG_ATTR}]:not([${BOUND_ATTR}])`;
+  if (root instanceof HTMLTextAreaElement && root.matches(selector)) {
+    init(root, readConfig(root));
+  }
   root.querySelectorAll<HTMLTextAreaElement>(selector).forEach((textarea) => {
     init(textarea, readConfig(textarea));
   });
 }
 
-// One-time bootstrap: register chrome, scan the initial DOM, and wire the
-// lifecycle listeners. Guarded (see the bottom of the file) so a re-executed
-// bundle doesn't run it twice.
+// Framework-agnostic mount / teardown. A single MutationObserver reacts to ANY
+// DOM change — htmx, Turbo, Unpoly, Livewire, Alpine, Django admin inlines, or
+// hand-rolled JS — so no per-framework event wiring is needed. Added subtrees are
+// scanned for unmounted editors; removed subtrees have their editors torn down.
+// Mutations inside an editor's own shell (ProseMirror's DOM churn on every
+// keystroke) are skipped, so the observer stays cheap on a live page.
+function observeDom(): void {
+  const observer = new MutationObserver((records) => {
+    const added: Element[] = [];
+    const removed: Element[] = [];
+    for (const record of records) {
+      const target = record.target;
+      if (target instanceof Element && target.closest(`[${SHELL_ATTR}]`)) {
+        continue; // a mutation inside an editor — not a mount/unmount site
+      }
+      record.removedNodes.forEach((node) => {
+        if (node instanceof Element) {
+          removed.push(node);
+        }
+      });
+      record.addedNodes.forEach((node) => {
+        if (node instanceof Element && !node.hasAttribute(SHELL_ATTR)) {
+          added.push(node); // skip our own shells; they hold no unmounted editor
+        }
+      });
+    }
+    // Teardown before mount: an element removed and re-added in the same batch
+    // (a move) must not be destroyed and then skipped on re-mount.
+    if (instances.size) {
+      removed.forEach((node) => {
+        if (!node.isConnected) {
+          destroyWithin(node);
+        }
+      });
+    }
+    added.forEach((node) => {
+      if (node.isConnected) {
+        autoMount(node);
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// One-time bootstrap: register chrome, scan the initial DOM, and start the
+// lifecycle observer. Guarded (see the bottom of the file) so a re-executed
+// bundle doesn't run it twice. The observer needs document.body, so when the
+// script runs in <head> during parsing we defer both to DOMContentLoaded.
 function bootstrap(): void {
   registerBuiltInButtons();
   checkTipTapVersion();
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => autoMount());
-  } else {
+  const start = (): void => {
     autoMount();
+    observeDom();
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
   }
-  // Additive re-scans: Django admin inlines (formset:added / django:added) and
-  // htmx content swaps (htmx:afterSwap). autoMount is idempotent and init()
-  // self-heals a stale same-id entry left by a destructive swap.
-  document.addEventListener("formset:added", () => autoMount());
-  document.addEventListener("django:added", () => autoMount());
-  document.addEventListener("htmx:afterSwap", () => autoMount());
-  // Destructive teardown: htmx fires htmx:beforeCleanupElement on each element it
-  // is about to remove during a swap. Destroy any editor inside it so no orphaned
-  // shell or detached editor survives — including when the swap drops the field
-  // without re-rendering it (so init() never runs to self-heal). The event
-  // bubbles; its target is the element being cleaned up.
-  document.addEventListener("htmx:beforeCleanupElement", (event) => {
-    const target = event.target;
-    if (target instanceof Element) {
-      destroyWithin(target);
-    }
-  });
 }
 
 const DjangoTipTap = {

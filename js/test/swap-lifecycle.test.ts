@@ -1,9 +1,11 @@
-// Destructive-swap lifecycle. Django emits a stable id_<field> on the textarea,
-// so after an outerHTML swap the server re-renders a fresh textarea with the SAME
-// id. The glue must re-mount on the new node and tear the stale editor down — not
-// return the dead one and leave a bare textarea on top. These tests drive the
-// real document-level listeners installed by the module's bootstrap and assert
-// against the live DOM.
+// Framework-agnostic mount / teardown. The glue watches the DOM with a single
+// MutationObserver, so editors mount and tear down on ANY DOM change — no htmx /
+// admin event wiring. These tests drive real DOM mutations (no synthetic events)
+// and flush the observer's microtask before asserting against the live DOM.
+//
+// Django emits a stable id_<field>, so after a destructive swap the server
+// re-renders a fresh textarea with the SAME id. The glue must re-mount on the new
+// node and tear the stale editor down — not leave a bare textarea on top.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import DjangoTipTap from "../src/index";
@@ -11,8 +13,10 @@ import DjangoTipTap from "../src/index";
 const ID = "id_content";
 const FIELD = `<textarea id="${ID}" data-tiptap-config="{}">hello</textarea>`;
 
-function fire(name: string): void {
-  document.dispatchEvent(new Event(name));
+// MutationObserver callbacks run as microtasks; a macrotask tick drains them
+// (including the no-op follow-up the observer sees from our own shell insert).
+function flush(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function plantForm(html: string): HTMLFormElement {
@@ -23,43 +27,47 @@ function plantForm(html: string): HTMLFormElement {
 }
 
 function shellCount(): number {
-  return document.querySelectorAll(".django-tiptap").length;
+  return document.querySelectorAll("[data-tiptap-shell]").length;
 }
 
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
-afterEach(() => {
-  DjangoTipTap.destroy(ID);
-  vi.restoreAllMocks();
+afterEach(async () => {
+  // Clearing the DOM lets the observer tear down any live instance; flush so the
+  // map is clean before the next test.
   document.body.innerHTML = "";
+  await flush();
+  vi.restoreAllMocks();
 });
 
-describe("destructive swap lifecycle", () => {
-  it("re-mounts on the swapped-in textarea and destroys the stale editor", () => {
+describe("framework-agnostic swap lifecycle", () => {
+  it("mounts an editor when a textarea is inserted (no framework event)", async () => {
     const form = plantForm(FIELD);
-    fire("htmx:afterSwap"); // initial mount via the htmx re-scan path
+    await flush();
 
+    const textarea = form.querySelector("textarea") as HTMLTextAreaElement;
+    expect(DjangoTipTap.get(ID)).not.toBeNull();
+    expect(textarea.style.display).toBe("none");
+    expect(textarea.getAttribute("data-tiptap-bound")).toBe("true");
+    expect(shellCount()).toBe(1);
+  });
+
+  it("re-mounts on the swapped-in textarea and destroys the stale editor", async () => {
+    const form = plantForm(FIELD);
+    await flush();
     const firstTextarea = form.querySelector("textarea") as HTMLTextAreaElement;
     const firstEditor = DjangoTipTap.get(ID);
-    expect(firstEditor).not.toBeNull();
-    expect(firstTextarea.style.display).toBe("none");
-    expect(firstTextarea.getAttribute("data-tiptap-bound")).toBe("true");
-    expect(shellCount()).toBe(1);
 
     // Server returns the form again (e.g. validation errors): an outerHTML swap
-    // replaces the whole fragment with a brand-new textarea carrying the SAME
-    // Django id and no shell. Replacing innerHTML wipes the old textarea + shell.
+    // replaces the fragment with a brand-new textarea carrying the SAME id.
     form.innerHTML = FIELD;
     const secondTextarea = form.querySelector("textarea") as HTMLTextAreaElement;
     expect(secondTextarea).not.toBe(firstTextarea);
-    expect(secondTextarea.hasAttribute("data-tiptap-bound")).toBe(false);
-
-    fire("htmx:afterSwap");
+    await flush();
 
     const secondEditor = DjangoTipTap.get(ID);
-    // Exactly one editor, bound to the NEW textarea, with a single shell.
     expect(secondEditor).not.toBeNull();
     expect(secondEditor).not.toBe(firstEditor);
     expect(firstEditor?.isDestroyed).toBe(true);
@@ -68,86 +76,87 @@ describe("destructive swap lifecycle", () => {
     expect(shellCount()).toBe(1);
   });
 
-  it("re-mounted editor syncs two-way (writes back into the new textarea)", () => {
+  it("re-mounted editor syncs two-way (writes into the new textarea)", async () => {
     const form = plantForm(FIELD);
-    fire("htmx:afterSwap");
-
+    await flush();
     form.innerHTML = FIELD;
     const secondTextarea = form.querySelector("textarea") as HTMLTextAreaElement;
-    fire("htmx:afterSwap");
+    await flush();
 
-    const editor = DjangoTipTap.get(ID);
-    editor?.commands.insertContent(" world");
-    // The new (not the orphaned) textarea receives the update.
+    DjangoTipTap.get(ID)?.commands.insertContent(" world");
     expect(secondTextarea.value).toContain("world");
   });
 
-  it("removes the orphaned shell when only the textarea node is swapped", () => {
+  it("removes the orphaned shell when only the textarea node is swapped", async () => {
     const form = plantForm(FIELD);
-    fire("htmx:afterSwap");
-
+    await flush();
     const firstTextarea = form.querySelector("textarea") as HTMLTextAreaElement;
-    const firstShell = form.querySelector(".django-tiptap") as HTMLElement;
-    expect(firstShell).not.toBeNull();
+    const firstShell = form.querySelector("[data-tiptap-shell]") as HTMLElement;
 
-    // Narrow swap: replace only the <textarea> node. The shell is a sibling, not
-    // a child, so htmx leaves it behind — an orphan over the new textarea.
+    // Narrow swap: replace only the <textarea>. The shell is a sibling, not a
+    // child, so it is left behind as an orphan over the new textarea.
     const holder = document.createElement("div");
     holder.innerHTML = FIELD;
     const secondTextarea = holder.firstElementChild as HTMLTextAreaElement;
     firstTextarea.replaceWith(secondTextarea);
-    expect(document.body.contains(firstShell)).toBe(true); // orphan present
+    await flush();
 
-    fire("htmx:afterSwap");
-
-    // init() evicted the stale instance, whose destroy() removed the orphan.
     expect(document.body.contains(firstShell)).toBe(false);
     expect(shellCount()).toBe(1);
     expect(secondTextarea.getAttribute("data-tiptap-bound")).toBe("true");
   });
 
-  it("tears down the editor when htmx cleans up the removed element", () => {
+  it("tears down the editor when its container is removed", async () => {
     const form = plantForm(FIELD);
-    fire("htmx:afterSwap");
-
+    await flush();
     const editor = DjangoTipTap.get(ID);
-    const shell = form.querySelector(".django-tiptap") as HTMLElement;
-    expect(editor).not.toBeNull();
+    const shell = form.querySelector("[data-tiptap-shell]") as HTMLElement;
 
-    // A swap that drops the field entirely (e.g. replaced by a success message):
-    // htmx fires beforeCleanupElement on the content it removes, and init() never
-    // runs to self-heal. The event bubbles to the document-level listener.
-    form.dispatchEvent(new Event("htmx:beforeCleanupElement", { bubbles: true }));
+    form.remove();
+    await flush();
 
     expect(editor?.isDestroyed).toBe(true);
     expect(DjangoTipTap.get(ID)).toBeNull();
     expect(document.body.contains(shell)).toBe(false);
   });
 
-  it("ignores beforeCleanupElement for unrelated removed content", () => {
-    const form = plantForm(FIELD);
-    fire("htmx:afterSwap");
+  it("leaves unrelated DOM removals alone", async () => {
+    plantForm(FIELD);
+    await flush();
     const editor = DjangoTipTap.get(ID);
 
-    // An unrelated element being cleaned up must not touch the live editor.
     const other = document.createElement("div");
+    other.textContent = "unrelated";
     document.body.appendChild(other);
-    other.dispatchEvent(new Event("htmx:beforeCleanupElement", { bubbles: true }));
+    await flush();
+    other.remove();
+    await flush();
 
     expect(editor?.isDestroyed).toBe(false);
     expect(DjangoTipTap.get(ID)).toBe(editor);
   });
 
-  it("still supports additive multi-mount (admin inlines / formset:added)", () => {
-    const form = plantForm(
-      `${FIELD}<textarea id="id_extra" data-tiptap-config="{}">more</textarea>`,
-    );
-    fire("formset:added");
+  it("supports additive multi-mount (admin inlines / dynamically added fields)", async () => {
+    plantForm(`${FIELD}<textarea id="id_extra" data-tiptap-config="{}">more</textarea>`);
+    await flush();
 
     expect(DjangoTipTap.get(ID)).not.toBeNull();
     expect(DjangoTipTap.get("id_extra")).not.toBeNull();
     expect(shellCount()).toBe(2);
+  });
 
-    DjangoTipTap.destroy("id_extra");
+  it("ignores ProseMirror's own DOM churn (no remount on edit)", async () => {
+    plantForm(FIELD);
+    await flush();
+    const editor = DjangoTipTap.get(ID);
+
+    // Editing mutates the editor's contenteditable DOM (inside the shell). The
+    // observer must skip it — no teardown, no second mount.
+    editor?.commands.insertContent(" more text");
+    await flush();
+
+    expect(DjangoTipTap.get(ID)).toBe(editor);
+    expect(editor?.isDestroyed).toBe(false);
+    expect(shellCount()).toBe(1);
   });
 });
