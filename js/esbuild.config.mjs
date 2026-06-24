@@ -19,6 +19,17 @@ const TIPTAP_VERSION = JSON.parse(
   readFileSync("node_modules/@tiptap/core/package.json", "utf8"),
 ).version;
 
+// The package version, read from the single source of truth (version.py) and
+// baked into the bundle as DjangoTipTap.version. CI's js-build diff check then
+// enforces that a committed bundle carries the current version — so `make
+// release-bump` rebuilds the bundle after bumping version.py.
+const PACKAGE_VERSION = /__version__\s*:\s*str\s*=\s*"([^"]+)"/.exec(
+  readFileSync("../django_tiptap_editor/version.py", "utf8"),
+)?.[1];
+if (!PACKAGE_VERSION) {
+  throw new Error("could not read __version__ from ../django_tiptap_editor/version.py");
+}
+
 const OUTDIR = "../django_tiptap_editor/static/django_tiptap_editor";
 
 const shared = {
@@ -31,6 +42,7 @@ const shared = {
 };
 
 const defines = (buildKind) => ({
+  __DTT_VERSION__: JSON.stringify(PACKAGE_VERSION),
   __DTT_TIPTAP_VERSION__: JSON.stringify(TIPTAP_VERSION),
   __DTT_BUILD__: JSON.stringify(buildKind),
 });

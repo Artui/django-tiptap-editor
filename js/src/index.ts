@@ -247,7 +247,7 @@ function bootstrap(): void {
 }
 
 const DjangoTipTap = {
-  version: "0.0.0",
+  version: __DTT_VERSION__,
   supportedTipTapVersion: SUPPORTED_TIPTAP_VERSION,
   init,
   get,

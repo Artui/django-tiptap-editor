@@ -28,7 +28,7 @@ roadmap. This file governs *how* code is written.
 | `make format` / `make format-check` | write / verify `ruff format` |
 | `make type-check` | `ty check django_tiptap_editor` |
 | `make docs-serve` / `make docs-build` | live docs / strict build |
-| `make release-bump VERSION=X.Y.Z` | bump `version.py` + promote CHANGELOG |
+| `make release-bump VERSION=X.Y.Z` | bump `version.py` + promote CHANGELOG + rebuild JS bundles |
 | `make release-publish` | workstation release (prepare → publish → finalize) |
 | `make build-js` | rebuild the committed JS bundles (esbuild, in `js/`) |
 | `make build` | `build-js` + `uv build` (sdist + wheel) |
@@ -198,7 +198,7 @@ promotes `[Unreleased]` → `[0.1.0]`, and fixes the compare-link footer.
 
 ```bash
 # 1. On a release branch with CHANGELOG.md entries under ## [Unreleased]:
-make release-bump VERSION=0.2.0
+make release-bump VERSION=0.2.0   # also rebuilds the JS bundles (version baked in)
 # 2. Review the diff, commit, open a PR, get it reviewed.
 git diff && git commit -am "Release 0.2.0" && git push -u origin release/0.2.0 && gh pr create
 # 3. Merge to main. release.yml detects the bump, runs the full flow, tags/publishes.
