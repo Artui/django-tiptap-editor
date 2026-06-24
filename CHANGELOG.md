@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Editor re-mounts cleanly after a destructive htmx swap.** When a form was
+  re-rendered via an `outerHTML` swap (e.g. returning validation errors), the
+  server emits a fresh `<textarea>` with the same Django `id`, but the glue keyed
+  liveness to its instances map and never tore the old editor down — so a bare,
+  unstyled textarea appeared on top of an orphaned editor that only synced one
+  way ([#25](https://github.com/Artui/django-tiptap-editor/issues/25)). Mounting
+  is now keyed to the live DOM: a stale same-`id` instance whose node has left the
+  document is destroyed and the new textarea is mounted in its place. Editors are
+  also disposed on `htmx:beforeCleanupElement`, and a re-executed bundle (e.g.
+  `{{ form.media }}` re-injected inside the swapped fragment) is now a no-op
+  instead of clobbering the live glue module.
+
 ## [0.3.0] — 2026-06-22
 
 ### Added

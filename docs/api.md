@@ -99,6 +99,13 @@ By default, textareas rendered by the widget mount automatically (on load and on
 `formset:added` / `django:added` / `htmx:afterSwap`). The textarea is hidden and kept in
 sync; removing it is handled by `destroy`.
 
+Mounting is keyed to the live DOM, so a **destructive swap re-mounts cleanly**: when htmx
+replaces a textarea with a fresh one carrying the same `id` (an `outerHTML` swap), the
+stale editor is destroyed and the new node is mounted — never a duplicate or an orphaned
+shell. Editors are also disposed on `htmx:beforeCleanupElement` for content swapped away
+without a replacement. Place `{{ form.media }}` in the page `<head>`, not inside an
+htmx-swapped partial (see [Quickstart](quickstart.md#dynamic-forms-htmx-admin-inlines)).
+
 ### Explicit init (Path B)
 
 For full control — and for the `onChange` callback, which can't travel through the JSON

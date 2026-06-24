@@ -59,4 +59,18 @@ Auto-mount re-scans on `DOMContentLoaded`, Django admin's `formset:added` /
 `django:added`, and `htmx:afterSwap`, so editors added after page load mount
 automatically. For full control, use [explicit init (Path B)](api.md#explicit-init-path-b).
 
+**Destructive swaps are supported.** When htmx replaces a form via an `outerHTML`
+swap (e.g. re-rendering with validation errors), the server emits a fresh
+`<textarea>` with the same Django `id`. The editor for the old node is torn down
+and re-mounted on the new one — no duplicate editor, no bare textarea left over.
+Cleanup also runs on `htmx:beforeCleanupElement`, so swapping a field away
+entirely disposes its editor too.
+
+**Keep `{{ form.media }}` out of the swapped fragment.** Put the editor assets
+(`{{ form.media }}` or `{% tiptap_media %}`) in your non-swapped page `<head>`,
+never inside an htmx partial. A re-injected `<script>` re-executes the bundle;
+the glue guards against this (a second execution is a no-op), but loading the
+assets once in the page shell is cleaner and avoids re-downloading them on every
+swap.
+
 Next: [Configuration](configuration.md).
