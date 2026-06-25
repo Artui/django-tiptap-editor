@@ -28,9 +28,9 @@
     "@tiptap/extension-underline": "2.27.2"
   },
   "devDependencies": {
-    "esbuild": "0.25.12",
+    "esbuild": "0.28.1",
     "jsdom": "25.0.1",
     "typescript": "5.7.3",
-    "vitest": "2.1.9"
+    "vitest": "4.1.9"
   }
 }
