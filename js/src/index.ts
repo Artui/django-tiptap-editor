@@ -36,6 +36,9 @@ interface Instance {
   // against the live DOM (document.contains) rather than trusting the map — a
   // destructive DOM swap can remove the node without ever calling destroy().
   element: HTMLTextAreaElement;
+  // Narrow per-editor observer that re-asserts the textarea's hidden state when a
+  // morphing swap strips it (see watchTextareaAttributes). Disconnected on destroy.
+  attrObserver: MutationObserver;
 }
 
 const instances = new Map<string, Instance>();
@@ -82,21 +85,56 @@ function readInitialContent(raw: string): object | string {
   }
 }
 
+// A morphing swap (idiomorph / hx-swap="morph" / a server-side re-render that the
+// host morphs in) reconciles the live textarea's attributes back to the server
+// markup, which carries neither display:none nor data-tiptap-bound — un-hiding the
+// raw field next to the live editor. Those are *attribute* mutations the
+// body-level childList observer never sees, so each bound textarea gets its own
+// narrow observer that re-asserts the hidden state. Writes are guarded (only when
+// the value is actually wrong) so a re-assertion can't feed back into an infinite
+// mutation loop, and attributeFilter keeps this off the global hot path — no
+// page-wide attribute observation.
+function watchTextareaAttributes(element: HTMLTextAreaElement): MutationObserver {
+  const observer = new MutationObserver(() => {
+    if (element.style.display !== "none") {
+      element.style.display = "none";
+    }
+    if (element.getAttribute(BOUND_ATTR) !== "true") {
+      element.setAttribute(BOUND_ATTR, "true");
+    }
+  });
+  observer.observe(element, {
+    attributes: true,
+    attributeFilter: ["style", BOUND_ATTR],
+  });
+  return observer;
+}
+
 function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
   if (existing) {
-    // Honor the cached instance only while its textarea is still in the live
-    // DOM. A destructive swap can replace the field with a fresh textarea that
-    // reuses the same id (Django emits a stable id_<field>), leaving the old
-    // node and its shell detached. Trusting the map here would return a dead
-    // editor and leave the new textarea unbound, so evict the stale instance and
-    // fall through to mount on the new element.
-    if (document.contains(existing.element)) {
+    // Idempotency lives here — in the live instances map, not the serialized
+    // data-tiptap-bound attribute (which survives into htmx's history snapshot
+    // and is stripped by morphs, so it can't be trusted). Honor the cached
+    // instance only when it is bound to *this* node and the node is still in the
+    // live DOM. A destructive or history-restore swap deposits a fresh textarea
+    // reusing the same id (Django emits a stable id_<field>); a same-id-but-
+    // different-node — or a detached node — means the editor is stale, so evict
+    // it and fall through to mount on the new element.
+    if (existing.element === element && document.contains(element)) {
       return existing.editor;
     }
     destroy(id);
   }
+
+  // Fresh mount. An htmx history-restore snapshot can deposit a serialized,
+  // untracked shell for this id alongside the bound textarea; destroy() only
+  // removes *tracked* shells, so clear any orphan carrying our id before inserting
+  // the live one — otherwise a dead, non-interactive shell lingers over the page.
+  document
+    .querySelectorAll(`[${SHELL_ATTR}="${id}"]`)
+    .forEach((orphan) => orphan.remove());
 
   const content = document.createElement("div");
   content.className = "django-tiptap__content";
@@ -140,7 +178,8 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   editor.on("transaction", () => shell.refresh());
 
   element.setAttribute(BOUND_ATTR, "true");
-  instances.set(id, { editor, shell: shell.el, element });
+  const attrObserver = watchTextareaAttributes(element);
+  instances.set(id, { editor, shell: shell.el, element, attrObserver });
   return editor;
 }
 
@@ -153,6 +192,7 @@ function destroy(id: string): void {
   if (!instance) {
     return;
   }
+  instance.attrObserver.disconnect();
   instance.editor.destroy();
   instance.shell.remove();
   instances.delete(id);
@@ -170,17 +210,42 @@ function destroyWithin(root: Element): void {
   }
 }
 
-// Idempotent: mounts every unbound textarea[data-tiptap-config] at or under
-// `root`. The observer can hand us a swapped-in textarea directly (not just a
-// container), so the root itself is checked, not only its descendants.
-function autoMount(root: ParentNode = document): void {
-  const selector = `textarea[${CONFIG_ATTR}]:not([${BOUND_ATTR}])`;
-  if (root instanceof HTMLTextAreaElement && root.matches(selector)) {
-    init(root, readConfig(root));
+// Every field carrying a config. The old `:not([data-tiptap-bound])` filter is
+// gone on purpose: idempotency moved into init() (the live instances map), so the
+// selector must also match an already-bound field — a history-restore snapshot
+// carries a stale data-tiptap-bound that only init() can re-evaluate against the
+// live DOM.
+const FIELD_SELECTOR = `textarea[${CONFIG_ATTR}]`;
+
+// Mount every matching field at or under `root` (idempotent via init()). The
+// observer can hand us a swapped-in textarea directly (not just a container), so
+// the root itself is checked, not only its descendants. `skipManual` filters out
+// manualMount fields for the *automatic* triggers (bootstrap scan + DOM observer);
+// an explicit autoMount()/init() call mounts them regardless — that is the
+// documented manualMount workflow (register renderers, then call autoMount()).
+function mountAll(root: ParentNode, skipManual: boolean): void {
+  const consider = (textarea: HTMLTextAreaElement): void => {
+    const config = readConfig(textarea);
+    if (skipManual && config.manualMount === true) {
+      return;
+    }
+    init(textarea, config);
+  };
+  if (root instanceof HTMLTextAreaElement && root.matches(FIELD_SELECTOR)) {
+    consider(root);
   }
-  root.querySelectorAll<HTMLTextAreaElement>(selector).forEach((textarea) => {
-    init(textarea, readConfig(textarea));
-  });
+  root.querySelectorAll<HTMLTextAreaElement>(FIELD_SELECTOR).forEach(consider);
+}
+
+// Public, explicit mount — caller intent overrides the manualMount opt-out.
+function autoMount(root: ParentNode = document): void {
+  mountAll(root, false);
+}
+
+// Internal, automatic scan — the bootstrap scan and the DOM observer. Skips
+// manualMount fields, so they mount only on an explicit autoMount()/init().
+function autoScan(root: ParentNode = document): void {
+  mountAll(root, true);
 }
 
 // Framework-agnostic mount / teardown. A single MutationObserver reacts to ANY
@@ -220,7 +285,7 @@ function observeDom(): void {
     }
     added.forEach((node) => {
       if (node.isConnected) {
-        autoMount(node);
+        autoScan(node);
       }
     });
   });
@@ -236,7 +301,7 @@ function bootstrap(): void {
   checkTipTapVersion();
 
   const start = (): void => {
-    autoMount();
+    autoScan();
     observeDom();
   };
   if (document.readyState === "loading") {
