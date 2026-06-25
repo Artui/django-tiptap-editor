@@ -1171,7 +1171,7 @@ the package root.</p>
 <div class="language-ts highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span><span class="w">   </span><span class="c1">// explicit mount; returns the editor</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w">                 </span><span class="c1">// editor handle | null</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">destroy</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w">             </span><span class="c1">// unmount + tear down the shell</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">autoMount</span><span class="p">(</span><span class="nx">root</span><span class="o">?</span><span class="p">)</span><span class="w">        </span><span class="c1">// idempotent; mounts unbound textareas</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">autoMount</span><span class="p">(</span><span class="nx">root</span><span class="o">?</span><span class="p">)</span><span class="w">        </span><span class="c1">// idempotent; mounts every config-carrying textarea (incl. manualMount)</span>
 </span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerExtension</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">factory</span><span class="p">)</span>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerLocale</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span><span class="w"> </span><span class="nx">strings</span><span class="p">)</span>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">renderHTML</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span><span class="w">         </span><span class="c1">// ProseMirror JSON -&gt; HTML string</span>
@@ -1195,6 +1195,25 @@ the same <code>id</code> (an <code>outerHTML</code> swap), the stale editor is d
 — never a duplicate or an orphaned shell. Place <code>{{ form.media }}</code> in the page <code>&lt;head&gt;</code>,
 not inside a swapped partial (see
 <a href="../quickstart/#dynamic-forms-htmx-turbo-admin-inlines">Quickstart</a>).</p>
+<p>Idempotency is keyed to the <strong>live editor</strong>, not the <code>data-tiptap-bound</code> attribute, so two
+more swap shapes are handled:</p>
+<ul>
+<li><strong>htmx history (Back/Forward).</strong> With <code>hx-boost</code> / <code>hx-push-url</code> / <code>hx-history</code>, htmx
+  caches a static snapshot of the page — including the rendered shell and the hidden
+  textarea — and restores it on Back (firing <code>htmx:historyRestore</code>, not <code>afterSwap</code>). The
+  restored field re-mounts a live editor and the dead snapshot shell is removed. For pages
+  where you'd rather skip the snapshot entirely, set <code>hx-history="false"</code> on the editor page.</li>
+<li><strong>Morphing swaps (<code>hx-swap="morph"</code> / idiomorph).</strong> A morph reconciles the live textarea's
+  attributes back to the server markup, stripping <code>display:none</code>/<code>data-tiptap-bound</code>; a
+  per-editor observer re-asserts the hidden state in place (no remount). Mark the editor
+  region <code>hx-preserve</code> for pure-attribute morphs. Note: once an editor is live it <strong>owns the
+  content</strong> — a server-side value change delivered via morph is overwritten on the next edit.</li>
+</ul>
+<p><strong>Opting a field out of auto-mount</strong> — set <code>manualMount: true</code> (per field, or in
+<code>TIPTAP_DEFAULT_CONFIG</code>) when renderers/extensions must be registered before the editor
+builds. The automatic triggers (initial scan + the <code>MutationObserver</code>) then skip it; mount it
+yourself once you're ready with <code>DjangoTipTap.autoMount()</code> (mounts every field, including
+manualMount ones) or <code>DjangoTipTap.init(el, config)</code>. See <a href="../theming/#load-order">Theming → Load order</a>.</p>
 <h3 id="explicit-init-path-b">Explicit init (Path B)<a class="headerlink" href="#explicit-init-path-b" title="Permanent link">&para;</a></h3>
 <p>For full control — and for the <code>onChange</code> callback, which can't travel through the JSON
 <code>data-tiptap-config</code> attribute:</p>

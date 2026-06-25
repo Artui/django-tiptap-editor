@@ -1242,8 +1242,19 @@ experimental and pin your supported version range. See the <a href="../semver/">
 <h2 id="load-order">Load order<a class="headerlink" href="#load-order" title="Permanent link">&para;</a></h2>
 <p>Renderers (like extensions and buttons) must be registered <strong>before</strong> auto-mount. Load your
 registration script <em>after</em> the bundle/glue, both with <code>defer</code> — deferred scripts run in document
-order before <code>DOMContentLoaded</code>, so the registry is populated before mounting. For non-<code>defer</code>
-setups, set <code>manualMount: true</code> and call <code>DjangoTipTap.autoMount()</code> after registering.</p>
+order before <code>DOMContentLoaded</code>, so the registry is populated before mounting.</p>
+<p>For non-<code>defer</code> setups, set <code>manualMount: true</code> on the field (or project-wide via
+<code>TIPTAP_DEFAULT_CONFIG</code>). The automatic triggers — the initial scan and the <code>MutationObserver</code>
+that auto-mounts swapped-in fields — then <strong>skip</strong> that field, so it never mounts before your
+renderers exist. Register everything, then mount explicitly with <code>DjangoTipTap.autoMount()</code> (which
+mounts every field, including <code>manualMount</code> ones) or <code>DjangoTipTap.init(el, config)</code>:</p>
+<div class="language-html highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;…/tiptap.bundle.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;toolbar&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">myToolbar</span><span class="p">);</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerExtension</span><span class="p">(</span><span class="s2">&quot;myMark&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">myMarkFactory</span><span class="p">);</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">autoMount</span><span class="p">();</span><span class="w"> </span><span class="c1">// now mount the manualMount fields</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</span></code></pre></div>
 
 
 
