@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-06-25
+
 ### Added
 
 - **`manualMount` opt-out is now live.** Setting `manualMount: true` on a field (per widget
@@ -143,7 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0
