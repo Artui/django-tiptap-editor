@@ -165,5 +165,19 @@ experimental and pin your supported version range. See the [stability policy](se
 
 Renderers (like extensions and buttons) must be registered **before** auto-mount. Load your
 registration script *after* the bundle/glue, both with `defer` — deferred scripts run in document
-order before `DOMContentLoaded`, so the registry is populated before mounting. For non-`defer`
-setups, set `manualMount: true` and call `DjangoTipTap.autoMount()` after registering.
+order before `DOMContentLoaded`, so the registry is populated before mounting.
+
+For non-`defer` setups, set `manualMount: true` on the field (or project-wide via
+`TIPTAP_DEFAULT_CONFIG`). The automatic triggers — the initial scan and the `MutationObserver`
+that auto-mounts swapped-in fields — then **skip** that field, so it never mounts before your
+renderers exist. Register everything, then mount explicitly with `DjangoTipTap.autoMount()` (which
+mounts every field, including `manualMount` ones) or `DjangoTipTap.init(el, config)`:
+
+```html
+<script src="…/tiptap.bundle.js"></script>
+<script>
+  DjangoTipTap.ui.setRenderer("toolbar", myToolbar);
+  DjangoTipTap.registerExtension("myMark", myMarkFactory);
+  DjangoTipTap.autoMount(); // now mount the manualMount fields
+</script>
+```

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`manualMount` opt-out is now live.** Setting `manualMount: true` on a field (per widget
+  or via `TIPTAP_DEFAULT_CONFIG`) makes the *automatic* triggers — the initial scan and the
+  `MutationObserver` — skip it, so it never mounts before your renderers/extensions are
+  registered. Mount it yourself afterwards with `DjangoTipTap.autoMount()` (which mounts every
+  field, including `manualMount` ones) or `DjangoTipTap.init(el, config)`. The key was already
+  accepted and serialized by the Python side; this wires it into the JS mount path.
+
+### Fixed
+
+- **htmx history (Back/Forward) restores a live editor.** With `hx-boost` / `hx-push-url` /
+  `hx-history`, htmx caches a static snapshot of the page — capturing both the rendered shell
+  and the hidden, already-bound textarea — and restores it on Back (firing
+  `htmx:historyRestore`, not `afterSwap`). The restored field used to stay a frozen, dead shell
+  because mount idempotency trusted the serialized `data-tiptap-bound` attribute. Idempotency
+  now lives in the live editor map, so the restored field re-mounts a working editor and the
+  dead snapshot shell is removed. Consumers can still set `hx-history="false"` to skip the
+  snapshot entirely.
+- **Morphing swaps no longer un-hide the raw textarea.** A morph (`hx-swap="morph"` /
+  idiomorph) reconciles the live textarea's attributes back to the server markup, stripping
+  `display:none` and `data-tiptap-bound` and exposing the raw field next to the editor. A
+  narrow per-editor attribute observer now re-asserts the hidden state in place (no remount,
+  no global attribute observation). Mark the editor region `hx-preserve` for pure-attribute
+  morphs.
+
 ## [0.3.1] — 2026-06-24
 
 ### Changed
