@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-07-01
+
+### Added
+
+- **Configurable text-color / highlight palettes.** Two new config keys —
+  `textColors` and `highlightColors` (each a list of CSS colors) — override the
+  swatches shown in the `color` (text) / `highlight` (background) toolbar
+  dropdowns, per field or via `TIPTAP_DEFAULT_CONFIG`. Omit them to keep the
+  built-in palettes (no change for existing consumers). Like the font lists,
+  the swatches resolve per editor at render time; invalid values fail loudly via
+  `validate_config`.
+
 ## [0.5.0] — 2026-07-01
 
 ### Added
@@ -157,7 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...v0.3.1

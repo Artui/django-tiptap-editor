@@ -115,7 +115,7 @@ root = ["./django_tiptap_editor"]
 # The source tree carries 0.0.0 until the first release; `make release-bump
 # VERSION=0.1.0` cuts the first published version and promotes [Unreleased].
 [tool.bumpversion]
-current_version = "0.5.0"
+current_version = "0.6.0"
 allow_dirty = false
 commit = false
 tag = false

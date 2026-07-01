@@ -21,6 +21,8 @@ any omitted key.
 | `imageFileTypes` | str | Comma-separated extensions for the upload dialog, e.g. `"png,jpg,gif"`. |
 | `fontFamilies` | list[str] | Presets for the `fontFamily` dropdown; each a full CSS font stack (label = first segment, quotes stripped). Omit for the built-in list. |
 | `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`). Omit for the built-in list. |
+| `textColors` | list[str] | Swatches for the `color` (text color) dropdown; each any CSS color. Omit for the built-in palette. |
+| `highlightColors` | list[str] | Swatches for the `highlight` (background) dropdown; each any CSS color. Omit for the built-in palette. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
 
 Unknown top-level keys, and extension names that are neither built in nor in
@@ -33,6 +35,8 @@ TipTapWidget(config={
     "imageUploadUrl": "/editor/upload/",
     "fontFamilies": ["Arial, sans-serif", "Roboto, sans-serif"],
     "fontSizes": ["12px", "14px", "16px", "20px", "28px"],
+    "textColors": ["#1f2329", "#e03e2d", "#3598db"],
+    "highlightColors": ["#fff3a3", "#c8f7c5", "#bfe3ff"],
     "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
 })
 ```

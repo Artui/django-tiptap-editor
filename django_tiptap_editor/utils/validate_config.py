@@ -18,10 +18,10 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
     """Return ``config`` unchanged after structural validation.
 
     Raises ``ImproperlyConfigured`` for unknown top-level keys, an out-of-range
-    ``enterKey`` value, a ``fontFamilies`` / ``fontSizes`` value that is not a
-    list of strings, or extension names that are neither built in nor declared
-    in TIPTAP_EXTRA_EXTENSIONS. Extension names are otherwise treated as opaque
-    strings (resolved in JS).
+    ``enterKey`` value, a ``fontFamilies`` / ``fontSizes`` / ``textColors`` /
+    ``highlightColors`` value that is not a list of strings, or extension names
+    that are neither built in nor declared in TIPTAP_EXTRA_EXTENSIONS. Extension
+    names are otherwise treated as opaque strings (resolved in JS).
     """
     unknown_keys = set(config) - KNOWN_CONFIG_KEYS
     if unknown_keys:
@@ -36,7 +36,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             f"Invalid TipTap enterKey {enter_key!r}. Allowed: {sorted(ENTER_KEY_MODES)}."
         )
 
-    for key in ("fontFamilies", "fontSizes"):
+    for key in ("fontFamilies", "fontSizes", "textColors", "highlightColors"):
         value = config.get(key)
         if value is not None and (
             not isinstance(value, list) or not all(isinstance(item, str) for item in value)
