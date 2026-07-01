@@ -2,58 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/api/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/asset-modes/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/configuration/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/contracts/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/extending/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/installation/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/quickstart/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/security/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/semver/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/storage/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/theming/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/recipes/migrating-from-tinymce/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
     <url>
          <loc>https://artui.github.io/django-tiptap-editor/recipes/preview/</loc>
-         <lastmod>2026-06-25</lastmod>
+         <lastmod>2026-07-01</lastmod>
     </url>
 </urlset>
