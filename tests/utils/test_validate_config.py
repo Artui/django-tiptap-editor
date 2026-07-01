@@ -41,24 +41,28 @@ def test_invalid_enter_key_raises() -> None:
         validate_config({"enterKey": "newline"})
 
 
-@pytest.mark.parametrize("key", ["fontFamilies", "fontSizes"])
-def test_font_list_of_strings_passes(key: str) -> None:
-    cfg = {key: ["Arial, sans-serif", "16px"]}
+# Keys validated as "a list of strings": font stacks/sizes and color swatches.
+STRING_LIST_KEYS = ["fontFamilies", "fontSizes", "textColors", "highlightColors"]
+
+
+@pytest.mark.parametrize("key", STRING_LIST_KEYS)
+def test_string_list_of_strings_passes(key: str) -> None:
+    cfg = {key: ["Arial, sans-serif", "#ff0000"]}
     assert validate_config(cfg) is cfg
 
 
-@pytest.mark.parametrize("key", ["fontFamilies", "fontSizes"])
-def test_empty_font_list_passes(key: str) -> None:
+@pytest.mark.parametrize("key", STRING_LIST_KEYS)
+def test_empty_string_list_passes(key: str) -> None:
     assert validate_config({key: []}) == {key: []}
 
 
-@pytest.mark.parametrize("key", ["fontFamilies", "fontSizes"])
-def test_font_list_not_a_list_raises(key: str) -> None:
+@pytest.mark.parametrize("key", STRING_LIST_KEYS)
+def test_string_list_not_a_list_raises(key: str) -> None:
     with pytest.raises(ImproperlyConfigured, match=f"TipTap {key} must be a list of strings"):
         validate_config({key: "16px"})
 
 
-@pytest.mark.parametrize("key", ["fontFamilies", "fontSizes"])
-def test_font_list_with_non_string_item_raises(key: str) -> None:
+@pytest.mark.parametrize("key", STRING_LIST_KEYS)
+def test_string_list_with_non_string_item_raises(key: str) -> None:
     with pytest.raises(ImproperlyConfigured, match=f"TipTap {key} must be a list of strings"):
         validate_config({key: ["16px", 12]})

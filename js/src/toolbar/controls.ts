@@ -118,17 +118,23 @@ export function commandMenuControl(opts: {
   };
 }
 
+// A static swatch list or a resolver that produces one from the editor. Text
+// color / highlight use a resolver so the swatches can be read from the
+// per-editor config (textColors / highlightColors) at render time.
+export type SwatchOptions = string[] | ((editor: Editor) => string[]);
+
 // Text color / highlight: a swatch grid plus "Remove".
 export function colorControl(opts: {
   title: string;
   attr: string;
   triggerHTML: string;
-  swatches: string[];
+  swatches: SwatchOptions;
 }): ButtonSpec {
   return {
     title: opts.title,
     render(editor: Editor): RenderedControl {
       const t = translatorFor(editor);
+      const swatches = typeof opts.swatches === "function" ? opts.swatches(editor) : opts.swatches;
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
@@ -137,7 +143,7 @@ export function colorControl(opts: {
           const grid = document.createElement("div");
           grid.className = "django-tiptap__swatches";
           const current = ((editor.getAttributes("textStyle")[opts.attr] as string) ?? "").toLowerCase();
-          for (const color of opts.swatches) {
+          for (const color of swatches) {
             const sw = document.createElement("button");
             sw.type = "button";
             sw.className = "django-tiptap__swatch";

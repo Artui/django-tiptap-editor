@@ -52,6 +52,8 @@ KNOWN_CONFIG_KEYS = frozenset(
         "linkProtocols",
         "fontFamilies",
         "fontSizes",
+        "textColors",
+        "highlightColors",
     }
 )
 
