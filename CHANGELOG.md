@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-01
+
+### Added
+
+- **Configurable font-family / font-size dropdowns.** Two new config keys —
+  `fontFamilies` (a list of CSS font stacks) and `fontSizes` (a list of CSS
+  lengths like `"16px"`) — override the presets shown in the `fontFamily` /
+  `fontSize` toolbar dropdowns, per field or via `TIPTAP_DEFAULT_CONFIG`. Omit
+  them to keep the built-in lists (no change for existing consumers). The lists
+  resolve per editor at render time; invalid values (e.g. a string instead of a
+  list of strings) fail loudly via `validate_config`.
+
 ## [0.4.0] — 2026-06-25
 
 ### Added
@@ -145,7 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0

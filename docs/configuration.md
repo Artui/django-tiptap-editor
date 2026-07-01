@@ -19,6 +19,8 @@ any omitted key.
 | `imageUploadUrl` | str | Enables image upload (see [Contracts](contracts.md)). |
 | `imageListUrl` | str | Enables the library picker. |
 | `imageFileTypes` | str | Comma-separated extensions for the upload dialog, e.g. `"png,jpg,gif"`. |
+| `fontFamilies` | list[str] | Presets for the `fontFamily` dropdown; each a full CSS font stack (label = first segment, quotes stripped). Omit for the built-in list. |
+| `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`). Omit for the built-in list. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
 
 Unknown top-level keys, and extension names that are neither built in nor in
@@ -29,6 +31,8 @@ TipTapWidget(config={
     "height": "500px",
     "toolbar": [["bold", "italic", "link"], ["bulletList", "orderedList"]],
     "imageUploadUrl": "/editor/upload/",
+    "fontFamilies": ["Arial, sans-serif", "Roboto, sans-serif"],
+    "fontSizes": ["12px", "14px", "16px", "20px", "28px"],
     "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
 })
 ```

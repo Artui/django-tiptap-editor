@@ -26,18 +26,26 @@ function menuItem(label: string, active: boolean, onPick: () => void): HTMLButto
   return item;
 }
 
+// A static option list or a resolver that produces one from the editor. Font
+// size / family use a resolver so the presets can be read from the per-editor
+// config (fontSizes / fontFamilies) at render time rather than baked in.
+export type SelectOptions =
+  | Array<{ label: string; value: string }>
+  | ((editor: Editor) => Array<{ label: string; value: string }>);
+
 // Font size / family: a list of presets plus "Default".
 export function selectControl(opts: {
   title: string;
   attr: string;
   triggerHTML: string;
-  options: Array<{ label: string; value: string }>;
+  options: SelectOptions;
   styleOption?: boolean;
 }): ButtonSpec {
   return {
     title: opts.title,
     render(editor: Editor): RenderedControl {
       const t = translatorFor(editor);
+      const options = typeof opts.options === "function" ? opts.options(editor) : opts.options;
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
@@ -51,7 +59,7 @@ export function selectControl(opts: {
               close();
             }),
           );
-          for (const opt of opts.options) {
+          for (const opt of options) {
             const item = menuItem(opt.label, current === opt.value, () => {
               applyTextStyle(editor, opts.attr, opt.value);
               close();
