@@ -961,6 +961,16 @@ any omitted key.</p>
 <td>Presets for the <code>fontSize</code> dropdown; each a CSS length like <code>"16px"</code> (label = value without <code>px</code>). Omit for the built-in list.</td>
 </tr>
 <tr>
+<td><code>textColors</code></td>
+<td>list[str]</td>
+<td>Swatches for the <code>color</code> (text color) dropdown; each any CSS color. Omit for the built-in palette.</td>
+</tr>
+<tr>
+<td><code>highlightColors</code></td>
+<td>list[str]</td>
+<td>Swatches for the <code>highlight</code> (background) dropdown; each any CSS color. Omit for the built-in palette.</td>
+</tr>
+<tr>
 <td><code>mergeTags</code></td>
 <td>list[{label, value}]</td>
 <td>Items for the merge-tags menu; <code>value</code> is inserted verbatim.</td>
@@ -975,8 +985,10 @@ any omitted key.</p>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="s2">&quot;imageUploadUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;/editor/upload/&quot;</span><span class="p">,</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="s2">&quot;fontFamilies&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Arial, sans-serif&quot;</span><span class="p">,</span> <span class="s2">&quot;Roboto, sans-serif&quot;</span><span class="p">],</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="s2">&quot;fontSizes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;12px&quot;</span><span class="p">,</span> <span class="s2">&quot;14px&quot;</span><span class="p">,</span> <span class="s2">&quot;16px&quot;</span><span class="p">,</span> <span class="s2">&quot;20px&quot;</span><span class="p">,</span> <span class="s2">&quot;28px&quot;</span><span class="p">],</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="s2">&quot;mergeTags&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;{{ first_name }}&quot;</span><span class="p">}],</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">})</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="s2">&quot;textColors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;#1f2329&quot;</span><span class="p">,</span> <span class="s2">&quot;#e03e2d&quot;</span><span class="p">,</span> <span class="s2">&quot;#3598db&quot;</span><span class="p">],</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="s2">&quot;highlightColors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;#fff3a3&quot;</span><span class="p">,</span> <span class="s2">&quot;#c8f7c5&quot;</span><span class="p">,</span> <span class="s2">&quot;#bfe3ff&quot;</span><span class="p">],</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="s2">&quot;mergeTags&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;{{ first_name }}&quot;</span><span class="p">}],</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">})</span>
 </span></code></pre></div>
 <h3 id="toolbar-buttons">Toolbar buttons<a class="headerlink" href="#toolbar-buttons" title="Permanent link">&para;</a></h3>
 <p><code>undo</code> <code>redo</code> · <code>bold</code> <code>italic</code> <code>underline</code> <code>strike</code> <code>code</code> · <code>fontSize</code> <code>fontFamily</code>
