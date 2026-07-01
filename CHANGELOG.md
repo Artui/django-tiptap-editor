@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Configurable font-family / font-size dropdowns.** Two new config keys —
+  `fontFamilies` (a list of CSS font stacks) and `fontSizes` (a list of CSS
+  lengths like `"16px"`) — override the presets shown in the `fontFamily` /
+  `fontSize` toolbar dropdowns, per field or via `TIPTAP_DEFAULT_CONFIG`. Omit
+  them to keep the built-in lists (no change for existing consumers). The lists
+  resolve per editor at render time; invalid values (e.g. a string instead of a
+  list of strings) fail loudly via `validate_config`.
+
 ## [0.4.0] — 2026-06-25
 
 ### Added

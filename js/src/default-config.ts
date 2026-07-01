@@ -21,6 +21,11 @@ export interface TipTapConfig {
   imageUploadUrl?: string;
   imageListUrl?: string;
   imageFileTypes?: string;
+  // Presets for the font-family / font-size toolbar dropdowns. Each family is a
+  // full CSS font stack (the label is the first segment, quotes stripped); each
+  // size is a CSS length like "16px". Omit to keep the built-in lists.
+  fontFamilies?: string[];
+  fontSizes?: string[];
   mergeTags?: MergeTag[];
   // Path B only (passed to init(); not serializable via data-tiptap-config).
   onChange?: (html: string) => void;

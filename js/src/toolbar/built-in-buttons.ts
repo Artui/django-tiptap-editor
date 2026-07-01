@@ -96,13 +96,18 @@ const BUILTIN: Record<string, ButtonSpec> = {
     title: "fontSize",
     attr: "fontSize",
     triggerHTML: `<span class="django-tiptap__glyph">A<small>A</small></span>${caret}`,
-    options: FONT_SIZES.map((v) => ({ label: v.replace("px", ""), value: v })),
+    options: (e) =>
+      (configFor(e).fontSizes ?? FONT_SIZES).map((v) => ({ label: v.replace("px", ""), value: v })),
   }),
   fontFamily: selectControl({
     title: "fontFamily",
     attr: "fontFamily",
     triggerHTML: `<span class="django-tiptap__glyph">Aa</span>${caret}`,
-    options: FONT_FAMILIES.map((v) => ({ label: v.split(",")[0].replace(/'/g, ""), value: v })),
+    options: (e) =>
+      (configFor(e).fontFamilies ?? FONT_FAMILIES).map((v) => ({
+        label: v.split(",")[0].replace(/'/g, ""),
+        value: v,
+      })),
     styleOption: true,
   }),
   color: colorControl({
