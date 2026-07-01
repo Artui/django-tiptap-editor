@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-01
+
 ### Added
 
 - **Configurable font-family / font-size dropdowns.** Two new config keys —
@@ -155,7 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0
