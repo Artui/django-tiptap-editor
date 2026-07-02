@@ -976,31 +976,34 @@ typed value:</p>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">body</span> <span class="o">=</span> <span class="n">TipTapJSONField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
-<p>In a template, render the editor-derived HTML mirror — <strong>no <code>|safe</code> needed</strong> (the field marks it
-safe; the trust model matches HTML mode — see <a href="../security/">Security</a>):</p>
+<p>In a template, render the HTML mirror — <strong>no <code>|safe</code> needed</strong> (the field marks it safe; on save
+it is re-derived from the sanitized <code>doc</code>, so it is safe whoever wrote the value — see
+<a href="../security/">Security</a>):</p>
 <div class="language-django highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">{{</span> <span class="nv">article.body</span> <span class="cp">}}</span><span class="x">            </span><span class="c">{# the HTML mirror #}</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cp">{{</span> <span class="nv">article.body.html</span> <span class="cp">}}</span><span class="x">       </span><span class="c">{# same thing, explicit #}</span>
 </span></code></pre></div>
 <p>In Python, work with the canonical document:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">doc</span>    <span class="c1"># the ProseMirror JSON (dict) — canonical, lossless</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">html</span>   <span class="c1"># the editor-derived HTML mirror (SafeString)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">html</span>   <span class="c1"># the HTML mirror, re-derived from doc on save (SafeString)</span>
 </span></code></pre></div>
 <p><code>article.body</code> is a <code>TipTapValue</code> (<code>.doc</code> + <code>.html</code>). Assign one when writing programmatically:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django_tiptap_editor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TipTapValue</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">TipTapValue</span><span class="o">.</span><span class="n">from_stored</span><span class="p">({</span><span class="s2">&quot;doc&quot;</span><span class="p">:</span> <span class="n">some_doc</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;p&gt;…&lt;/p&gt;&quot;</span><span class="p">})</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">TipTapValue</span><span class="o">.</span><span class="n">from_stored</span><span class="p">({</span><span class="s2">&quot;doc&quot;</span><span class="p">:</span> <span class="n">some_doc</span><span class="p">})</span>  <span class="c1"># html is re-derived on save</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">article</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </span></code></pre></div>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
-<p>The editor is the <strong>only authoritative renderer</strong> of the document, so in JSON mode it writes both
-sides on every change — <code>editor.getJSON()</code> → <code>doc</code> and <code>editor.getHTML()</code> → <code>html</code> — into one
-JSON column. Server-side display reads the stored <code>html</code>; no JavaScript and no Node are required.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>edit ──▶ editor ──┬─▶ doc  (canonical, stored)
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                  └─▶ html (mirror, stored, rendered with |safe)
+<p>In JSON mode the editor writes both sides on every change — <code>editor.getJSON()</code> → <code>doc</code> and
+<code>editor.getHTML()</code> → <code>html</code> — into one JSON column. On save the field <strong>re-derives the <code>html</code>
+mirror from the sanitized <code>doc</code></strong> with the built-in <a href="#server-side-rendering-python">server-side renderer</a>,
+so the stored mirror always reflects the canonical (and sanitized) document — whether the write
+came from the editor, an API, or a hand-edit. Server-side display reads that stored <code>html</code>; no
+JavaScript and no Node are required.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>save ──▶ sanitize(doc) ──┬─▶ doc  (canonical, stored)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                         └─▶ render_doc(doc) ──▶ html (mirror, stored, rendered with |safe)
 </span></code></pre></div>
-<p>When you write only the <code>doc</code> from Python (no editor involved), the field <strong>renders the mirror
-for you on save</strong> with the built-in <a href="#server-side-rendering-python">server-side renderer</a> — so
-<code>{{ obj.body }}</code> still works with no JavaScript. An editor-produced <code>html</code> is kept as-is (it's the
-exact WYSIWYG output); the server renderer only fills a missing mirror.</p>
+<p>Because the mirror is re-derived server-side, any caller-supplied <code>html</code> is discarded — a benign
+<code>doc</code> can never ship hostile markup through the mirror. <code>{{ obj.body }}</code> works with no JavaScript
+even for a doc written purely from Python.</p>
 <h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1039,7 +1042,7 @@ or import), render it in Python with <code>render_doc</code>:</p>
 <p>It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,
 and validates inline CSS — so the result is safe to render directly. The output is <strong>faithful to,
 but not byte-identical with</strong>, the editor's <code>getHTML()</code> (the browser normalizes some CSS).
-<code>TipTapJSONField</code> uses it automatically to fill a missing mirror on save.</p>
+<code>TipTapJSONField</code> uses it automatically to re-derive the mirror from the sanitized doc on save.</p>
 <p>A template filter is also available:</p>
 <div class="language-django highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cp">{%</span> <span class="k">load</span> <span class="nv">tiptap</span> <span class="cp">%}</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="cp">{{</span> <span class="nv">article.body</span><span class="o">|</span><span class="nf">tiptap_html</span> <span class="cp">}}</span><span class="x">   </span><span class="c">{# TipTapValue → its mirror; a raw doc dict → render_doc #}</span>

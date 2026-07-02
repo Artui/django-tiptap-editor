@@ -877,7 +877,8 @@
 settings-driven config, and committed static assets — <strong>node-free for consumers</strong>.</p>
 <h2 id="highlights">Highlights<a class="headerlink" href="#highlights" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Stores HTML</strong> (render with <code>|safe</code>), never JSON.</li>
+<li><strong>Stores HTML by default</strong> (render with <code>|safe</code>); optional JSON storage via
+  <code>TipTapJSONField</code> (canonical doc + safe, server-derived HTML mirror).</li>
 <li><strong>Safe by construction</strong> — ProseMirror's schema drops scripts and unknown nodes on
   parse; link and image protocols are allowlisted. See <a href="security/">Security</a>.</li>
 <li><strong>Node-free</strong> — ships a committed, self-contained bundle. An optional glue-only ESM

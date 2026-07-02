@@ -1146,8 +1146,9 @@ field is <code>TipTapJSONFormField</code> (a <code>forms.Field</code> whose widg
 See <a href="../storage/">Storage format</a>.</p>
 <h3 id="tiptapvalue"><code>TipTapValue</code><a class="headerlink" href="#tiptapvalue" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.types.tiptap_value.TipTapValue</code> — frozen value with <code>.doc</code> (canonical
-ProseMirror JSON) and <code>.html</code> (the editor-derived, safe HTML mirror). <code>str(value)</code> / <code>{{ value }}</code>
-render the mirror. <code>TipTapValue.from_stored({...})</code> builds one from a <code>{doc, html}</code> mapping.</p>
+ProseMirror JSON) and <code>.html</code> (the safe HTML mirror, re-derived from <code>doc</code> on save). <code>str(value)</code>
+/ <code>{{ value }}</code> render the mirror. <code>TipTapValue.from_stored({...})</code> builds one from a <code>{doc, html}</code>
+mapping.</p>
 <h3 id="render_doc"><code>render_doc</code><a class="headerlink" href="#render_doc" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…)</code>
 — renders a ProseMirror <code>doc</code> dict to a safe HTML string in pure Python (no Node), covering the
