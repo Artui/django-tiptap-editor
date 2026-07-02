@@ -20,7 +20,9 @@ A reusable rich-text editor for Django: a form `Widget`, an admin widget, a
 `ModelAdmin` mixin, a settings-driven config, and committed static assets — with a
 clean, options-object surface and its own config schema.
 
-- Stored value is **HTML** (render it with `|safe`), never JSON.
+- Stored value is **HTML by default** (render it with `|safe`); optional JSON
+  storage via `TipTapJSONField` keeps the canonical ProseMirror doc plus a safe,
+  server-derived HTML mirror.
 - ProseMirror's schema *is* a sanitizer: scripts and unknown nodes are dropped on
   parse, and link/image protocols are allowlisted — so `|safe` is justified.
 - **Node-free for consumers**: the editor ships as a committed, self-contained bundle.
@@ -64,7 +66,7 @@ from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
 
 @admin.register(Article)
 class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
-    pass  # every TextField becomes a TipTap editor
+    pass  # every TextField (and TipTapJSONField) becomes a TipTap editor
 ```
 
 Render the field with `{{ form.media }}` (or `{% tiptap_media %}`) in your template, and

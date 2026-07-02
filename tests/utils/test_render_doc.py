@@ -66,6 +66,22 @@ def test_link_mark_with_and_without_rel_target() -> None:
     assert out == '<p><a href="https://a" target="_blank" rel="noopener">x</a></p>'
 
 
+def test_link_with_whitespace_hidden_scheme_is_dropped() -> None:
+    # ``java\nscript:`` resolves to the javascript scheme in a browser; the link
+    # mark must be stripped so no <a href> reaches the output at all.
+    out = render_doc(_p(_text("x", [{"type": "link", "attrs": {"href": "java\nscript:alert(1)"}}])))
+    assert out == "<p>x</p>"
+
+
+def test_entity_encoded_href_is_html_escaped_not_executable() -> None:
+    # Carries no literal scheme, so the mark survives — but the ``&`` is escaped,
+    # so the browser can't decode the attribute back into a javascript: scheme.
+    out = render_doc(
+        _p(_text("x", [{"type": "link", "attrs": {"href": "&#106;avascript:alert(1)"}}]))
+    )
+    assert out == '<p><a href="&amp;#106;avascript:alert(1)">x</a></p>'
+
+
 def test_textstyle_builds_span_or_skips() -> None:
     out = render_doc(
         _p(_text("x", [{"type": "textStyle", "attrs": {"color": "#f00", "fontSize": "20px"}}]))
