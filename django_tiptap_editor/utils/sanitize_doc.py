@@ -9,7 +9,7 @@ which have no scheme, are always kept), before the value is persisted.
 
 This is deliberately narrow: it secures the URL-bearing attributes, not the full
 schema. Full structural validation is the editor's job (and a future Python
-renderer's); see the TT-10 design doc.
+renderer's); see the JSON-storage design notes.
 """
 
 from __future__ import annotations
@@ -21,12 +21,25 @@ from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK
 
 _SCHEME_RE = re.compile(r"^([a-zA-Z][a-zA-Z0-9+.\-]*):")
 
+# ASCII whitespace and C0/DEL control characters (``\x00``–``\x20`` and ``\x7f``).
+# A browser strips these while resolving a URL — tabs/newlines are removed from
+# anywhere in the string, leading controls/spaces are trimmed — so an attacker
+# embeds them mid-scheme (``java\nscript:``) to hide a disallowed scheme from a
+# naive parser. We remove them before scheme detection to see what the browser
+# will.
+_URL_STRIP_RE = re.compile(r"[\x00-\x20\x7f]")
+
 
 def _scheme(url: object) -> str:
-    """Return the lowercased URL scheme, or ``""`` for a relative/anchor URL."""
+    """Return the lowercased URL scheme, or ``""`` for a relative/anchor URL.
+
+    Whitespace and control characters are stripped first (see ``_URL_STRIP_RE``),
+    mirroring the browser, so ``java\\nscript:`` resolves to the ``javascript``
+    scheme here just as it would on click.
+    """
     if not isinstance(url, str):
         return ""
-    match = _SCHEME_RE.match(url.strip())
+    match = _SCHEME_RE.match(_URL_STRIP_RE.sub("", url))
     return match.group(1).lower() if match else ""
 
 

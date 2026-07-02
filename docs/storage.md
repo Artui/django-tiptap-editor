@@ -20,8 +20,9 @@ class Article(models.Model):
     body = TipTapJSONField(null=True, blank=True)
 ```
 
-In a template, render the editor-derived HTML mirror — **no `|safe` needed** (the field marks it
-safe; the trust model matches HTML mode — see [Security](security.md)):
+In a template, render the HTML mirror — **no `|safe` needed** (the field marks it safe; on save
+it is re-derived from the sanitized `doc`, so it is safe whoever wrote the value — see
+[Security](security.md)):
 
 ```django
 {{ article.body }}            {# the HTML mirror #}
@@ -32,32 +33,34 @@ In Python, work with the canonical document:
 
 ```python
 article.body.doc    # the ProseMirror JSON (dict) — canonical, lossless
-article.body.html   # the editor-derived HTML mirror (SafeString)
+article.body.html   # the HTML mirror, re-derived from doc on save (SafeString)
 ```
 
 `article.body` is a `TipTapValue` (`.doc` + `.html`). Assign one when writing programmatically:
 
 ```python
 from django_tiptap_editor import TipTapValue
-article.body = TipTapValue.from_stored({"doc": some_doc, "html": "<p>…</p>"})
+article.body = TipTapValue.from_stored({"doc": some_doc})  # html is re-derived on save
 article.save()
 ```
 
 ## How it works
 
-The editor is the **only authoritative renderer** of the document, so in JSON mode it writes both
-sides on every change — `editor.getJSON()` → `doc` and `editor.getHTML()` → `html` — into one
-JSON column. Server-side display reads the stored `html`; no JavaScript and no Node are required.
+In JSON mode the editor writes both sides on every change — `editor.getJSON()` → `doc` and
+`editor.getHTML()` → `html` — into one JSON column. On save the field **re-derives the `html`
+mirror from the sanitized `doc`** with the built-in [server-side renderer](#server-side-rendering-python),
+so the stored mirror always reflects the canonical (and sanitized) document — whether the write
+came from the editor, an API, or a hand-edit. Server-side display reads that stored `html`; no
+JavaScript and no Node are required.
 
 ```
-edit ──▶ editor ──┬─▶ doc  (canonical, stored)
-                  └─▶ html (mirror, stored, rendered with |safe)
+save ──▶ sanitize(doc) ──┬─▶ doc  (canonical, stored)
+                         └─▶ render_doc(doc) ──▶ html (mirror, stored, rendered with |safe)
 ```
 
-When you write only the `doc` from Python (no editor involved), the field **renders the mirror
-for you on save** with the built-in [server-side renderer](#server-side-rendering-python) — so
-`{{ obj.body }}` still works with no JavaScript. An editor-produced `html` is kept as-is (it's the
-exact WYSIWYG output); the server renderer only fills a missing mirror.
+Because the mirror is re-derived server-side, any caller-supplied `html` is discarded — a benign
+`doc` can never ship hostile markup through the mirror. `{{ obj.body }}` works with no JavaScript
+even for a doc written purely from Python.
 
 ## Settings
 
@@ -96,7 +99,7 @@ html = render_doc(article.body.doc)   # a safe HTML string
 It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,
 and validates inline CSS — so the result is safe to render directly. The output is **faithful to,
 but not byte-identical with**, the editor's `getHTML()` (the browser normalizes some CSS).
-`TipTapJSONField` uses it automatically to fill a missing mirror on save.
+`TipTapJSONField` uses it automatically to re-derive the mirror from the sanitized doc on save.
 
 A template filter is also available:
 

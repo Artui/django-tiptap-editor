@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Fixed a `javascript:` scheme-allowlist bypass in the JSON-storage sanitizer.**
+  `sanitize_doc` (and `render_doc` / the `tiptap_html` filter that build on it)
+  detected a URL's scheme without stripping the ASCII whitespace and C0/DEL
+  control characters a browser removes while resolving a URL. A stored `href` /
+  image `src` such as `java\nscript:alert(1)`, `java\tscript:…`, or
+  `\x01javascript:…` therefore slipped past the link/image protocol allowlist and
+  executed on click. Whitespace and control characters are now removed before
+  scheme detection, so these values are correctly dropped. Affects stored-JSON
+  (`TipTapJSONField`) documents written outside the editor (API / import /
+  hand-edit) since JSON storage was introduced in 0.2.0; HTML-mode storage and
+  the editor-side JS path were unaffected.
+- **The `TipTapJSONField` HTML mirror is now always re-derived from the sanitized
+  `doc` on save**, never trusted from the caller. Previously a direct write of a
+  `{doc, html}` envelope (API / import / hand-edit) kept a caller-supplied `html`
+  verbatim when non-empty, so a benign `doc` could ship hostile markup through the
+  rendered mirror. The mirror now reflects only the sanitized doc.
+
+### Changed
+
+- `TipTapModelAdminMixin` now also swaps the admin editor onto `TipTapJSONField`
+  columns (in JSON storage mode), not just `TextField`s — so JSON-stored fields
+  get the admin-tuned widget out of the box.
+
+### Docs
+
+- Corrected the "stores HTML, never JSON" claim in the README and docs to note
+  the optional `TipTapJSONField` JSON storage, and updated the storage/security
+  docs to describe the always-re-derived HTML mirror.
+
 ## [0.6.0] — 2026-07-01
 
 ### Added

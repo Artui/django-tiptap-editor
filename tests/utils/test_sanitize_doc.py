@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import pytest
+
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
+
+
+def _link(href: str) -> dict:
+    return {"type": "text", "text": "x", "marks": [{"type": "link", "attrs": {"href": href}}]}
 
 
 def test_non_dict_returned_unchanged() -> None:
@@ -85,3 +91,34 @@ def test_recurses_into_content() -> None:
 def test_custom_protocol_allowlist() -> None:
     node = {"type": "text", "marks": [{"type": "link", "attrs": {"href": "ftp://host"}}]}
     assert sanitize_doc(node, link_protocols=("ftp",))["marks"] == node["marks"]
+
+
+@pytest.mark.parametrize(
+    "href",
+    [
+        "java\nscript:alert(1)",  # embedded newline
+        "java\tscript:alert(1)",  # embedded tab
+        "jav\rascript:alert(1)",  # embedded carriage return
+        "\x01javascript:alert(1)",  # leading C0 control
+        "  javascript:alert(1)",  # leading spaces
+        "JaVaScRiPt:alert(1)",  # mixed case
+        "\x0cJAVA\nSCRIPT:x",  # form-feed + newline, mixed case
+    ],
+)
+def test_drops_javascript_href_hidden_by_whitespace_or_control_chars(href: str) -> None:
+    # A browser strips whitespace/control chars while resolving the URL, so these
+    # all execute as ``javascript:`` on click — the scheme must be seen and dropped.
+    assert sanitize_doc(_link(href))["marks"] == []
+
+
+def test_blanks_image_src_scheme_hidden_by_whitespace() -> None:
+    node = {"type": "image", "attrs": {"src": "java\nscript:alert(1)"}}
+    assert sanitize_doc(node)["attrs"]["src"] == ""
+
+
+def test_keeps_entity_and_percent_encoded_forms_verbatim() -> None:
+    # These carry no literal scheme (``&``/``%`` prefix), so sanitize keeps them;
+    # render_doc's HTML-escaping is what neutralizes them on output — the browser
+    # never re-decodes an escaped attribute into an executable scheme.
+    for href in ["&#106;avascript:alert(1)", "%6aavascript:alert(1)"]:
+        assert sanitize_doc(_link(href))["marks"] == _link(href)["marks"]

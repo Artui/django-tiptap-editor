@@ -81,11 +81,22 @@ def test_get_prep_value_derives_mirror_when_html_missing() -> None:
     assert prepared["html"] == "<p>hi</p>"
 
 
-def test_get_prep_value_keeps_editor_html() -> None:
+def test_get_prep_value_rederives_mirror_ignoring_caller_html() -> None:
+    # A caller-supplied html mirror is discarded and re-derived from the doc.
     prepared = TipTapJSONField().get_prep_value(
         TipTapValue.from_stored({"doc": DOC, "html": "<p>custom</p>"})
     )
-    assert prepared["html"] == "<p>custom</p>"
+    assert prepared["html"] == "<p>hi</p>"
+
+
+def test_get_prep_value_discards_hostile_caller_html() -> None:
+    # Benign doc, hostile html mirror (an API / import / hand-edit write). The
+    # stored mirror must reflect only the sanitized doc, never the caller markup.
+    prepared = TipTapJSONField().get_prep_value(
+        TipTapValue.from_stored({"doc": DOC, "html": '<img src=x onerror="alert(1)">'})
+    )
+    assert prepared["html"] == "<p>hi</p>"
+    assert "onerror" not in prepared["html"]
 
 
 def test_get_prep_value_empty_doc_keeps_empty_html() -> None:

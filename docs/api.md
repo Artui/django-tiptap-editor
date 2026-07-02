@@ -43,8 +43,9 @@ See [Storage format](storage.md).
 ### `TipTapValue`
 
 `django_tiptap_editor.types.tiptap_value.TipTapValue` — frozen value with `.doc` (canonical
-ProseMirror JSON) and `.html` (the editor-derived, safe HTML mirror). `str(value)` / `{{ value }}`
-render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}` mapping.
+ProseMirror JSON) and `.html` (the safe HTML mirror, re-derived from `doc` on save). `str(value)`
+/ `{{ value }}` render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}`
+mapping.
 
 ### `render_doc`
 
