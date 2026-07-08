@@ -32,13 +32,14 @@ Because protocol allowlisting happens on *parse* — which a stored-JSON documen
   enforced in pure Python (no extra dependency), and disallowed `javascript:`/`vbscript:`/other
   schemes on link `href` / image `src` are stripped. The canonical value is always safe,
   whoever wrote it (form, API, import).
-- The `html` mirror is editor-produced and rendered with the same trust model as HTML mode
-  (it came from the editor). The field marks `.html` safe on that basis.
-- For JSON the editor didn't produce, the built-in **`render_doc`** (used automatically to fill a
-  missing mirror, and available directly / via the `tiptap_html` filter) re-applies the protocol
-  allowlist, HTML-escapes text and attributes, and passes inline `style` values through a
-  conservative CSS allowlist (no `;`/`:` injection, no `url(...:...)`, no `expression`) — so its
-  output is safe to render even for untrusted documents.
+- The `html` mirror is **re-derived from the sanitized `doc` on every save** (never trusted from
+  the caller) by the built-in **`render_doc`**, which re-applies the protocol allowlist,
+  HTML-escapes text and attributes, and passes inline `style` values through a conservative CSS
+  allowlist (no `;`/`:` injection, no `url(...:...)`, no `expression`). A write can set
+  `{doc, html}` directly (API / import / hand-edit); the supplied `html` is discarded, so the
+  rendered surface always reflects only the sanitized doc. The field marks `.html` safe on that
+  basis. `render_doc` is also available directly and via the `tiptap_html` filter for rendering
+  a bare `doc`.
 
 ## Caveats
 

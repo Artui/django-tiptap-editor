@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 from django.db import models
-from django.utils.safestring import mark_safe
 
 from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK_PROTOCOLS
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
@@ -18,10 +17,12 @@ class TipTapJSONField(models.JSONField):
     """A ``JSONField`` storing ``{doc, html}`` and exposing a ``TipTapValue``.
 
     The Python value on a model instance is a ``TipTapValue`` (``.doc`` is the
-    canonical ProseMirror JSON; ``.html`` the editor-derived, safe mirror). On
-    save the ``doc`` is protocol-allowlisted (``sanitize_doc``) so the canonical
-    value is always safe regardless of who wrote it. The default form field
-    renders the editor in JSON storage mode.
+    canonical ProseMirror JSON; ``.html`` a safe, server-derived mirror). On save
+    the ``doc`` is protocol-allowlisted (``sanitize_doc``) and the ``html`` mirror
+    is re-derived from it (``render_doc``), so both the canonical value and the
+    rendered surface are always safe regardless of who wrote them — any
+    caller-supplied ``html`` is discarded. The default form field renders the
+    editor in JSON storage mode.
     """
 
     def __init__(
@@ -57,15 +58,16 @@ class TipTapJSONField(models.JSONField):
             link_protocols=self.link_protocols,
             image_protocols=self.image_protocols,
         )
-        # Derive the HTML mirror server-side when it's missing — e.g. a
-        # programmatic write that set only `doc` (no editor to produce it). The
-        # doc is already protocol-allowlisted, so render_doc's output is safe.
-        html = coerced.html
-        if not html and isinstance(doc.get("content"), list) and doc["content"]:
-            html = render_doc(
-                doc, link_protocols=self.link_protocols, image_protocols=self.image_protocols
-            )
-        clean = TipTapValue(doc=doc, html=mark_safe(str(html)))
+        # Always re-derive the HTML mirror from the sanitized doc — never trust a
+        # caller-supplied `html`. A write can set `{doc, html}` directly (API /
+        # import / hand-edit) with benign `doc` but hostile `html`; deriving the
+        # mirror here guarantees the rendered surface only ever reflects the
+        # sanitized doc. render_doc's output is protocol-allowlisted, HTML-escaped
+        # and CSS-validated, so it is safe to mark for `|safe`.
+        html = render_doc(
+            doc, link_protocols=self.link_protocols, image_protocols=self.image_protocols
+        )
+        clean = TipTapValue(doc=doc, html=html)
         return super().get_prep_value(clean.to_stored())
 
     def formfield(self, **kwargs: Any) -> Any:

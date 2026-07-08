@@ -50,6 +50,10 @@ KNOWN_CONFIG_KEYS = frozenset(
         "imageFileTypes",
         "mergeTags",
         "linkProtocols",
+        "fontFamilies",
+        "fontSizes",
+        "textColors",
+        "highlightColors",
     }
 )
 

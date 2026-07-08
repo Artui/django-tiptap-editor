@@ -11,6 +11,7 @@ any omitted key.
 | --- | --- | --- |
 | `height` | str | Editor min-height, e.g. `"400px"`. |
 | `locale` | str | `"en"` or `"sv"` built in; add more with `registerLocale`. |
+| `manualMount` | bool | Opt the field out of auto-mount (initial scan + observer); mount it yourself after registering renderers. See [Theming → Load order](theming.md#load-order). |
 | `enterKey` | str | Enter / Shift-Enter behaviour: `"paragraph"` (default — Enter splits into a new paragraph, Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"` (exchange the two). |
 | `toolbar` | list[list[str]] | Groups of [button keys](#toolbar-buttons). Omit for the default. |
 | `extensions` | list[str] | Extension names. Built-ins are always on; list custom ones (and add them to `TIPTAP_EXTRA_EXTENSIONS`). |
@@ -18,6 +19,10 @@ any omitted key.
 | `imageUploadUrl` | str | Enables image upload (see [Contracts](contracts.md)). |
 | `imageListUrl` | str | Enables the library picker. |
 | `imageFileTypes` | str | Comma-separated extensions for the upload dialog, e.g. `"png,jpg,gif"`. |
+| `fontFamilies` | list[str] | Presets for the `fontFamily` dropdown; each a full CSS font stack (label = first segment, quotes stripped). Omit for the built-in list. |
+| `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`). Omit for the built-in list. |
+| `textColors` | list[str] | Swatches for the `color` (text color) dropdown; each any CSS color. Omit for the built-in palette. |
+| `highlightColors` | list[str] | Swatches for the `highlight` (background) dropdown; each any CSS color. Omit for the built-in palette. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
 
 Unknown top-level keys, and extension names that are neither built in nor in
@@ -28,6 +33,10 @@ TipTapWidget(config={
     "height": "500px",
     "toolbar": [["bold", "italic", "link"], ["bulletList", "orderedList"]],
     "imageUploadUrl": "/editor/upload/",
+    "fontFamilies": ["Arial, sans-serif", "Roboto, sans-serif"],
+    "fontSizes": ["12px", "14px", "16px", "20px", "28px"],
+    "textColors": ["#1f2329", "#e03e2d", "#3598db"],
+    "highlightColors": ["#fff3a3", "#c8f7c5", "#bfe3ff"],
     "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
 })
 ```

@@ -5,6 +5,7 @@ from typing import Any
 from django.db import models
 
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
+from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
 from tests.testapp.models import Article
 
@@ -50,3 +51,20 @@ def test_explicit_list_excludes_other_textfield() -> None:
         tiptap_fields = ["body"]
 
     assert "widget" not in A().formfield_for_dbfield(_field("summary"), None)
+
+
+def test_json_field_gets_admin_widget_in_json_storage_mode() -> None:
+    class A(TipTapModelAdminMixin, FakeModelAdmin):
+        pass
+
+    widget = A().formfield_for_dbfield(_field("document"), None)["widget"]
+    # An instance (pinned to JSON storage), not the bare class.
+    assert isinstance(widget, AdminTipTapWidget)
+    assert widget.storage == STORAGE_FORMAT_JSON
+
+
+def test_json_field_excluded_when_not_listed() -> None:
+    class A(TipTapModelAdminMixin, FakeModelAdmin):
+        tiptap_fields = ["body"]
+
+    assert "widget" not in A().formfield_for_dbfield(_field("document"), None)

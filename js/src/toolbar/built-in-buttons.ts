@@ -96,26 +96,31 @@ const BUILTIN: Record<string, ButtonSpec> = {
     title: "fontSize",
     attr: "fontSize",
     triggerHTML: `<span class="django-tiptap__glyph">A<small>A</small></span>${caret}`,
-    options: FONT_SIZES.map((v) => ({ label: v.replace("px", ""), value: v })),
+    options: (e) =>
+      (configFor(e).fontSizes ?? FONT_SIZES).map((v) => ({ label: v.replace("px", ""), value: v })),
   }),
   fontFamily: selectControl({
     title: "fontFamily",
     attr: "fontFamily",
     triggerHTML: `<span class="django-tiptap__glyph">Aa</span>${caret}`,
-    options: FONT_FAMILIES.map((v) => ({ label: v.split(",")[0].replace(/'/g, ""), value: v })),
+    options: (e) =>
+      (configFor(e).fontFamilies ?? FONT_FAMILIES).map((v) => ({
+        label: v.split(",")[0].replace(/'/g, ""),
+        value: v,
+      })),
     styleOption: true,
   }),
   color: colorControl({
     title: "color",
     attr: "color",
     triggerHTML: `<span class="django-tiptap__glyph django-tiptap__glyph--color">A</span>${caret}`,
-    swatches: TEXT_COLORS,
+    swatches: (e) => configFor(e).textColors ?? TEXT_COLORS,
   }),
   highlight: colorControl({
     title: "highlight",
     attr: "backgroundColor",
     triggerHTML: `<span class="django-tiptap__glyph django-tiptap__glyph--highlight">A</span>${caret}`,
-    swatches: HIGHLIGHTS,
+    swatches: (e) => configFor(e).highlightColors ?? HIGHLIGHTS,
   }),
   h1: heading(1),
   h2: heading(2),

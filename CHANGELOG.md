@@ -7,6 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-02
+
+### Security
+
+- **Fixed a `javascript:` scheme-allowlist bypass in the JSON-storage sanitizer.**
+  `sanitize_doc` (and `render_doc` / the `tiptap_html` filter that build on it)
+  detected a URL's scheme without stripping the ASCII whitespace and C0/DEL
+  control characters a browser removes while resolving a URL. A stored `href` /
+  image `src` such as `java\nscript:alert(1)`, `java\tscript:…`, or
+  `\x01javascript:…` therefore slipped past the link/image protocol allowlist and
+  executed on click. Whitespace and control characters are now removed before
+  scheme detection, so these values are correctly dropped. Affects stored-JSON
+  (`TipTapJSONField`) documents written outside the editor (API / import /
+  hand-edit) since JSON storage was introduced in 0.2.0; HTML-mode storage and
+  the editor-side JS path were unaffected.
+- **The `TipTapJSONField` HTML mirror is now always re-derived from the sanitized
+  `doc` on save**, never trusted from the caller. Previously a direct write of a
+  `{doc, html}` envelope (API / import / hand-edit) kept a caller-supplied `html`
+  verbatim when non-empty, so a benign `doc` could ship hostile markup through the
+  rendered mirror. The mirror now reflects only the sanitized doc.
+
+### Changed
+
+- `TipTapModelAdminMixin` now also swaps the admin editor onto `TipTapJSONField`
+  columns (in JSON storage mode), not just `TextField`s — so JSON-stored fields
+  get the admin-tuned widget out of the box.
+
+### Docs
+
+- Corrected the "stores HTML, never JSON" claim in the README and docs to note
+  the optional `TipTapJSONField` JSON storage, and updated the storage/security
+  docs to describe the always-re-derived HTML mirror.
+
+## [0.6.0] — 2026-07-01
+
+### Added
+
+- **Configurable text-color / highlight palettes.** Two new config keys —
+  `textColors` and `highlightColors` (each a list of CSS colors) — override the
+  swatches shown in the `color` (text) / `highlight` (background) toolbar
+  dropdowns, per field or via `TIPTAP_DEFAULT_CONFIG`. Omit them to keep the
+  built-in palettes (no change for existing consumers). Like the font lists,
+  the swatches resolve per editor at render time; invalid values fail loudly via
+  `validate_config`.
+
+## [0.5.0] — 2026-07-01
+
+### Added
+
+- **Configurable font-family / font-size dropdowns.** Two new config keys —
+  `fontFamilies` (a list of CSS font stacks) and `fontSizes` (a list of CSS
+  lengths like `"16px"`) — override the presets shown in the `fontFamily` /
+  `fontSize` toolbar dropdowns, per field or via `TIPTAP_DEFAULT_CONFIG`. Omit
+  them to keep the built-in lists (no change for existing consumers). The lists
+  resolve per editor at render time; invalid values (e.g. a string instead of a
+  list of strings) fail loudly via `validate_config`.
+
+## [0.4.0] — 2026-06-25
+
+### Added
+
+- **`manualMount` opt-out is now live.** Setting `manualMount: true` on a field (per widget
+  or via `TIPTAP_DEFAULT_CONFIG`) makes the *automatic* triggers — the initial scan and the
+  `MutationObserver` — skip it, so it never mounts before your renderers/extensions are
+  registered. Mount it yourself afterwards with `DjangoTipTap.autoMount()` (which mounts every
+  field, including `manualMount` ones) or `DjangoTipTap.init(el, config)`. The key was already
+  accepted and serialized by the Python side; this wires it into the JS mount path.
+
+### Fixed
+
+- **htmx history (Back/Forward) restores a live editor.** With `hx-boost` / `hx-push-url` /
+  `hx-history`, htmx caches a static snapshot of the page — capturing both the rendered shell
+  and the hidden, already-bound textarea — and restores it on Back (firing
+  `htmx:historyRestore`, not `afterSwap`). The restored field used to stay a frozen, dead shell
+  because mount idempotency trusted the serialized `data-tiptap-bound` attribute. Idempotency
+  now lives in the live editor map, so the restored field re-mounts a working editor and the
+  dead snapshot shell is removed. Consumers can still set `hx-history="false"` to skip the
+  snapshot entirely.
+- **Morphing swaps no longer un-hide the raw textarea.** A morph (`hx-swap="morph"` /
+  idiomorph) reconciles the live textarea's attributes back to the server markup, stripping
+  `display:none` and `data-tiptap-bound` and exposing the raw field next to the editor. A
+  narrow per-editor attribute observer now re-asserts the hidden state in place (no remount,
+  no global attribute observation). Mark the editor region `hx-preserve` for pure-attribute
+  morphs.
+
 ## [0.3.1] — 2026-06-24
 
 ### Changed
@@ -117,7 +202,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.1.0...v0.2.0

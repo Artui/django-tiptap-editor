@@ -43,8 +43,9 @@ See [Storage format](storage.md).
 ### `TipTapValue`
 
 `django_tiptap_editor.types.tiptap_value.TipTapValue` — frozen value with `.doc` (canonical
-ProseMirror JSON) and `.html` (the editor-derived, safe HTML mirror). `str(value)` / `{{ value }}`
-render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}` mapping.
+ProseMirror JSON) and `.html` (the safe HTML mirror, re-derived from `doc` on save). `str(value)`
+/ `{{ value }}` render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}`
+mapping.
 
 ### `render_doc`
 
@@ -79,7 +80,7 @@ the package root.
 DjangoTipTap.init(element, config)   // explicit mount; returns the editor
 DjangoTipTap.get(id)                 // editor handle | null
 DjangoTipTap.destroy(id)             // unmount + tear down the shell
-DjangoTipTap.autoMount(root?)        // idempotent; mounts unbound textareas
+DjangoTipTap.autoMount(root?)        // idempotent; mounts every config-carrying textarea (incl. manualMount)
 DjangoTipTap.registerExtension(name, factory)
 DjangoTipTap.registerLocale(code, strings)
 DjangoTipTap.renderHTML(doc)         // ProseMirror JSON -> HTML string
@@ -106,6 +107,26 @@ the same `id` (an `outerHTML` swap), the stale editor is destroyed and the new n
 — never a duplicate or an orphaned shell. Place `{{ form.media }}` in the page `<head>`,
 not inside a swapped partial (see
 [Quickstart](quickstart.md#dynamic-forms-htmx-turbo-admin-inlines)).
+
+Idempotency is keyed to the **live editor**, not the `data-tiptap-bound` attribute, so two
+more swap shapes are handled:
+
+- **htmx history (Back/Forward).** With `hx-boost` / `hx-push-url` / `hx-history`, htmx
+  caches a static snapshot of the page — including the rendered shell and the hidden
+  textarea — and restores it on Back (firing `htmx:historyRestore`, not `afterSwap`). The
+  restored field re-mounts a live editor and the dead snapshot shell is removed. For pages
+  where you'd rather skip the snapshot entirely, set `hx-history="false"` on the editor page.
+- **Morphing swaps (`hx-swap="morph"` / idiomorph).** A morph reconciles the live textarea's
+  attributes back to the server markup, stripping `display:none`/`data-tiptap-bound`; a
+  per-editor observer re-asserts the hidden state in place (no remount). Mark the editor
+  region `hx-preserve` for pure-attribute morphs. Note: once an editor is live it **owns the
+  content** — a server-side value change delivered via morph is overwritten on the next edit.
+
+**Opting a field out of auto-mount** — set `manualMount: true` (per field, or in
+`TIPTAP_DEFAULT_CONFIG`) when renderers/extensions must be registered before the editor
+builds. The automatic triggers (initial scan + the `MutationObserver`) then skip it; mount it
+yourself once you're ready with `DjangoTipTap.autoMount()` (mounts every field, including
+manualMount ones) or `DjangoTipTap.init(el, config)`. See [Theming → Load order](theming.md#load-order).
 
 ### Explicit init (Path B)
 
