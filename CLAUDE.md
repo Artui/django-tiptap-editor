@@ -9,8 +9,8 @@ with one deliberate deviation: an **embedded esbuild JS build** (see "JavaScript
 
 A reusable Django package providing a drop-in TipTap (headless ProseMirror) rich-text
 editor: a form `Widget`, an admin widget, a `ModelAdmin` mixin, a settings default, and
-vendored static assets — node-free for consumers. The stored value is **HTML**, never
-JSON. The hard engineering problem is the ProseMirror schema/extension set that
+vendored static assets — node-free for consumers. The stored value is **HTML by
+default**, with optional JSON storage via `TipTapJSONField`. The hard engineering problem is the ProseMirror schema/extension set that
 round-trips real authored HTML without loss — not the Django plumbing.
 
 The design plan lives in the ecosystem planning repo
@@ -150,7 +150,7 @@ The full extension set, registry, toolbar, and theming build on top of this seam
 
 ## Boundaries
 
-- **Store HTML, never JSON.**
+- **Store HTML by default; optional JSON storage via `TipTapJSONField`.**
 - **No consumer-app code**: no email pipeline, no preview view, no `email_template`, no
   app-specific models/routing. The package owns widget + bundle/glue + generic contracts
   + extension points.
