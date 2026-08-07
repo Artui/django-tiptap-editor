@@ -16,6 +16,7 @@ typed value:
 from django.db import models
 from django_tiptap_editor.fields import TipTapJSONField
 
+
 class Article(models.Model):
     body = TipTapJSONField(null=True, blank=True)
 ```
@@ -32,14 +33,15 @@ it is re-derived from the sanitized `doc`, so it is safe whoever wrote the value
 In Python, work with the canonical document:
 
 ```python
-article.body.doc    # the ProseMirror JSON (dict) — canonical, lossless
-article.body.html   # the HTML mirror, re-derived from doc on save (SafeString)
+article.body.doc  # the ProseMirror JSON (dict) — canonical, lossless
+article.body.html  # the HTML mirror, re-derived from doc on save (SafeString)
 ```
 
 `article.body` is a `TipTapValue` (`.doc` + `.html`). Assign one when writing programmatically:
 
 ```python
 from django_tiptap_editor import TipTapValue
+
 article.body = TipTapValue.from_stored({"doc": some_doc})  # html is re-derived on save
 article.save()
 ```
@@ -93,7 +95,7 @@ or import), render it in Python with `render_doc`:
 ```python
 from django_tiptap_editor import render_doc
 
-html = render_doc(article.body.doc)   # a safe HTML string
+html = render_doc(article.body.doc)  # a safe HTML string
 ```
 
 It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,

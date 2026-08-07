@@ -14,6 +14,7 @@ admin). Both store HTML, so the database column is unchanged.
 ```python
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
+
 class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
@@ -73,8 +74,9 @@ Add the new field alongside the old column (don't drop the old one until you've 
 ```python
 from django_tiptap_editor.fields import TipTapJSONField
 
+
 class Article(models.Model):
-    body = models.TextField()                 # legacy TinyMCE HTML
+    body = models.TextField()  # legacy TinyMCE HTML
     body_doc = TipTapJSONField(null=True, blank=True)
 ```
 
@@ -86,11 +88,13 @@ Python — no conversion needed yet), leaving the `doc` empty:
 ```python
 from django.db import migrations
 
+
 def seed_mirror(apps, schema_editor):
     Article = apps.get_model("yourapp", "Article")
     for row in Article.objects.exclude(body=""):
         row.body_doc = {"doc": {}, "html": row.body}
         row.save(update_fields=["body_doc"])
+
 
 class Migration(migrations.Migration):
     dependencies = [("yourapp", "0002_article_body_doc")]

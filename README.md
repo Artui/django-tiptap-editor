@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 from django import forms
 from django_tiptap_editor.forms.fields import TipTapFormField
 
+
 class ArticleForm(forms.Form):
     body = TipTapFormField()
 ```
@@ -63,6 +64,7 @@ In the admin:
 ```python
 from django.contrib import admin
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
+
 
 @admin.register(Article)
 class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
