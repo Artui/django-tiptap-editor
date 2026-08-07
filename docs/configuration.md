@@ -29,16 +29,18 @@ Unknown top-level keys, and extension names that are neither built in nor in
 `TIPTAP_EXTRA_EXTENSIONS`, raise `ImproperlyConfigured` — typos fail loudly.
 
 ```python
-TipTapWidget(config={
-    "height": "500px",
-    "toolbar": [["bold", "italic", "link"], ["bulletList", "orderedList"]],
-    "imageUploadUrl": "/editor/upload/",
-    "fontFamilies": ["Arial, sans-serif", "Roboto, sans-serif"],
-    "fontSizes": ["12px", "14px", "16px", "20px", "28px"],
-    "textColors": ["#1f2329", "#e03e2d", "#3598db"],
-    "highlightColors": ["#fff3a3", "#c8f7c5", "#bfe3ff"],
-    "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
-})
+TipTapWidget(
+    config={
+        "height": "500px",
+        "toolbar": [["bold", "italic", "link"], ["bulletList", "orderedList"]],
+        "imageUploadUrl": "/editor/upload/",
+        "fontFamilies": ["Arial, sans-serif", "Roboto, sans-serif"],
+        "fontSizes": ["12px", "14px", "16px", "20px", "28px"],
+        "textColors": ["#1f2329", "#e03e2d", "#3598db"],
+        "highlightColors": ["#fff3a3", "#c8f7c5", "#bfe3ff"],
+        "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
+    }
+)
 ```
 
 ### Toolbar buttons

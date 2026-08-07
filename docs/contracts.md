@@ -19,6 +19,7 @@ from django.core.files.storage import default_storage
 from django_tiptap_editor.views.base_image_upload_view import BaseImageUploadView
 from django_tiptap_editor.views.image_upload_error import ImageUploadError
 
+
 class ImageUploadView(BaseImageUploadView):
     def save(self, file):
         if file.size > 5 * 1024 * 1024:
@@ -29,7 +30,7 @@ class ImageUploadView(BaseImageUploadView):
 
 ```python
 # urls.py
-path("editor/upload/", ImageUploadView.as_view(), name="tiptap-upload"),
+(path("editor/upload/", ImageUploadView.as_view(), name="tiptap-upload"),)
 ```
 
 ```python

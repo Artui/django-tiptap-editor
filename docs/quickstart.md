@@ -6,6 +6,7 @@
 from django import forms
 from django_tiptap_editor.forms.fields import TipTapFormField
 
+
 class ArticleForm(forms.Form):
     body = TipTapFormField()
 ```
@@ -15,6 +16,7 @@ Or attach the widget to any field / model form:
 ```python
 from django import forms
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
+
 
 class ArticleForm(forms.ModelForm):
     class Meta:
@@ -44,6 +46,7 @@ Display the stored value with `|safe`:
 ```python
 from django.contrib import admin
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
+
 
 @admin.register(Article)
 class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
