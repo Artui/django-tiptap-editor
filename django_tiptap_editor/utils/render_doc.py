@@ -1,16 +1,16 @@
 """Pure-Python ProseMirror-JSON → HTML renderer for the package's schema.
 
 Renders a stored document to HTML **server-side, with no Node and no editor** —
-the zero-JS display path for JSON storage (especially programmatically-authored
-documents that have no editor-produced mirror). It covers exactly the package's
+the zero-JS display path for JSON storage, especially programmatically-authored
+documents that have no editor-produced mirror. It covers exactly the package's
 node/mark set; unknown nodes/marks degrade to their text content rather than
-raising, so it never loses content silently.
+raising, so it never loses content silently. Faithful to, but not byte-identical
+with, the JS ``getHTML()`` output.
 
-Safety: the document is protocol-allowlisted first (``sanitize_doc`` strips
-disallowed link/image URLs), text and attribute values are HTML-escaped, and
-inline ``style`` values are passed through a conservative CSS allowlist — so the
-output is safe to mark for ``|safe`` even for untrusted JSON. It is faithful to,
-but not byte-identical with, the JS ``getHTML()`` output.
+**Safety, relied on wherever this output is marked safe:** the document is
+protocol-allowlisted first (``sanitize_doc``), text and attribute values are
+HTML-escaped, and inline ``style`` values pass a conservative CSS allowlist — so
+the result is safe for ``|safe`` even for untrusted JSON.
 """
 
 from __future__ import annotations
@@ -187,9 +187,7 @@ def render_doc(
 ) -> SafeString:
     """Render a ProseMirror document (dict) to a safe HTML string.
 
-    The document is protocol-allowlisted first; the result is HTML-escaped and
-    CSS-validated, so it is safe to render with ``|safe``. Non-dict / empty input
-    renders as an empty string.
+    Non-dict / empty input renders as an empty string.
     """
     if not isinstance(doc, dict):
         return mark_safe("")

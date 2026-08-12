@@ -3,13 +3,12 @@
 JSON storage means a document can be written by something other than the editor
 (an API, an import, a hand-edit). ProseMirror's schema only allowlists protocols
 on *parse*, which a stored-JSON path never runs — so a doc could carry a
-``javascript:`` link ``href`` or image ``src``. This walks the document tree and
-strips any URL whose scheme is outside the allowlist (relative / anchor URLs,
-which have no scheme, are always kept), before the value is persisted.
+``javascript:`` link ``href`` or image ``src``. This walks the tree and strips
+any URL whose scheme is outside the allowlist (relative / anchor URLs, having no
+scheme, are always kept), before the value is persisted.
 
-This is deliberately narrow: it secures the URL-bearing attributes, not the full
-schema. Full structural validation is the editor's job (and a future Python
-renderer's); see the JSON-storage design notes.
+Deliberately narrow: it secures the URL-bearing attributes, not the full schema.
+Structural validation is the editor's job.
 """
 
 from __future__ import annotations
@@ -31,12 +30,7 @@ _URL_STRIP_RE = re.compile(r"[\x00-\x20\x7f]")
 
 
 def _scheme(url: object) -> str:
-    """Return the lowercased URL scheme, or ``""`` for a relative/anchor URL.
-
-    Whitespace and control characters are stripped first (see ``_URL_STRIP_RE``),
-    mirroring the browser, so ``java\\nscript:`` resolves to the ``javascript``
-    scheme here just as it would on click.
-    """
+    """Return the lowercased URL scheme, or ``""`` for a relative/anchor URL."""
     if not isinstance(url, str):
         return ""
     match = _SCHEME_RE.match(_URL_STRIP_RE.sub("", url))
