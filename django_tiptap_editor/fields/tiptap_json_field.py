@@ -60,10 +60,9 @@ class TipTapJSONField(models.JSONField):
         )
         # Always re-derive the HTML mirror from the sanitized doc — never trust a
         # caller-supplied `html`. A write can set `{doc, html}` directly (API /
-        # import / hand-edit) with benign `doc` but hostile `html`; deriving the
-        # mirror here guarantees the rendered surface only ever reflects the
-        # sanitized doc. render_doc's output is protocol-allowlisted, HTML-escaped
-        # and CSS-validated, so it is safe to mark for `|safe`.
+        # import / hand-edit) with a benign `doc` but a hostile `html`, so
+        # deriving it here is what makes the rendered surface reflect only the
+        # sanitized doc.
         html = render_doc(
             doc, link_protocols=self.link_protocols, image_protocols=self.image_protocols
         )

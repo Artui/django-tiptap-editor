@@ -1,8 +1,6 @@
 """Template tags: ``{% tiptap_media %}``, ``{% tiptap_config %}``, and the
-``tiptap_html`` filter.
-
-(A template-tag module groups its tags by Django convention, like the
-``constants`` module groups constants.)
+``tiptap_html`` filter — several exports in one file because Django resolves a
+tag library by module name.
 """
 
 from __future__ import annotations

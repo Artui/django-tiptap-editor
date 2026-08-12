@@ -5,14 +5,13 @@ from __future__ import annotations
 # data-* attribute carrying the per-field config JSON the JS glue reads.
 CONFIG_ATTR = "data-tiptap-config"
 
-# data-* attribute telling the glue what to serialize into the textarea:
-# "html" (editor.getHTML()) or "json" (a {doc, html} envelope). See
-# TIPTAP_STORAGE_FORMAT / TipTapJSONField.
+# data-* attribute telling the glue which storage format to serialize into the
+# textarea.
 STORAGE_ATTR = "data-tiptap-storage"
 
 # Storage formats (see TIPTAP_STORAGE_FORMAT). "html" is the default, zero-config
-# path; "json" stores the canonical ProseMirror document plus a derived HTML
-# mirror (TipTapJSONField).
+# path (editor.getHTML()); "json" stores a {doc, html} envelope — the canonical
+# ProseMirror document plus a derived HTML mirror (TipTapJSONField).
 STORAGE_FORMAT_HTML = "html"
 STORAGE_FORMAT_JSON = "json"
 STORAGE_FORMATS = frozenset({STORAGE_FORMAT_HTML, STORAGE_FORMAT_JSON})

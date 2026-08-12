@@ -13,11 +13,10 @@ class TipTapValue:
     """A JSON-stored editor value: the ProseMirror ``doc`` plus an HTML mirror.
 
     ``doc`` is the canonical, lossless representation (use it for programmatic
-    work). ``html`` is a rendering of ``doc``, marked safe so templates can
-    render it directly: ``{{ obj.body }}`` or ``{{ obj.body.html }}`` — no
-    ``|safe`` needed. On save the field re-derives it from the sanitized ``doc``
-    (``render_doc``), so it is safe whoever wrote the value (see the security
-    docs). Mutating ``doc`` out of band leaves ``html`` stale until re-rendered.
+    work). ``html`` is a rendering of ``doc``, marked safe so templates can render
+    it directly: ``{{ obj.body }}`` or ``{{ obj.body.html }}``, no ``|safe``
+    needed — ``TipTapJSONField`` re-derives it on save, which is what makes that
+    safe. Mutating ``doc`` out of band leaves ``html`` stale until re-rendered.
     """
 
     doc: dict[str, Any]

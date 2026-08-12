@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`linkify-it` → 5.0.2 and `postcss` → 8.5.26** (both HIGH), plus
   **`pymdown-extensions` → 11.0.1** (MEDIUM). All three open advisories closed.
 
-  ⚠ **None of them reached consumers**, and the distinction is worth stating
+  **None of them reached consumers**, and the distinction is worth stating
   rather than implying. `linkify-it` arrives via `markdown-it` →
   `prosemirror-markdown` → `@tiptap/pm`, and **`markdown-it` is not in the
   shipped bundle at all** — the `linkify` strings in `tiptap.bundle.js` belong
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   after the upgrade, which is the evidence: had any of this been shipped, the
   rebuild would have changed them.
 
-- **Tested against Django 6.1.** ⚠ Django 6.1 removed
+- **Tested against Django 6.1.** Django 6.1 removed
   `django.utils.cache.cc_delim_re`, which DRF 3.17.x imports at module level, so
   that pairing fails at `import rest_framework`.
 

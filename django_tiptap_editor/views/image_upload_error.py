@@ -1,4 +1,4 @@
-"""Error a custom upload view raises to return a 400 to the editor."""
+"""The upload endpoint's failure signal."""
 
 from __future__ import annotations
 
