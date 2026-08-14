@@ -47,6 +47,12 @@ usual split-into-a-new-paragraph behaviour:
 TipTapWidget(config={"enterKey": "hardBreak"})
 ```
 
+**Lists are exempt, in every mode.** Inside a list item Enter starts the next item and
+Shift-Enter breaks the line within it — the behaviour authors expect from every other
+editor. A mode that inserted a `<br>` there would leave no way to add a bullet, or to
+leave the list, from the keyboard. Pressing Enter on an empty item still lifts out of the
+list as usual.
+
 To make it the **default for every editor in the project**, set it in the project-wide
 config — it merges into every instance, no per-field repetition:
 

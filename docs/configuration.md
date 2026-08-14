@@ -12,7 +12,7 @@ any omitted key.
 | `height` | str | Editor min-height, e.g. `"400px"`. |
 | `locale` | str | `"en"` or `"sv"` built in; add more with `registerLocale`. |
 | `manualMount` | bool | Opt the field out of auto-mount (initial scan + observer); mount it yourself after registering renderers. See [Theming → Load order](theming.md#load-order). |
-| `enterKey` | str | Enter / Shift-Enter behaviour: `"paragraph"` (default — Enter splits into a new paragraph, Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"` (exchange the two). |
+| `enterKey` | str | Enter / Shift-Enter behaviour **outside lists**: `"paragraph"` (default — Enter splits into a new paragraph, Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"` (exchange the two). Inside a list item Enter always starts the next item and Shift-Enter always breaks the line — see [Extending → The Enter key](extending.md#the-enter-key-built-in). |
 | `toolbar` | list[list[str]] | Groups of [button keys](#toolbar-buttons). Omit for the default. |
 | `extensions` | list[str] | Extension names. Built-ins are always on; list custom ones (and add them to `TIPTAP_EXTRA_EXTENSIONS`). |
 | `linkProtocols` | list[str] | Allowed link protocols. Default `["http","https","mailto","tel"]`. |

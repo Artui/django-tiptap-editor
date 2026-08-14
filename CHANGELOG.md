@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-08-14
+
+### Fixed
+
+- **Enter inside a list now starts the next item under every `enterKey` mode.**
+  With `enterKey` set to `"hardBreak"` or `"swap"`, the high-priority Enter
+  binding applied inside list items too: pressing Enter in a bullet appended a
+  `<br>` to the same `<li>` instead of creating the next one. There was no
+  keyboard route to a second bullet — and none out of the list either, since the
+  empty-item Enter that normally lifts out was swallowed the same way. The two
+  handlers now decline the key inside a list item, which hands it to the list
+  keymap that splits the item and lifts out of an empty one. `"swap"` also no
+  longer nests a second `<p>` inside one bullet on Shift-Enter. The default
+  `"paragraph"` mode was never affected.
+
+  Documented as a rule rather than an accident: `enterKey` configures behaviour
+  *outside* lists; inside a list item Enter starts the next item and Shift-Enter
+  breaks the line.
+
+### Added
+
+- **`harness/`** — a no-build page (`make harness`) that mounts real editors the
+  way the widget does and replays scripted key presses across all three
+  `enterKey` modes, asserting the serialized HTML. The manual mirror of
+  `js/test/enter-key.test.ts`.
+
 ### Security
 
 - **`linkify-it` → 5.0.2 and `postcss` → 8.5.26** (both HIGH), plus
@@ -220,7 +246,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.4.0...v0.5.0
