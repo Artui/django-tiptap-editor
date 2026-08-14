@@ -1,4 +1,4 @@
-.PHONY: help init test lint lint-fix format format-check type-check deps-bump build-js build docs-serve docs-build release-bump release-publish release-publish-prepare release-publish-finalize
+.PHONY: help init test lint lint-fix format format-check type-check deps-bump build-js build harness docs-serve docs-build release-bump release-publish release-publish-prepare release-publish-finalize
 
 help:
 	@echo "Available targets:"
@@ -12,6 +12,7 @@ help:
 	@echo "  deps-bump        Upgrade pinned dependencies"
 	@echo "  build-js         Rebuild the committed JS bundles (esbuild, in js/)"
 	@echo "  build            build-js + uv build (sdist + wheel)"
+	@echo "  harness          Serve the manual keyboard harness at http://localhost:8765/harness/"
 	@echo "  docs-serve       Live-reload docs at http://localhost:8000 (needs mkdocs.yml)"
 	@echo "  docs-build       Build docs into ./site (strict — fails on broken links)"
 	@echo "  release-bump     Bump version files + CHANGELOG. Usage: make release-bump VERSION=X.Y.Z"
@@ -53,6 +54,12 @@ build-js:
 
 build: build-js
 	uv build
+
+# Manual QA page for the committed bundle (see harness/README.md). Served from
+# the repo root so the page's relative static/ paths resolve over http://.
+harness:
+	@echo "Harness: http://localhost:8765/harness/"
+	python3 -m http.server 8765
 
 docs-serve:
 	uv run --group docs mkdocs serve

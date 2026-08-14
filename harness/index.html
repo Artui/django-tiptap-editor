@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>django-tiptap-editor — keyboard harness</title>
+    <link rel="stylesheet" href="../django_tiptap_editor/static/django_tiptap_editor/tiptap.bundle.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f5f7;
+        --panel: #ffffff;
+        --ink: #1c1e21;
+        --muted: #6b7280;
+        --line: #d9dce1;
+        --pass: #157347;
+        --fail: #b02a37;
+        --code-bg: #f7f8fa;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 28px 24px 64px;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 960px; margin: 0 auto; }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      h2 { font-size: 16px; margin: 0 0 12px; }
+      .lede { color: var(--muted); margin: 0 0 24px; }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 24px;
+      }
+      .modes { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+      .modes label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      .modes code { font-size: 13px; }
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin: 0;
+        font-size: 12.5px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 40px;
+      }
+      .label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+      button {
+        font: inherit;
+        padding: 7px 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+      }
+      button:hover { background: #f0f1f3; }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; }
+      th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+      th { background: var(--code-bg); font-weight: 600; }
+      td.verdict { text-align: center; font-weight: 600; width: 110px; cursor: pointer; }
+      td.pass { color: var(--pass); }
+      td.fail { color: var(--fail); }
+      #summary { margin: 0 0 14px; font-weight: 600; }
+      #detail { margin-top: 16px; }
+      #detail:empty { display: none; }
+      .scratch { position: absolute; left: -10000px; top: 0; width: 700px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>django-tiptap-editor — keyboard harness</h1>
+      <p class="lede">
+        A no-build page for exercising Enter / Shift-Enter against the committed bundle. The
+        playground mounts a real editor the way the Django widget does (a
+        <code>&lt;textarea&gt;</code> carrying <code>data-tiptap-config</code>); the scenario grid
+        runs the same key presses across all three <code>enterKey</code> modes and asserts the
+        serialized HTML.
+      </p>
+
+      <section class="panel">
+        <h2>Playground</h2>
+        <div class="modes" id="modes"></div>
+        <div id="slot"></div>
+        <p class="label">Serialized value (what the form would POST)</p>
+        <pre id="value"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Scenarios</h2>
+        <p id="summary">Not run yet.</p>
+        <button id="run" type="button">Run all scenarios</button>
+        <div class="label">Results</div>
+        <table id="grid"></table>
+        <div id="detail"></div>
+      </section>
+    </main>
+
+    <div class="scratch" id="scratch"></div>
+
+    <script src="../django_tiptap_editor/static/django_tiptap_editor/tiptap.bundle.js"></script>
+    <script>
+      const MODES = ["paragraph", "hardBreak", "swap"];
+
+      // --- editor plumbing ------------------------------------------------
+      // Mount the way Django does: drop a textarea carrying data-tiptap-config
+      // into the DOM and let the bundle's auto-mount claim it. Nothing here
+      // reaches past the public glue API, so the harness exercises the same
+      // path a real page does.
+      function mount(container, id, config, initialHtml) {
+        const existing = DjangoTipTap.get(id);
+        if (existing) {
+          DjangoTipTap.destroy(id);
+        }
+        container.innerHTML = "";
+        const textarea = document.createElement("textarea");
+        textarea.id = id;
+        textarea.name = id;
+        textarea.setAttribute("data-tiptap-config", JSON.stringify(config));
+        textarea.setAttribute("data-tiptap-storage", "html");
+        // Seed through the textarea, not setContent(): the widget renders the
+        // stored value as the textarea's content and the glue loads from there,
+        // so the serialized pane below is populated from the first paint.
+        textarea.value = initialHtml || "";
+        container.appendChild(textarea);
+        DjangoTipTap.autoMount(container);
+        return { editor: DjangoTipTap.get(id), textarea };
+      }
+
+      // A real keydown on the editable node — the same event ProseMirror sees
+      // from a physical key press, so the keymap chain is what is under test.
+      function press(editor, key, shift) {
+        editor.view.dom.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: key,
+            code: key,
+            shiftKey: Boolean(shift),
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      }
+
+      function clickButton(editor, key) {
+        const shell = editor.view.dom.closest("[data-tiptap-shell]");
+        const button = shell && shell.querySelector('[data-key="' + key + '"]');
+        if (!button) {
+          throw new Error('no toolbar button "' + key + '"');
+        }
+        button.click();
+      }
+
+      // --- scenarios ------------------------------------------------------
+      // Steps are data so the same script runs under every mode. `expect` maps
+      // a mode to the HTML the editor must serialize afterwards; a single
+      // string means "the same in every mode".
+      const type = (text) => ({ do: "type", text });
+      const enter = { do: "key", key: "Enter" };
+      const shiftEnter = { do: "key", key: "Enter", shift: true };
+      const toolbar = (key) => ({ do: "toolbar", key });
+
+      const SCENARIOS = [
+        {
+          title: "Bullet list: Enter starts the next item",
+          steps: [toolbar("bulletList"), type("one"), enter, type("two")],
+          expect: "<ul><li><p>one</p></li><li><p>two</p></li></ul>",
+        },
+        {
+          title: "Ordered list: Enter starts the next item",
+          steps: [toolbar("orderedList"), type("one"), enter, type("two")],
+          expect: "<ol><li><p>one</p></li><li><p>two</p></li></ol>",
+        },
+        {
+          title: "List: Enter on an empty item leaves the list",
+          steps: [toolbar("bulletList"), type("one"), enter, enter, type("after")],
+          expect: "<ul><li><p>one</p></li></ul><p>after</p>",
+        },
+        {
+          title: "List: Shift-Enter breaks the line inside the item",
+          steps: [toolbar("bulletList"), type("one"), shiftEnter, type("two")],
+          expect: "<ul><li><p>one<br>two</p></li></ul>",
+        },
+        {
+          title: "Paragraph: Enter follows the configured mode",
+          steps: [type("one"), enter, type("two")],
+          expect: {
+            paragraph: "<p>one</p><p>two</p>",
+            hardBreak: "<p>one<br>two</p>",
+            swap: "<p>one<br>two</p>",
+          },
+        },
+        {
+          title: "Paragraph: Shift-Enter follows the configured mode",
+          steps: [type("one"), shiftEnter, type("two")],
+          expect: {
+            paragraph: "<p>one<br>two</p>",
+            hardBreak: "<p>one<br>two</p>",
+            swap: "<p>one</p><p>two</p>",
+          },
+        },
+      ];
+
+      function expectedFor(scenario, mode) {
+        return typeof scenario.expect === "string" ? scenario.expect : scenario.expect[mode];
+      }
+
+      function runScenario(scenario, mode) {
+        const { editor } = mount(document.getElementById("scratch"), "harness-scratch", {
+          enterKey: mode,
+          height: "160px",
+        });
+        editor.commands.focus("end");
+        for (const step of scenario.steps) {
+          if (step.do === "type") {
+            editor.commands.insertContent(step.text);
+          } else if (step.do === "key") {
+            press(editor, step.key, step.shift);
+          } else {
+            clickButton(editor, step.key);
+          }
+        }
+        const actual = editor.getHTML();
+        DjangoTipTap.destroy("harness-scratch");
+        return actual;
+      }
+
+      // --- results grid ---------------------------------------------------
+      const results = [];
+
+      function renderGrid() {
+        const head =
+          "<tr><th>Scenario</th>" + MODES.map((m) => "<th>" + m + "</th>").join("") + "</tr>";
+        const rows = SCENARIOS.map((scenario, row) => {
+          const cells = MODES.map((mode, col) => {
+            const result = results[row] && results[row][col];
+            if (!result) {
+              return '<td class="verdict">—</td>';
+            }
+            const cls = result.ok ? "pass" : "fail";
+            const text = result.ok ? "PASS" : "FAIL";
+            return (
+              '<td class="verdict ' + cls + '" data-row="' + row + '" data-col="' + col + '">' +
+              text +
+              "</td>"
+            );
+          }).join("");
+          return "<tr><td>" + scenario.title + "</td>" + cells + "</tr>";
+        }).join("");
+        document.getElementById("grid").innerHTML = head + rows;
+      }
+
+      function showDetail(row, col) {
+        const result = results[row][col];
+        document.getElementById("detail").innerHTML =
+          '<div class="label">' + SCENARIOS[row].title + " — " + MODES[col] + "</div>" +
+          "<pre>expected  " + escapeHtml(result.expected) + "\nactual    " + escapeHtml(result.actual) + "</pre>";
+      }
+
+      function escapeHtml(value) {
+        return value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      }
+
+      function runAll() {
+        results.length = 0;
+        let failures = 0;
+        SCENARIOS.forEach((scenario, row) => {
+          results[row] = MODES.map((mode) => {
+            const expected = expectedFor(scenario, mode);
+            let actual;
+            try {
+              actual = runScenario(scenario, mode);
+            } catch (error) {
+              actual = "ERROR: " + error.message;
+            }
+            const ok = actual === expected;
+            if (!ok) {
+              failures += 1;
+            }
+            return { ok, expected, actual };
+          });
+        });
+        const total = SCENARIOS.length * MODES.length;
+        document.getElementById("summary").textContent = failures
+          ? failures + " of " + total + " checks FAILED"
+          : "All " + total + " checks passed";
+        document.getElementById("summary").style.color = failures
+          ? "var(--fail)"
+          : "var(--pass)";
+        renderGrid();
+        // Read by the browser-driving tests; also handy from the devtools console.
+        window.HARNESS_RESULTS = { failures, total, results };
+      }
+
+      // --- playground -----------------------------------------------------
+      let playgroundMode = "paragraph";
+
+      function mountPlayground() {
+        const { editor, textarea } = mount(
+          document.getElementById("slot"),
+          "harness-editor",
+          { enterKey: playgroundMode, height: "220px" },
+          "<p>Click the bullet-list button, type, and press Enter.</p>",
+        );
+        const value = document.getElementById("value");
+        const sync = () => {
+          value.textContent = textarea.value;
+        };
+        editor.on("update", sync);
+        editor.commands.focus("end");
+        sync();
+      }
+
+      document.getElementById("modes").innerHTML = MODES.map(
+        (mode, index) =>
+          '<label><input type="radio" name="mode" value="' + mode + '"' +
+          (index === 0 ? " checked" : "") + " /><code>" + mode + "</code></label>",
+      ).join("");
+
+      document.getElementById("modes").addEventListener("change", (event) => {
+        playgroundMode = event.target.value;
+        mountPlayground();
+      });
+
+      document.getElementById("run").addEventListener("click", runAll);
+
+      document.getElementById("grid").addEventListener("click", (event) => {
+        const cell = event.target.closest("td.verdict");
+        if (cell && cell.dataset.row) {
+          showDetail(Number(cell.dataset.row), Number(cell.dataset.col));
+        }
+      });
+
+      mountPlayground();
+      renderGrid();
+    </script>
+  </body>
+</html>
