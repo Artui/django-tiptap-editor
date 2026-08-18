@@ -35,7 +35,11 @@ Because protocol allowlisting happens on *parse* — which a stored-JSON documen
 - The `html` mirror is **re-derived from the sanitized `doc` on every save** (never trusted from
   the caller) by the built-in **`render_doc`**, which re-applies the protocol allowlist,
   HTML-escapes text and attributes, and passes inline `style` values through a conservative CSS
-  allowlist (no `;`/`:` injection, no `url(...:...)`, no `expression`). A write can set
+  allowlist (no `;`/`:` injection, no `url(...:...)`, no `expression`). An image's stored `style`
+  is split into declarations and filtered the same way, keeping only layout properties --
+  `float`, `display`, `vertical-align`, `margin`/`padding` (and their per-side forms), `border`,
+  `border-radius`, `width`, `height` -- so the float and margins the editor round-trips survive
+  without widening what a style attribute can carry. A write can set
   `{doc, html}` directly (API / import / hand-edit); the supplied `html` is discarded, so the
   rendered surface always reflects only the sanitized doc. The field marks `.html` safe on that
   basis. `render_doc` is also available directly and via the `tiptap_html` filter for rendering

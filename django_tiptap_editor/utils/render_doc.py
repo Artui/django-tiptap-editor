@@ -65,6 +65,73 @@ def _css_length(value: object) -> str:
     return "" if token.replace(".", "", 1).isdigit() else token
 
 
+# Properties an image's stored ``style`` may carry into the output. The editor
+# round-trips that attribute verbatim (the corpus needs ``float`` and ``margin``
+# to survive), so this path has to emit it too or JSON storage renders the image
+# differently from HTML storage. An allowlist rather than a pattern, because the
+# docs enumerate exactly what survives, and every value still passes _css_value.
+_IMAGE_STYLE_PROPERTIES = frozenset(
+    {
+        "border",
+        "border-radius",
+        "display",
+        "float",
+        "height",
+        "margin",
+        "margin-bottom",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "padding",
+        "padding-bottom",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "vertical-align",
+        "width",
+    }
+)
+
+# Sizing carried by the width/height attributes, which the editor writes when an
+# image is resized. A style declaration for the same property would outrank the
+# attribute, so the attribute wins and the declaration is dropped.
+_SIZE_PROPERTIES = ("width", "height")
+
+
+def _style_declarations(style: object, allowed: frozenset[str]) -> list[tuple[str, str]]:
+    """Split a stored ``style`` string into safe (property, value) pairs.
+
+    Splitting on ``;`` and ``:`` and re-checking each half is what keeps the
+    conservative guarantee: the property must be one this renderer emits, and
+    the value still has to pass ``_css_value``, which rejects anything carrying
+    its own ``;``/``:`` (so ``url(...:...)`` never survives).
+    """
+    if not isinstance(style, str):
+        return []
+    pairs: list[tuple[str, str]] = []
+    for declaration in style.split(";"):
+        name, separator, value = declaration.partition(":")
+        if not separator:
+            continue
+        prop = name.strip().lower()
+        safe = _css_value(value)
+        if prop in allowed and safe:
+            pairs.append((prop, safe))
+    return pairs
+
+
+def _image_style(attrs: dict[str, Any]) -> str:
+    """Build an image's ``style``, merging its stored one with its size."""
+    stored = _style_declarations(attrs.get("style"), _IMAGE_STYLE_PROPERTIES)
+    pairs: list[tuple[str, object]] = [
+        (prop, value)
+        for prop, value in stored
+        if not (prop in _SIZE_PROPERTIES and attrs.get(prop) not in (None, ""))
+    ]
+    pairs.extend((prop, _css_length(attrs.get(prop))) for prop in _SIZE_PROPERTIES)
+    return _style_attr(pairs)
+
+
 def _style_attr(pairs: list[tuple[str, object]]) -> str:
     """Build a ``style="..."`` attribute from (prop, value) pairs, dropping
     empties and unsafe values. Returns ``""`` when nothing survives."""
@@ -175,12 +242,7 @@ def _render_node(node: dict[str, Any]) -> str:
             + _attr("title", attrs.get("title"))
             + _attr("width", attrs.get("width"))
             + _attr("height", attrs.get("height"))
-            + _style_attr(
-                [
-                    ("width", _css_length(attrs.get("width"))),
-                    ("height", _css_length(attrs.get("height"))),
-                ]
-            )
+            + _image_style(attrs)
         )
         return f"<img{rendered}>"
     if kind == "table":
