@@ -123,12 +123,58 @@ export function commandMenuControl(opts: {
 // per-editor config (textColors / highlightColors) at render time.
 export type SwatchOptions = string[] | ((editor: Editor) => string[]);
 
-// Text color / highlight: a swatch grid plus "Remove".
+// Six-digit hex is the only form <input type="color"> accepts; a swatch or
+// stored value in any other notation (rgb(), a named color) can't seed it, so
+// the picker opens on black rather than silently showing a wrong color.
+const HEX6_RE = /^#[0-9a-f]{6}$/i;
+
+// The optional native picker row under the swatch grid, shown when the editor's
+// config opts in via `colorPicker`. Committing on "change" (not "input") keeps
+// one transaction per pick instead of one per drag step.
+//
+// The native control is styled out of the way rather than shown raw: it sits at
+// opacity 0 over a rainbow chip sized like a swatch, so the row reads as one
+// more entry in the panel instead of an OS widget dropped into it. The chip is
+// the affordance; the input underneath is what the click actually lands on.
+function pickerRow(
+  editor: Editor,
+  attr: string,
+  label: string,
+  current: string,
+  close: () => void,
+): HTMLElement {
+  const row = document.createElement("label");
+  row.className = "django-tiptap__picker";
+  row.title = label;
+  const chip = document.createElement("span");
+  chip.className = "django-tiptap__picker-chip";
+  const input = document.createElement("input");
+  input.type = "color";
+  input.className = "django-tiptap__picker-input";
+  input.value = HEX6_RE.test(current) ? current : "#000000";
+  chip.appendChild(input);
+  const text = document.createElement("span");
+  text.className = "django-tiptap__picker-label";
+  text.textContent = label;
+  row.append(chip, text);
+  // No preventDefault on mousedown here, unlike every other control: that is
+  // what would stop the native picker from opening. Losing DOM focus is safe —
+  // the ProseMirror selection lives in editor state, and applyTextStyle's
+  // chain().focus() restores it before the mark is applied.
+  input.addEventListener("change", () => {
+    applyTextStyle(editor, attr, input.value);
+    close();
+  });
+  return row;
+}
+
+// Text color / highlight: a swatch grid, an optional native picker, "Remove".
 export function colorControl(opts: {
   title: string;
   attr: string;
   triggerHTML: string;
   swatches: SwatchOptions;
+  picker?: (editor: Editor) => boolean;
 }): ButtonSpec {
   return {
     title: opts.title,
@@ -162,6 +208,9 @@ export function colorControl(opts: {
             grid.appendChild(sw);
           }
           panel.appendChild(grid);
+          if (opts.picker?.(editor)) {
+            panel.appendChild(pickerRow(editor, opts.attr, t("custom"), current, close));
+          }
           panel.appendChild(
             menuItem(t("remove"), false, () => {
               applyTextStyle(editor, opts.attr, null);

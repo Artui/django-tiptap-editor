@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Optional native color picker on the text-color and highlight dropdowns.**
+  Both dropdowns offered a fixed swatch grid and nothing else, so any color
+  outside the configured palette was unreachable from the toolbar. Setting
+  `colorPicker: True` appends a native `<input type="color">` under both grids,
+  seeded from the current color. Off by default, because the swatch grid alone
+  is what keeps a document's colors to a house palette.
+
+  The picker commits on `change` rather than `input`, so dragging through the
+  OS color wheel produces one undo step instead of one per intermediate shade.
+  Values in a notation the native control can't take (`rgb()`, a named color)
+  leave it on black rather than showing a wrong color.
+
 ## [0.8.0] — 2026-08-14
 
 ### Fixed

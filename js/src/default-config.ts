@@ -31,6 +31,10 @@ export interface TipTapConfig {
   // palettes.
   textColors?: string[];
   highlightColors?: string[];
+  // Adds a native <input type="color"> under both swatch grids, for colors the
+  // palettes don't carry. Off by default: the swatch grid alone is what keeps a
+  // document's colors to a house palette.
+  colorPicker?: boolean;
   mergeTags?: MergeTag[];
   // Path B only (passed to init(); not serializable via data-tiptap-config).
   onChange?: (html: string) => void;

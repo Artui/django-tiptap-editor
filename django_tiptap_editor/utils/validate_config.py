@@ -19,9 +19,10 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
 
     Raises ``ImproperlyConfigured`` for unknown top-level keys, an out-of-range
     ``enterKey`` value, a ``fontFamilies`` / ``fontSizes`` / ``textColors`` /
-    ``highlightColors`` value that is not a list of strings, or extension names
-    that are neither built in nor declared in TIPTAP_EXTRA_EXTENSIONS. Extension
-    names are otherwise treated as opaque strings (resolved in JS).
+    ``highlightColors`` value that is not a list of strings, a non-boolean
+    ``colorPicker``, or extension names that are neither built in nor declared
+    in TIPTAP_EXTRA_EXTENSIONS. Extension names are otherwise treated as opaque
+    strings (resolved in JS).
     """
     unknown_keys = set(config) - KNOWN_CONFIG_KEYS
     if unknown_keys:
@@ -42,6 +43,10 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             not isinstance(value, list) or not all(isinstance(item, str) for item in value)
         ):
             raise ImproperlyConfigured(f"TipTap {key} must be a list of strings, got {value!r}.")
+
+    color_picker = config.get("colorPicker")
+    if color_picker is not None and not isinstance(color_picker, bool):
+        raise ImproperlyConfigured(f"TipTap colorPicker must be a boolean, got {color_picker!r}.")
 
     extensions = config.get("extensions")
     if extensions is not None:
