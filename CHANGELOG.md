@@ -44,6 +44,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Server-rendered images keep their layout styling.** `render_doc` never read an
+  image's stored `style`, so under JSON storage an image carrying
+  `style="float: right; margin: 8px"` rendered with the float and margins
+  silently dropped -- while the same document stored as HTML kept them. One
+  document, two renderings, depending only on the storage format. The editor
+  round-trips that attribute deliberately (the fidelity corpus depends on it),
+  and this path now does too.
+
+  The style is not passed through raw: it is split into declarations and each
+  one filtered, keeping only layout properties (`float`, `display`,
+  `vertical-align`, `margin`/`padding` and their per-side forms, `border`,
+  `border-radius`, `width`, `height`) with every value still passing the
+  existing conservative CSS allowlist -- so nothing carrying its own `;` or `:`
+  survives, and `render_doc` output stays safe to mark safe. Where a style
+  width or height meets a `width`/`height` attribute, the attribute wins, since
+  a style declaration would otherwise outrank the size the editor writes.
+
 - **Server-rendered images no longer carry an invalid CSS length.** `render_doc`
   emitted a resized image as `width="300" style="width: 300"`, and a bare number
   is not a CSS length, so every browser discarded that declaration -- the

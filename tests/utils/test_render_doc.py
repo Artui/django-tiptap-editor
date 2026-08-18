@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from django.utils.safestring import SafeString
 
 from django_tiptap_editor.utils.render_doc import render_doc
@@ -300,3 +301,80 @@ def test_disallowed_link_and_image_protocols_stripped() -> None:
     }
     assert 'src=""' not in render_doc(img) or "javascript" not in render_doc(img)
     assert "javascript" not in render_doc(img)
+
+
+def _image(**attrs: object) -> dict:
+    return {"type": "image", "attrs": attrs}
+
+
+def test_image_keeps_its_stored_layout_style() -> None:
+    """The editor round-trips an image's style, so this path must too.
+
+    Dropping it rendered a float-right image inline under JSON storage while
+    HTML storage kept the float -- one document, two renderings.
+    """
+    doc = _p(_image(src="https://i/x.png", style="float: right; margin: 8px;"))
+    assert render_doc(doc) == '<p><img src="https://i/x.png" style="float: right; margin: 8px"></p>'
+
+
+def test_image_style_drops_properties_outside_the_allowlist() -> None:
+    doc = _p(_image(src="https://i/x.png", style="float: left; position: fixed"))
+    assert render_doc(doc) == '<p><img src="https://i/x.png" style="float: left"></p>'
+
+
+@pytest.mark.parametrize(
+    "style",
+    [
+        'float: right" onload="alert(1)',  # quote/attribute injection
+        "background: url(javascript:alert(1))",  # a value carrying its own colon
+        "float: expression(alert(1))",
+        "margin",  # no colon at all
+    ],
+)
+def test_image_style_rejects_unsafe_declarations(style: str) -> None:
+    doc = _p(_image(src="https://i/x.png", style=style))
+    assert render_doc(doc) == '<p><img src="https://i/x.png"></p>'
+
+
+def test_image_style_is_ignored_when_not_a_string() -> None:
+    doc = _p(_image(src="https://i/x.png", style={"float": "right"}))
+    assert render_doc(doc) == '<p><img src="https://i/x.png"></p>'
+
+
+def test_image_size_attribute_wins_over_a_style_width() -> None:
+    """A style width outranks the attribute in the browser, so it cannot stay.
+
+    The editor clears these on resize for the same reason; a document written
+    by hand can still carry both, and the attribute is the canonical size.
+    """
+    doc = _p(_image(src="https://i/x.png", width="300", style="float: left; width: 500px"))
+    assert render_doc(doc) == '<p><img src="https://i/x.png" width="300" style="float: left"></p>'
+
+
+def test_image_style_size_survives_without_a_matching_attribute() -> None:
+    doc = _p(_image(src="https://i/x.png", height="80", style="width: 500px"))
+    assert render_doc(doc) == '<p><img src="https://i/x.png" height="80" style="width: 500px"></p>'
+
+
+def test_image_style_parity_with_the_editor_for_a_stored_document() -> None:
+    """The attrs shape JSON storage actually holds, nulls and all.
+
+    Taken from the glue's own htmlToJSON of the corpus image; the editor
+    renders it as ``<img src="..." style="float: right; margin: 8px;">``, and
+    this path has to agree (bar the trailing semicolon, which this renderer
+    never emits -- it is faithful to that output, not byte-identical).
+    """
+    doc = _p(
+        _image(
+            src="https://placehold.co/120x60",
+            alt=None,
+            title=None,
+            width=None,
+            height=None,
+            style="float: right; margin: 8px;",
+        )
+    )
+    assert (
+        render_doc(doc)
+        == '<p><img src="https://placehold.co/120x60" style="float: right; margin: 8px"></p>'
+    )
