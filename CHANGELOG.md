@@ -23,8 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   width would otherwise outrank the attribute and the drag would appear to do
   nothing.
 
-  The handles are a NodeView, i.e. editing chrome: `getHTML()` serializes from
-  the document through the schema, so the wrapper never reaches a stored value.
+  The handles are an overlay that tracks the selected image, not a wrapper
+  around it. That is deliberate: the caret's height is taken from the box beside
+  it, so a bare `<img>` -- an inline replaced element -- gets a caret spanning
+  the image, while a wrapper drops it to a text-height stub. Leaving the image
+  node's own DOM untouched keeps the caret, the line box and the serialized
+  value identical whether resizing is on or off.
 
 ### Fixed
 

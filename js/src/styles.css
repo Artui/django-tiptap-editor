@@ -283,6 +283,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  position: relative; /* containing block for the image-resize overlay */
 }
 
 /* Statusbar region (opt-in, tier-2 setRenderer("statusbar", …)). A custom
@@ -452,44 +453,32 @@
   border-color: var(--tiptap-accent, #3538cd);
 }
 
-/* Image resize handles (NodeView chrome — never part of the stored value). The
-   wrapper carries ProseMirror-selectednode instead of the <img>, so it takes
-   over the selected outline too. */
-/* inline-block, because the handles anchor to this box and an inline wrapper
-   reports the 18px line box rather than the image's height (handles then land
-   ~100px off a 120px image). The cost is the caret beside the image: next to a
-   bare <img> the browser gives the caret the whole line box, while beside an
-   inline-block it falls back to the text strut, so the caret is an ~18px stub
-   rather than image-height. Fixing that properly means dropping the wrapper and
-   floating the handles as an overlay. */
-.django-tiptap__img {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
+/* Image resize handles. An overlay tracking the selected image, NOT a wrapper
+   around it: the caret's height comes from the box beside it, so leaving the
+   <img> a bare inline replaced element is what keeps the caret spanning the
+   image instead of dropping to a text-height stub. The overlay lives in the
+   scroll container, so it scrolls with the content it tracks. */
+.django-tiptap__img-overlay {
+  position: absolute;
+  z-index: 5;
+  /* Transparent to the pointer, so only the handles inside it are clickable
+     and the image underneath stays selectable. */
+  pointer-events: none;
 }
 
-/* A block image is not an inline box inside the wrapper, so the wrapper's box
-   matches the image's exactly (an inline one leaves it ~6px taller) and the
-   outline and handles hug the image rather than floating below it. */
-.django-tiptap__img img {
-  display: block;
+.django-tiptap__img-overlay[hidden] {
+  display: none;
 }
 
-.django-tiptap__img.ProseMirror-selectednode {
-  outline: 2px solid var(--tiptap-accent);
-}
-
-/* The element is a 22px transparent grab target — a 10px square is a poor one,
-   particularly on a trackpad. The visible chip is drawn by ::after, inset
-   within it, so widening the target never enlarges the chrome. (Widening the
-   hit area with a negative-inset pseudo-element instead does not work: the
-   generated box is not hit-tested here.) */
+/* Each handle is a 22px transparent grab target -- a 10px square is a poor one,
+   particularly on a trackpad -- with the visible chip drawn inside by ::after,
+   so widening the target never enlarges the chrome. */
 .django-tiptap__img-handle {
   position: absolute;
-  display: none;
   width: 22px;
   height: 22px;
   box-sizing: border-box;
+  pointer-events: auto;
 }
 
 .django-tiptap__img-handle::after {
@@ -501,10 +490,7 @@
   border-radius: 2px;
 }
 
-.django-tiptap__img.ProseMirror-selectednode .django-tiptap__img-handle {
-  display: block;
-}
-
+/* The chip sits 6px inside a 22px box, so 11px is what centres it on a corner. */
 .django-tiptap__img-handle--nw {
   top: -11px;
   left: -11px;

@@ -10,8 +10,8 @@ import { BackgroundColor } from "./extensions/background-color";
 import { BlockStyle } from "./extensions/block-style";
 import { EnterKey } from "./extensions/enter-key";
 import { FontSize } from "./extensions/font-size";
+import { ImageResize } from "./extensions/image-resize";
 import { InlineImage } from "./extensions/inline-image";
-import { ResizableImage } from "./extensions/resizable-image";
 import { getExtensionFactory } from "./registry";
 import type { ExtensionContext } from "./registry";
 import {
@@ -98,10 +98,7 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
       protocols,
       HTMLAttributes: { target: null, rel: null },
     }),
-    // Resize handles are editing chrome only (a NodeView), so the serialized
-    // value is identical either way; opting out drops the NodeView entirely
-    // rather than hiding it.
-    (config.imageResize === false ? InlineImage : ResizableImage).configure({ inline: true }),
+    InlineImage.configure({ inline: true }),
     Table.configure({ resizable: false }),
     TableRow,
     TableHeader,
@@ -110,6 +107,12 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
     Superscript,
     CharacterCount,
   ];
+
+  // Editing chrome, not schema: the image node is identical either way, so
+  // turning this off changes nothing about the stored value.
+  if (config.imageResize !== false) {
+    baseline.push(ImageResize);
+  }
 
   const requested = config.extensions ?? DEFAULT_EXTENSIONS;
   const custom: AnyExtension[] = [];
