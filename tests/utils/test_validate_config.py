@@ -68,17 +68,22 @@ def test_string_list_with_non_string_item_raises(key: str) -> None:
         validate_config({key: ["16px", 12]})
 
 
+BOOL_KEYS = ["colorPicker", "imageResize"]
+
+
+@pytest.mark.parametrize("key", BOOL_KEYS)
 @pytest.mark.parametrize("value", [True, False])
-def test_color_picker_boolean_passes(value: bool) -> None:
-    cfg = {"colorPicker": value}
+def test_boolean_key_passes(key: str, value: bool) -> None:
+    cfg = {key: value}
     assert validate_config(cfg) is cfg
 
 
-def test_color_picker_omitted_passes() -> None:
+def test_boolean_keys_omitted_pass() -> None:
     assert validate_config({}) == {}
 
 
+@pytest.mark.parametrize("key", BOOL_KEYS)
 @pytest.mark.parametrize("value", ["true", 1, ["#ff0000"]])
-def test_color_picker_non_boolean_raises(value: object) -> None:
-    with pytest.raises(ImproperlyConfigured, match="TipTap colorPicker must be a boolean"):
-        validate_config({"colorPicker": value})
+def test_boolean_key_non_boolean_raises(key: str, value: object) -> None:
+    with pytest.raises(ImproperlyConfigured, match=f"TipTap {key} must be a boolean"):
+        validate_config({key: value})

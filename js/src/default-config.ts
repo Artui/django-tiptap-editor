@@ -35,6 +35,10 @@ export interface TipTapConfig {
   // palettes don't carry. Off by default: the swatch grid alone is what keeps a
   // document's colors to a house palette.
   colorPicker?: boolean;
+  // Drag handles on a selected image, sizing how large the document asks for it
+  // to be drawn. On by default. This never touches the uploaded file: the asset
+  // keeps its own resolution, and only the width/height attributes change.
+  imageResize?: boolean;
   mergeTags?: MergeTag[];
   // Path B only (passed to init(); not serializable via data-tiptap-config).
   onChange?: (html: string) => void;

@@ -11,6 +11,7 @@ import { BlockStyle } from "./extensions/block-style";
 import { EnterKey } from "./extensions/enter-key";
 import { FontSize } from "./extensions/font-size";
 import { InlineImage } from "./extensions/inline-image";
+import { ResizableImage } from "./extensions/resizable-image";
 import { getExtensionFactory } from "./registry";
 import type { ExtensionContext } from "./registry";
 import {
@@ -97,7 +98,10 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
       protocols,
       HTMLAttributes: { target: null, rel: null },
     }),
-    InlineImage.configure({ inline: true }),
+    // Resize handles are editing chrome only (a NodeView), so the serialized
+    // value is identical either way; opting out drops the NodeView entirely
+    // rather than hiding it.
+    (config.imageResize === false ? InlineImage : ResizableImage).configure({ inline: true }),
     Table.configure({ resizable: false }),
     TableRow,
     TableHeader,

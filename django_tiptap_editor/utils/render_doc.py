@@ -52,6 +52,19 @@ def _css_value(value: object) -> str:
     return token
 
 
+def _css_length(value: object) -> str:
+    """Return ``value`` if it is a CSS length, else ``""``.
+
+    The editor writes a resized image's size as the bare-number ``width`` /
+    ``height`` attributes, and a bare number is not a CSS length -- emitting it
+    as one produced ``style="width: 300"``, which every browser discards. A
+    value that carries a unit (``50%``, ``300px``) is the case where the style
+    declaration is the only one that can express the size, so that one is kept.
+    """
+    token = _css_value(value)
+    return "" if token.replace(".", "", 1).isdigit() else token
+
+
 def _style_attr(pairs: list[tuple[str, object]]) -> str:
     """Build a ``style="..."`` attribute from (prop, value) pairs, dropping
     empties and unsafe values. Returns ``""`` when nothing survives."""
@@ -162,7 +175,12 @@ def _render_node(node: dict[str, Any]) -> str:
             + _attr("title", attrs.get("title"))
             + _attr("width", attrs.get("width"))
             + _attr("height", attrs.get("height"))
-            + _style_attr([("width", attrs.get("width")), ("height", attrs.get("height"))])
+            + _style_attr(
+                [
+                    ("width", _css_length(attrs.get("width"))),
+                    ("height", _css_length(attrs.get("height"))),
+                ]
+            )
         )
         return f"<img{rendered}>"
     if kind == "table":

@@ -451,3 +451,80 @@
 .django-tiptap__picker-item:hover {
   border-color: var(--tiptap-accent, #3538cd);
 }
+
+/* Image resize handles (NodeView chrome — never part of the stored value). The
+   wrapper carries ProseMirror-selectednode instead of the <img>, so it takes
+   over the selected outline too. */
+.django-tiptap__img {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  /* Aligns the wrapper to the line's bottom edge instead of the text baseline.
+     On the baseline the line box keeps descender room under the image, and the
+     caret is drawn on that baseline — so it hangs ~3px past the image's bottom
+     edge and reads as a clipped stub beside a tall image. The cost is that an
+     image sharing a line with text sits a descender lower here than a bare
+     baseline-aligned <img> would on the published page. */
+  vertical-align: bottom;
+}
+
+/* A block image is not an inline box inside the wrapper, so the wrapper's own
+   height matches the image's exactly (an inline one leaves it ~6px taller) and
+   the outline and handles hug the image rather than floating below it. */
+.django-tiptap__img img {
+  display: block;
+}
+
+.django-tiptap__img.ProseMirror-selectednode {
+  outline: 2px solid var(--tiptap-accent);
+}
+
+/* The element is a 22px transparent grab target — a 10px square is a poor one,
+   particularly on a trackpad. The visible chip is drawn by ::after, inset
+   within it, so widening the target never enlarges the chrome. (Widening the
+   hit area with a negative-inset pseudo-element instead does not work: the
+   generated box is not hit-tested here.) */
+.django-tiptap__img-handle {
+  position: absolute;
+  display: none;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+}
+
+.django-tiptap__img-handle::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: var(--tiptap-accent);
+  border: 1px solid #ffffff;
+  border-radius: 2px;
+}
+
+.django-tiptap__img.ProseMirror-selectednode .django-tiptap__img-handle {
+  display: block;
+}
+
+.django-tiptap__img-handle--nw {
+  top: -11px;
+  left: -11px;
+  cursor: nwse-resize;
+}
+
+.django-tiptap__img-handle--ne {
+  top: -11px;
+  right: -11px;
+  cursor: nesw-resize;
+}
+
+.django-tiptap__img-handle--sw {
+  bottom: -11px;
+  left: -11px;
+  cursor: nesw-resize;
+}
+
+.django-tiptap__img-handle--se {
+  bottom: -11px;
+  right: -11px;
+  cursor: nwse-resize;
+}

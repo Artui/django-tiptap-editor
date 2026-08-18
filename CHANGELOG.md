@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Images resize by dragging their corners.** Selecting an image in the editor
+  body now shows four corner handles; dragging one sets the width and height the
+  document asks for, preserving the aspect ratio and clamping to the editor's
+  own width. Set `imageResize: False` to pin images to their inserted size.
+
+  This is a display size, not a re-encode: the uploaded file is untouched and
+  keeps its own resolution. The size is committed as the unitless `width` /
+  `height` attributes the corpus already uses, so it survives both storage
+  formats, and the whole drag lands as one transaction -- one undo step, not one
+  per pixel. Legacy content whose size lives in `style="width: 500px"` has those
+  declarations cleared on resize (`float` and `margin` are kept), since a style
+  width would otherwise outrank the attribute and the drag would appear to do
+  nothing.
+
+  The handles are a NodeView, i.e. editing chrome: `getHTML()` serializes from
+  the document through the schema, so the wrapper never reaches a stored value.
+
+### Fixed
+
+- **Server-rendered images no longer carry an invalid CSS length.** `render_doc`
+  emitted a resized image as `width="300" style="width: 300"`, and a bare number
+  is not a CSS length, so every browser discarded that declaration -- the
+  attribute had been doing the work alone. The style is now emitted only for
+  values that carry a unit (`50%`, `300px`), which the attribute cannot express
+  on its own. Resizing makes this path hot, which is what surfaced it.
+
 - **Optional native color picker on the text-color and highlight dropdowns.**
   Both dropdowns offered a fixed swatch grid and nothing else, so any color
   outside the configured palette was unreachable from the toolbar. Setting
