@@ -24,6 +24,7 @@ any omitted key.
 | `textColors` | list[str] | Swatches for the `color` (text color) dropdown; each any CSS color. Omit for the built-in palette. |
 | `highlightColors` | list[str] | Swatches for the `highlight` (background) dropdown; each any CSS color. Omit for the built-in palette. |
 | `colorPicker` | bool | Adds a native color picker under both color swatch grids, for colors the palettes don't carry. Default `False`. |
+| `imageResize` | bool | Drag handles on a selected image, setting the width/height the document asks for. Default `True`; set `False` to pin images to their inserted size. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
 
 Unknown top-level keys, and extension names that are neither built in nor in
@@ -40,6 +41,7 @@ TipTapWidget(
         "textColors": ["#1f2329", "#e03e2d", "#3598db"],
         "highlightColors": ["#fff3a3", "#c8f7c5", "#bfe3ff"],
         "colorPicker": True,
+        "imageResize": True,
         "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
     }
 )

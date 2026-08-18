@@ -10,6 +10,7 @@ import { BackgroundColor } from "./extensions/background-color";
 import { BlockStyle } from "./extensions/block-style";
 import { EnterKey } from "./extensions/enter-key";
 import { FontSize } from "./extensions/font-size";
+import { ImageResize } from "./extensions/image-resize";
 import { InlineImage } from "./extensions/inline-image";
 import { getExtensionFactory } from "./registry";
 import type { ExtensionContext } from "./registry";
@@ -106,6 +107,12 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
     Superscript,
     CharacterCount,
   ];
+
+  // Editing chrome, not schema: the image node is identical either way, so
+  // turning this off changes nothing about the stored value.
+  if (config.imageResize !== false) {
+    baseline.push(ImageResize);
+  }
 
   const requested = config.extensions ?? DEFAULT_EXTENSIONS;
   const custom: AnyExtension[] = [];

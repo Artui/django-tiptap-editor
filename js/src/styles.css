@@ -283,6 +283,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  position: relative; /* containing block for the image-resize overlay */
 }
 
 /* Statusbar region (opt-in, tier-2 setRenderer("statusbar", …)). A custom
@@ -450,4 +451,66 @@
 
 .django-tiptap__picker-item:hover {
   border-color: var(--tiptap-accent, #3538cd);
+}
+
+/* Image resize handles. An overlay tracking the selected image, NOT a wrapper
+   around it: the caret's height comes from the box beside it, so leaving the
+   <img> a bare inline replaced element is what keeps the caret spanning the
+   image instead of dropping to a text-height stub. The overlay lives in the
+   scroll container, so it scrolls with the content it tracks. */
+.django-tiptap__img-overlay {
+  position: absolute;
+  z-index: 5;
+  /* Transparent to the pointer, so only the handles inside it are clickable
+     and the image underneath stays selectable. */
+  pointer-events: none;
+}
+
+.django-tiptap__img-overlay[hidden] {
+  display: none;
+}
+
+/* Each handle is a 22px transparent grab target -- a 10px square is a poor one,
+   particularly on a trackpad -- with the visible chip drawn inside by ::after,
+   so widening the target never enlarges the chrome. */
+.django-tiptap__img-handle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.django-tiptap__img-handle::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: var(--tiptap-accent);
+  border: 1px solid #ffffff;
+  border-radius: 2px;
+}
+
+/* The chip sits 6px inside a 22px box, so 11px is what centres it on a corner. */
+.django-tiptap__img-handle--nw {
+  top: -11px;
+  left: -11px;
+  cursor: nwse-resize;
+}
+
+.django-tiptap__img-handle--ne {
+  top: -11px;
+  right: -11px;
+  cursor: nesw-resize;
+}
+
+.django-tiptap__img-handle--sw {
+  bottom: -11px;
+  left: -11px;
+  cursor: nesw-resize;
+}
+
+.django-tiptap__img-handle--se {
+  bottom: -11px;
+  right: -11px;
+  cursor: nwse-resize;
 }

@@ -197,10 +197,59 @@ def test_image_attrs_and_protocol() -> None:
             }
         ],
     }
-    assert (
-        render_doc(doc)
-        == '<p><img src="https://i/x.png" alt="a" width="100" style="width: 100"></p>'
-    )
+    assert render_doc(doc) == '<p><img src="https://i/x.png" alt="a" width="100"></p>'
+
+
+def test_image_unitless_size_emits_no_style() -> None:
+    """A resized image carries bare numbers, which are not CSS lengths.
+
+    Emitting them as a style produced ``style="width: 300"``, a declaration
+    every browser discards -- the width attribute was already doing the work.
+    """
+    doc = {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "image",
+                        "attrs": {"src": "https://i/x.png", "width": "300", "height": "150"},
+                    }
+                ],
+            }
+        ],
+    }
+    assert render_doc(doc) == '<p><img src="https://i/x.png" width="300" height="150"></p>'
+
+
+def test_image_size_with_units_keeps_the_style() -> None:
+    """A percentage cannot be expressed by the attribute alone, so it stays."""
+    doc = {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [{"type": "image", "attrs": {"src": "https://i/x.png", "width": "50%"}}],
+            }
+        ],
+    }
+    assert render_doc(doc) == '<p><img src="https://i/x.png" width="50%" style="width: 50%"></p>'
+
+
+def test_image_fractional_unitless_size_emits_no_style() -> None:
+    doc = {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {"type": "image", "attrs": {"src": "https://i/x.png", "width": "12.5"}}
+                ],
+            }
+        ],
+    }
+    assert render_doc(doc) == '<p><img src="https://i/x.png" width="12.5"></p>'
 
 
 def test_table_rendering() -> None:

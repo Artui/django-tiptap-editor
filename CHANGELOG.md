@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Images resize by dragging their corners.** Selecting an image in the editor
+  body now shows four corner handles; dragging one sets the width and height the
+  document asks for, preserving the aspect ratio and clamping to the editor's
+  own width. Set `imageResize: False` to pin images to their inserted size.
+
+  This is a display size, not a re-encode: the uploaded file is untouched and
+  keeps its own resolution. The size is committed as the unitless `width` /
+  `height` attributes the corpus already uses, so it survives both storage
+  formats, and the whole drag lands as one transaction -- one undo step, not one
+  per pixel. Legacy content whose size lives in `style="width: 500px"` has those
+  declarations cleared on resize (`float` and `margin` are kept), since a style
+  width would otherwise outrank the attribute and the drag would appear to do
+  nothing.
+
+  The handles are an overlay that tracks the selected image, not a wrapper
+  around it. That is deliberate: the caret's height is taken from the box beside
+  it, so a bare `<img>` -- an inline replaced element -- gets a caret spanning
+  the image, while a wrapper drops it to a text-height stub. Leaving the image
+  node's own DOM untouched keeps the caret, the line box and the serialized
+  value identical whether resizing is on or off.
+
 - **Optional native color picker on the text-color and highlight dropdowns.**
   Both dropdowns offered a fixed swatch grid and nothing else, so any color
   outside the configured palette was unreachable from the toolbar. Setting
@@ -20,6 +41,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   OS color wheel produces one undo step instead of one per intermediate shade.
   Values in a notation the native control can't take (`rgb()`, a named color)
   leave it on black rather than showing a wrong color.
+
+### Fixed
+
+- **Server-rendered images no longer carry an invalid CSS length.** `render_doc`
+  emitted a resized image as `width="300" style="width: 300"`, and a bare number
+  is not a CSS length, so every browser discarded that declaration -- the
+  attribute had been doing the work alone. The style is now emitted only for
+  values that carry a unit (`50%`, `300px`), which the attribute cannot express
+  on its own. Resizing makes this path hot, which is what surfaced it.
 
 ## [0.8.0] — 2026-08-14
 

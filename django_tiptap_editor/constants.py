@@ -54,6 +54,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "textColors",
         "highlightColors",
         "colorPicker",
+        "imageResize",
     }
 )
 
