@@ -906,7 +906,11 @@ Because protocol allowlisting happens on <em>parse</em> — which a stored-JSON 
 <li>The <code>html</code> mirror is <strong>re-derived from the sanitized <code>doc</code> on every save</strong> (never trusted from
   the caller) by the built-in <strong><code>render_doc</code></strong>, which re-applies the protocol allowlist,
   HTML-escapes text and attributes, and passes inline <code>style</code> values through a conservative CSS
-  allowlist (no <code>;</code>/<code>:</code> injection, no <code>url(...:...)</code>, no <code>expression</code>). A write can set
+  allowlist (no <code>;</code>/<code>:</code> injection, no <code>url(...:...)</code>, no <code>expression</code>). An image's stored <code>style</code>
+  is split into declarations and filtered the same way, keeping only layout properties --
+  <code>float</code>, <code>display</code>, <code>vertical-align</code>, <code>margin</code>/<code>padding</code> (and their per-side forms), <code>border</code>,
+  <code>border-radius</code>, <code>width</code>, <code>height</code> -- so the float and margins the editor round-trips survive
+  without widening what a style attribute can carry. A write can set
   <code>{doc, html}</code> directly (API / import / hand-edit); the supplied <code>html</code> is discarded, so the
   rendered surface always reflects only the sanitized doc. The field marks <code>.html</code> safe on that
   basis. <code>render_doc</code> is also available directly and via the <code>tiptap_html</code> filter for rendering
