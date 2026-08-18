@@ -30,15 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   node's own DOM untouched keeps the caret, the line box and the serialized
   value identical whether resizing is on or off.
 
-### Fixed
-
-- **Server-rendered images no longer carry an invalid CSS length.** `render_doc`
-  emitted a resized image as `width="300" style="width: 300"`, and a bare number
-  is not a CSS length, so every browser discarded that declaration -- the
-  attribute had been doing the work alone. The style is now emitted only for
-  values that carry a unit (`50%`, `300px`), which the attribute cannot express
-  on its own. Resizing makes this path hot, which is what surfaced it.
-
 - **Optional native color picker on the text-color and highlight dropdowns.**
   Both dropdowns offered a fixed swatch grid and nothing else, so any color
   outside the configured palette was unreachable from the toolbar. Setting
@@ -50,6 +41,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   OS color wheel produces one undo step instead of one per intermediate shade.
   Values in a notation the native control can't take (`rgb()`, a named color)
   leave it on black rather than showing a wrong color.
+
+### Fixed
+
+- **Server-rendered images no longer carry an invalid CSS length.** `render_doc`
+  emitted a resized image as `width="300" style="width: 300"`, and a bare number
+  is not a CSS length, so every browser discarded that declaration -- the
+  attribute had been doing the work alone. The style is now emitted only for
+  values that carry a unit (`50%`, `300px`), which the attribute cannot express
+  on its own. Resizing makes this path hot, which is what surfaced it.
 
 ## [0.8.0] — 2026-08-14
 
