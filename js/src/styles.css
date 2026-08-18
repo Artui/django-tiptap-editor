@@ -455,22 +455,22 @@
 /* Image resize handles (NodeView chrome — never part of the stored value). The
    wrapper carries ProseMirror-selectednode instead of the <img>, so it takes
    over the selected outline too. */
+/* inline-block, because the handles anchor to this box and an inline wrapper
+   reports the 18px line box rather than the image's height (handles then land
+   ~100px off a 120px image). The cost is the caret beside the image: next to a
+   bare <img> the browser gives the caret the whole line box, while beside an
+   inline-block it falls back to the text strut, so the caret is an ~18px stub
+   rather than image-height. Fixing that properly means dropping the wrapper and
+   floating the handles as an overlay. */
 .django-tiptap__img {
   position: relative;
   display: inline-block;
   max-width: 100%;
-  /* Aligns the wrapper to the line's bottom edge instead of the text baseline.
-     On the baseline the line box keeps descender room under the image, and the
-     caret is drawn on that baseline — so it hangs ~3px past the image's bottom
-     edge and reads as a clipped stub beside a tall image. The cost is that an
-     image sharing a line with text sits a descender lower here than a bare
-     baseline-aligned <img> would on the published page. */
-  vertical-align: bottom;
 }
 
-/* A block image is not an inline box inside the wrapper, so the wrapper's own
-   height matches the image's exactly (an inline one leaves it ~6px taller) and
-   the outline and handles hug the image rather than floating below it. */
+/* A block image is not an inline box inside the wrapper, so the wrapper's box
+   matches the image's exactly (an inline one leaves it ~6px taller) and the
+   outline and handles hug the image rather than floating below it. */
 .django-tiptap__img img {
   display: block;
 }
