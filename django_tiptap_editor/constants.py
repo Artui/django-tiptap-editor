@@ -53,6 +53,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "fontSizes",
         "textColors",
         "highlightColors",
+        "colorPicker",
     }
 )
 

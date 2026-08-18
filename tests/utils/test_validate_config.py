@@ -66,3 +66,19 @@ def test_string_list_not_a_list_raises(key: str) -> None:
 def test_string_list_with_non_string_item_raises(key: str) -> None:
     with pytest.raises(ImproperlyConfigured, match=f"TipTap {key} must be a list of strings"):
         validate_config({key: ["16px", 12]})
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_color_picker_boolean_passes(value: bool) -> None:
+    cfg = {"colorPicker": value}
+    assert validate_config(cfg) is cfg
+
+
+def test_color_picker_omitted_passes() -> None:
+    assert validate_config({}) == {}
+
+
+@pytest.mark.parametrize("value", ["true", 1, ["#ff0000"]])
+def test_color_picker_non_boolean_raises(value: object) -> None:
+    with pytest.raises(ImproperlyConfigured, match="TipTap colorPicker must be a boolean"):
+        validate_config({"colorPicker": value})

@@ -82,3 +82,78 @@ describe("text-color / highlight swatch palettes", () => {
     editor.destroy();
   });
 });
+
+// The optional native picker (config.colorPicker). Off by default so a house
+// palette stays a house palette; on, it appends one <input type="color"> per
+// color dropdown.
+function pickerInput(m: Loaded, key: string, editor: unknown): HTMLInputElement | null {
+  const spec = m.getButton(key);
+  if (!spec?.render) {
+    throw new Error(`no render for ${key}`);
+  }
+  const { el } = spec.render(editor as never);
+  document.body.appendChild(el);
+  el.querySelector<HTMLButtonElement>(".django-tiptap__dropdown-trigger")?.click();
+  return el.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
+}
+
+describe("optional color picker", () => {
+  it("is absent unless config opts in", async () => {
+    const m = await load();
+    m.registerBuiltInButtons();
+    const editor = makeEditor(m);
+
+    expect(pickerInput(m, "color", editor)).toBeNull();
+    expect(pickerInput(m, "highlight", editor)).toBeNull();
+
+    editor.destroy();
+  });
+
+  it("appends a picker to both dropdowns when colorPicker is true", async () => {
+    const m = await load();
+    m.registerBuiltInButtons();
+    const editor = makeEditor(m);
+    m.setEditorConfig(editor, { colorPicker: true });
+
+    expect(pickerInput(m, "color", editor)?.type).toBe("color");
+    expect(pickerInput(m, "highlight", editor)?.type).toBe("color");
+
+    editor.destroy();
+  });
+
+  it("applies the picked value as a textStyle mark on change", async () => {
+    const m = await load();
+    m.registerBuiltInButtons();
+    const editor = makeEditor(m);
+    m.setEditorConfig(editor, { colorPicker: true });
+    editor.commands.selectAll();
+
+    const input = pickerInput(m, "color", editor);
+    input!.value = "#123456";
+    input!.dispatchEvent(new Event("change"));
+
+    // The mark holds the hex verbatim; the serialized style attribute is
+    // normalised to rgb() by the CSSOM, as it is for a swatch click.
+    expect(editor.getAttributes("textStyle").color).toBe("#123456");
+    expect(editor.getHTML()).toContain("color: rgb(18, 52, 86)");
+
+    editor.destroy();
+  });
+
+  it("seeds from the current color, falling back to black for non-hex values", async () => {
+    const m = await load();
+    m.registerBuiltInButtons();
+    const editor = makeEditor(m);
+    m.setEditorConfig(editor, { colorPicker: true });
+    editor.commands.selectAll();
+
+    editor.chain().setMark("textStyle", { color: "#abcdef" }).run();
+    expect(pickerInput(m, "color", editor)?.value).toBe("#abcdef");
+
+    // rgb() / named colors can't seed a native picker — it opens on black.
+    editor.chain().setMark("textStyle", { color: "rgb(1, 2, 3)" }).run();
+    expect(pickerInput(m, "color", editor)?.value).toBe("#000000");
+
+    editor.destroy();
+  });
+});
