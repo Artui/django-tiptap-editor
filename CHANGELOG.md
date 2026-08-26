@@ -7,6 +7,213 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-08-26
+
+### Upgrade note — content is now sanitised on the server
+
+**What changes.** Until now nothing on the server inspected what a project stored.
+The editor's schema drops scripts and unknown tags, but it runs in the browser, and
+the widget is a plain `<textarea>`: a client that never loads the editor posted
+whatever it liked, and the docs told you to render it with `|safe`. That is fixed.
+
+- Submitted HTML is put through an allowlist when the form cleans it
+  (`TipTapFormField`), and again when it is displayed (`{{ value|tiptap_html }}`).
+- The allowlist is built from the extensions the editor mounts, so markup the editor
+  produces round-trips byte-identically. Anything else has its tag unwrapped and keeps
+  its text; `script` and `style` bodies are dropped whole.
+- `TipTapValue` sanitises its `html` mirror on construction, so a value is safe to
+  render however it was built — including the one a `ModelForm` leaves on
+  `form.instance` after validation fails.
+- A `<a target="_blank">` always carries `rel="noopener noreferrer"`, whatever the
+  stored document asked for.
+- No new dependency: the package still requires only `django>=4.2`.
+
+**What to check before upgrading.**
+
+1. **Custom extensions.** If you set `TIPTAP_EXTRA_EXTENSIONS`, declare what each
+   extension emits, or its markup is unwrapped on the next save. The list form still
+   works and now warns, naming the extension:
+
+   ```python
+   TIPTAP_EXTRA_EXTENSIONS = {
+       "callout": {"aside": {"attrs": ["class"], "styles": ["background-color"]}},
+       "shortcuts": {},  # emits no markup of its own
+   }
+   ```
+
+2. **Templates.** Swap `{{ article.body|safe }}` for
+   `{% load tiptap %}{{ article.body|tiptap_html }}`. `|safe` still renders whatever
+   the column holds; the filter sanitises it first, which is what makes it right for
+   rows written before this release.
+
+3. **Anything that writes the JSON field directly.** Values that used to become an
+   empty document now raise `ValidationError`: assigning a string, a list, or any
+   non-mapping to a `TipTapJSONField`, and posting `[]` / `"oops"` / `42` to
+   `TipTapJSONFormField`. If you were relying on the old coercion, you were storing
+   empty documents.
+
+4. **Very deeply nested content.** Documents and markup nested deeper than 100 levels
+   are refused with a `ValidationError` instead of raising `RecursionError` out of a
+   save.
+
+**Content already stored.** Nothing is rewritten in place — existing rows keep exactly
+the bytes they have. Rendering them with `|tiptap_html` cleans them at display time.
+To clean the column itself, run the sanitiser over it in a data migration:
+
+```python
+from django_tiptap_editor import sanitize_html
+
+for article in Article.objects.all().iterator():
+    cleaned = str(sanitize_html(article.body))
+    if cleaned != article.body:
+        article.body = cleaned
+        article.save(update_fields=["body"])
+```
+
+JSON-stored rows are re-derived from their sanitised `doc` on their next save, as
+before.
+
+### Added
+
+- **`sanitize_html`** — an allowlist HTML sanitiser in pure Python, exported from the
+  package root. Unknown tags are unwrapped rather than deleted, so no pass can quietly
+  empty a document; `script` and `style` bodies are the exception and are dropped
+  whole. Link and image URLs are protocol-allowlisted, inline styles keep only allowed
+  properties with values that pass the same conservative CSS gate the JSON renderer
+  uses, and character references are re-emitted as written so an author's `&nbsp;`
+  survives a save.
+- **`get_html_schema` / `HtmlSchema`** — the allowlist itself, built from
+  `EXTENSION_HTML_VOCABULARY`: one entry per built-in extension declaring the tags,
+  attributes and style properties it emits. `BUILTIN_EXTENSIONS` is derived from that
+  table's keys, so the names the editor knows and the markup the server accepts come
+  from one place and cannot drift apart.
+- **`TIPTAP_EXTRA_EXTENSIONS` accepts a vocabulary.** A mapping of extension name to
+  `{tag: {"attrs": [...], "styles": [...]}}` joins the allowlist, so a custom node's
+  markup survives sanitisation. A tag that executes script or loads a document, and
+  any `on*` attribute, are refused with `ImproperlyConfigured`.
+- **`tiptap_html` renders a stored HTML string**, not only a `TipTapValue` or a bare
+  doc — one filter for both storage formats, and the display-time boundary for content
+  stored before this release.
+
+### Fixed
+
+- **A JSON string assigned to `TipTapJSONField` is parsed instead of refused.**
+  `models.JSONField` defines no `to_python`, so this field's `super()` call was
+  `Field.to_python` -- a no-op that handed the string on unparsed. A value from a
+  fixture or a deserializer became an empty document without a word.
+
+- **A row seeded by the HTML-to-JSON migration survives its next save.** The
+  documented recipe seeds rows as `{"doc": {}, "html": "<p>legacy</p>"}`, and the
+  stored mirror was unconditionally re-derived from the doc -- which, for an empty
+  doc, renders `""`. Every migrated row was blanked the next time it was saved. The
+  seeded mirror is now kept when the doc has no content, and it is still sanitised,
+  because the value runs its HTML through the allowlist on construction.
+
+- **Stored XSS on the HTML path.** `TipTapFormField` accepted the POST body verbatim:
+  a plain `forms.Form` fed `<img src=x onerror=…>` reported success and handed that
+  string back on `cleaned_data`, and the docs said to render it with `|safe`. The field
+  now sanitises in `to_python`, so length validation counts what will be stored and the
+  value a view saves is already reduced to markup the editor could have produced.
+- **Stored XSS on the JSON path without a model.** A plain `forms.Form` with
+  `TipTapJSONFormField` put the client's `html` on `cleaned_data` as a `SafeString`:
+  the mirror was only re-derived at the ORM boundary, so any preview, wizard or
+  non-`ModelForm` handler rendered attacker markup. The form field now validates the
+  envelope, protocol-allowlists the `doc`, and re-derives the mirror from it.
+- **`TipTapValue.from_stored` marked caller-supplied HTML safe.** The mirror is now
+  sanitised in `__post_init__`, so the invariant holds for every instance rather than
+  for values that happen to have made a database round trip.
+- **`tiptap_html` returned a `TipTapValue`'s mirror verbatim** while rendering a bare
+  doc safely. Both branches now end at the same guarantee.
+- **Assigning a non-mapping to a `TipTapJSONField` persisted an empty document.**
+  A string, a list or a number silently emptied the row; the migration case the docs
+  describe (copying a legacy HTML column across) would have emptied every row with no
+  error. `from_stored` now raises `ValidationError` and says what the value should have
+  been.
+- **`'[]'`, `'"oops"'` and `42` cleaned successfully into an empty document** through
+  `TipTapJSONFormField`. They are field errors now: a form that reports success while
+  discarding the submission is worse than one that refuses it.
+- **Unbounded document nesting.** A few kilobytes of nesting validated fine and then
+  raised `RecursionError` out of `get_prep_value` — a 500, not a field error. Both the
+  document walker and the HTML sanitiser now refuse content deeper than
+  `MAX_DOCUMENT_DEPTH`.
+- **Link `rel` and `target` were emitted from the document with no allowlist**, so a
+  stored `rel="opener"` re-enabled the `window.opener` handle `target="_blank"` implies
+  away. `target` is restricted to `_blank`/`_self`, `rel` to known-safe tokens, and
+  `_blank` always carries `noopener noreferrer`.
+- **`TipTapWidget`'s docstring described a config precedence no subclass follows** —
+  it claimed subclass overrides win over a per-instance `config=`, while
+  `AdminTipTapWidget` (and its own docstring) do the opposite.
+- **`docs/security.md` argued for `|safe` from browser-side controls alone** and its
+  Caveats section never mentioned that a direct POST bypasses every one of them. The
+  page now describes where sanitisation actually happens and enumerates what survives.
+
+
+- **`TipTapJSONField` works in a `ModelForm`, `full_clean()` and the admin.** The
+  field had no `validate()`, so Django's `JSONField.validate` ran `json.dumps()`
+  over the `TipTapValue` the field hands back -- a dataclass, not JSON -- and
+  every non-empty document failed with "Value must be valid JSON". The plain ORM
+  path accepted the identical value, so the two entry points disagreed
+  completely and the field did not work in either of its most common
+  deployments. Validation now checks the `{doc, html}` mapping that actually
+  reaches the column, which keeps the JSON contract honest (a document carrying
+  something unserializable is still a validation error) while letting the real
+  Django paths through.
+
+- **Submitting with the source view open saves what the source view shows.**
+  Nothing flushed the raw-HTML textarea back into the form field, and the two
+  storage modes failed in opposite directions: HTML storage copied raw mid-edit
+  markup into the field on every keystroke, so a submit persisted markup the
+  schema would have dropped, while JSON storage copied nothing at all, so the
+  edit was silently lost. Both are the same defect -- the bound field held
+  something other than what the schema produces. Submitting now re-parses the
+  source through the schema first, exactly as closing the source view does, and
+  closes the view so the author sees the normalized result. The flush is wired
+  to `submit` (native and `requestSubmit()`) and to `formdata` (the ajax
+  submissions that build a `FormData` from the form), and the per-keystroke raw
+  sync is gone: the field only ever carries a schema-produced value in its
+  storage format.
+
+- **A `tiptap_fields` entry that matches nothing is a system-check error.**
+  `TipTapModelAdminMixin` silently ignored a name that is not a field on the
+  model, or one naming a field the widget cannot apply to: the admin just
+  rendered a plain textarea and nothing said why. Such an entry is now reported
+  by Django's check framework at startup (`django_tiptap_editor.E002` and
+  `E003`). A bare string other than `"__all__"` is reported too
+  (`django_tiptap_editor.E001`) -- it was matched with `in`, i.e. a substring
+  test, so `"somebody"` quietly turned `body` into an editor.
+
+### Changed
+
+- Text and attribute values rendered by `render_doc` escape `&`, `<`, `>` and (in
+  attributes) `"`, rather than also rewriting `'` to `&#x27;`. Escaping exactly what a
+  browser's own serialiser escapes is what lets a document round-trip through the
+  sanitiser unchanged; an apostrophe is inert in text and inside a double-quoted
+  attribute either way.
+- `get_extra_extensions()` returns a mapping of name to declared vocabulary (`None`
+  when undeclared) rather than a `frozenset` of names.
+
+- **`TipTapJSONField` validates a document's node and mark vocabulary.** Nothing
+  checked a stored document's `type` names against anything. The only vocabulary
+  that existed at rest was the server-side renderer's dispatch, which keeps an
+  unknown node's children and drops the wrapper -- so because the `html` mirror
+  is re-derived from the `doc` on every save, a custom node registered by the
+  documented extension recipe round-tripped in the editor and was flattened out
+  of the stored mirror on the first save, silently. `full_clean()`, a
+  `ModelForm` and the admin now reject a document whose node or mark types the
+  mirror cannot render. Types your own extensions add are declared in
+  `TIPTAP_EXTRA_EXTENSIONS`, which already declares extension names for config
+  validation; declaring one means the `doc` keeps it and the derived mirror
+  still cannot represent it, so render those documents from `doc`. Documents the
+  editor itself produces are unaffected. Writes through the plain ORM are not
+  validated, as everywhere else in Django.
+
+### Docs
+
+- Extending: a section on custom nodes under JSON storage -- what
+  `TIPTAP_EXTRA_EXTENSIONS` now declares, and why a declared type still has to
+  be rendered from `doc` rather than from the `html` mirror.
+
+
 ## [0.9.0] — 2026-08-18
 
 ### Added
@@ -309,7 +516,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.6.0...v0.7.0

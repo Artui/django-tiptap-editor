@@ -1,7 +1,8 @@
 # Storage format — HTML or JSON
 
-By default the editor stores **HTML**: the widget posts `editor.getHTML()`, you render it with
-`|safe`. That's the zero-config path and is right for most Django sites.
+By default the editor stores **HTML**: the widget posts `editor.getHTML()`, the form field
+sanitises it, and you render it with `|tiptap_html`. That's the zero-config path and is right for
+most Django sites.
 
 Optionally you can store **ProseMirror JSON** instead. JSON is the lossless canonical
 representation of the document — better for programmatic transforms, diffing, and feeding a
@@ -46,6 +47,12 @@ article.body = TipTapValue.from_stored({"doc": some_doc})  # html is re-derived 
 article.save()
 ```
 
+The value must be a `{doc, html}` envelope or a bare ProseMirror doc. Anything else —
+a string, a list, a number — raises `ValidationError`. In particular **assigning HTML
+does not convert it**: `article.body = "<p>hi</p>"` is an error, not a conversion. See
+[Converting & rendering in the browser](#converting--rendering-in-the-browser) for the
+HTML-to-JSON path.
+
 ## How it works
 
 In JSON mode the editor writes both sides on every change — `editor.getJSON()` → `doc` and
@@ -57,7 +64,7 @@ JavaScript and no Node are required.
 
 ```
 save ──▶ sanitize(doc) ──┬─▶ doc  (canonical, stored)
-                         └─▶ render_doc(doc) ──▶ html (mirror, stored, rendered with |safe)
+                         └─▶ render_doc(doc) ──▶ html (mirror, stored, safe to render)
 ```
 
 Because the mirror is re-derived server-side, any caller-supplied `html` is discarded — a benign
@@ -123,6 +130,6 @@ who wrote it. See [Security](security.md) for the full boundary.
 | | HTML (default) | JSON (`TipTapJSONField`) |
 | --- | --- | --- |
 | Column | `TextField` | `JSONField` |
-| Server display | `{{ body|safe }}` | `{{ body }}` (mirror) |
+| Server display | `{{ body|tiptap_html }}` | `{{ body }}` (mirror) |
 | Programmatic editing | parse HTML | work on `.doc` directly |
 | Best for | most Django sites | transforms, diffing, headless/SPA frontends |

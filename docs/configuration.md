@@ -64,7 +64,7 @@ A group is an inner array; groups render with separators. Register your own butt
 | `TIPTAP_DEFAULT_CONFIG` | `{}` | Config merged under every widget's per-field config. |
 | `TIPTAP_ASSET_MODE` | `"bundle"` | `"bundle"` or `"external"` — see [Asset modes](asset-modes.md). |
 | `TIPTAP_IMPORT_MAP` | CDN default | External mode: bare-specifier → URL map. |
-| `TIPTAP_EXTRA_EXTENSIONS` | `[]` | Extra extension names accepted by config validation. |
+| `TIPTAP_EXTRA_EXTENSIONS` | `[]` | Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type `TipTapJSONField` accepts in a stored document. See [Extending](extending.md#declaring-what-an-extension-emits). |
 
 ```python
 TIPTAP_DEFAULT_CONFIG = {"height": "450px", "locale": "sv"}

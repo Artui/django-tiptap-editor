@@ -5,6 +5,7 @@ import json
 from django.test import override_settings
 
 from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR, STORAGE_ATTR
+from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 
@@ -49,3 +50,15 @@ def test_media_emits_bundle() -> None:
     media = TipTapWidget().media
     assert BUNDLE_JS in media._js
     assert BUNDLE_CSS in media._css["all"]
+
+
+def test_a_per_instance_config_beats_a_subclass_default() -> None:
+    # The precedence the base docstring used to claim (subclass overrides last)
+    # is the opposite of what the only shipped subclass does.
+    assert AdminTipTapWidget(config={"height": "300px"}).get_config({})["height"] == "300px"
+
+
+def test_the_base_docstring_does_not_claim_subclass_overrides_win() -> None:
+    # A docs-drift guard, not a behaviour test: the sentence was wrong for every
+    # subclass in the package, and prose is where a reader takes the rule from.
+    assert "subclass overrides" not in (TipTapWidget.__doc__ or "")

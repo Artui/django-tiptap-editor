@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import pytest
+from django.core.exceptions import ValidationError
 
+from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH
+from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
 
 
@@ -122,3 +125,26 @@ def test_keeps_entity_and_percent_encoded_forms_verbatim() -> None:
     # never re-decodes an escaped attribute into an executable scheme.
     for href in ["&#106;avascript:alert(1)", "%6aavascript:alert(1)"]:
         assert sanitize_doc(_link(href))["marks"] == _link(href)["marks"]
+
+
+def _nest(depth: int) -> dict:
+    doc: dict = {"type": "doc"}
+    for _ in range(depth):
+        doc = {"type": "blockquote", "content": [doc]}
+    return doc
+
+
+def test_a_document_at_the_depth_limit_is_accepted() -> None:
+    assert sanitize_doc(_nest(MAX_DOCUMENT_DEPTH - 1)) is not None
+
+
+def test_a_deeper_document_is_refused_before_it_costs_the_stack() -> None:
+    # A few kilobytes of nesting used to reach the renderer and raise
+    # RecursionError out of a save: a 500 rather than a field error.
+    with pytest.raises(ValidationError, match="nests deeper"):
+        sanitize_doc(_nest(MAX_DOCUMENT_DEPTH + 1))
+
+
+def test_the_renderer_refuses_it_too() -> None:
+    with pytest.raises(ValidationError, match="nests deeper"):
+        render_doc(_nest(MAX_DOCUMENT_DEPTH + 1))

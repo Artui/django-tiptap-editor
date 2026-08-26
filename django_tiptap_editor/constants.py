@@ -63,49 +63,144 @@ KNOWN_CONFIG_KEYS = frozenset(
 # "swap" exchanges the two. Kept in sync with the JS EnterKeyMode union.
 ENTER_KEY_MODES = frozenset({"paragraph", "hardBreak", "swap"})
 
-# Built-in extension names the JS glue resolves. Consumer-registered extensions
-# are added to the allowlist via TIPTAP_EXTRA_EXTENSIONS. Kept in sync with the
-# JS BUILTIN_NAMES set; extension names are otherwise opaque to Python.
-BUILTIN_EXTENSIONS = frozenset(
+# Inline-style properties each style-bearing extension may put on a tag. These
+# are the vocabulary the editor itself emits: BlockStyle writes margin /
+# margin-block-end / padding-left on paragraphs and headings, TextAlign adds
+# text-align, the TextStyle family writes colour / font declarations on a span,
+# the inline image keeps its layout style, and the table view sizes columns.
+BLOCK_STYLE_PROPERTIES = ("margin", "margin-block-end", "padding-left")
+TEXT_ALIGN_PROPERTIES = ("text-align",)
+TEXT_STYLE_PROPERTIES = ("background-color", "color", "font-family", "font-size")
+IMAGE_STYLE_PROPERTIES = (
+    "border",
+    "border-radius",
+    "display",
+    "float",
+    "height",
+    "margin",
+    "margin-bottom",
+    "margin-left",
+    "margin-right",
+    "margin-top",
+    "padding",
+    "padding-bottom",
+    "padding-left",
+    "padding-right",
+    "padding-top",
+    "vertical-align",
+    "width",
+)
+TABLE_STYLE_PROPERTIES = ("min-width", "width")
+CELL_STYLE_PROPERTIES = ("background-color",)
+
+# Values a link's ``target`` may take, and the ``rel`` tokens that survive. A
+# stored ``rel="opener"`` re-enables the ``window.opener`` handle that
+# ``target="_blank"`` otherwise implies away, so rel is an allowlist of tokens
+# rather than a passthrough, and _blank always carries noopener noreferrer.
+LINK_TARGETS = frozenset({"_blank", "_self"})
+LINK_REL_TOKENS = frozenset({"nofollow", "noopener", "noreferrer", "sponsored", "ugc"})
+LINK_BLANK_REL = ("noopener", "noreferrer")
+
+# The HTML vocabulary of every built-in extension: which tags it can emit, and
+# the attributes and inline-style properties it puts on them. This is the single
+# vocabulary shared by the editor and the server -- BUILTIN_EXTENSIONS is derived
+# from its keys, and get_html_schema unions the entries into the allowlist
+# sanitize_html enforces, so what the editor can produce and what the server
+# accepts cannot drift apart. Kept in sync with the JS BUILTIN_NAMES set; an
+# extension with no markup of its own (history, cursors, character count, source
+# view) declares an empty vocabulary rather than being absent.
+EXTENSION_HTML_VOCABULARY: dict[str, dict[str, dict[str, tuple[str, ...]]]] = {
+    "document": {},
+    "text": {},
+    "paragraph": {"p": {"styles": BLOCK_STYLE_PROPERTIES}},
+    "bold": {"strong": {}},
+    "italic": {"em": {}},
+    "strike": {"s": {}},
+    "code": {"code": {}},
+    "codeBlock": {"pre": {}, "code": {"attrs": ("class",)}},
+    "heading": {f"h{level}": {"styles": BLOCK_STYLE_PROPERTIES} for level in range(1, 7)},
+    "bulletList": {"ul": {}},
+    "orderedList": {"ol": {"attrs": ("start", "type")}},
+    "listItem": {"li": {}},
+    "blockquote": {"blockquote": {}},
+    "horizontalRule": {"hr": {}},
+    "hardBreak": {"br": {}},
+    "history": {},
+    "dropcursor": {},
+    "gapcursor": {},
+    "underline": {"u": {}},
+    "textStyle": {"span": {}},
+    "fontFamily": {"span": {"styles": ("font-family",)}},
+    "color": {"span": {"styles": ("color",)}},
+    "backgroundColor": {"span": {"styles": ("background-color",)}},
+    "highlight": {"span": {"styles": ("background-color",)}},
+    "fontSize": {"span": {"styles": ("font-size",)}},
+    "textAlign": {
+        tag: {"styles": TEXT_ALIGN_PROPERTIES} for tag in ("p", "h1", "h2", "h3", "h4", "h5", "h6")
+    },
+    "link": {"a": {"attrs": ("class", "href", "rel", "target")}},
+    "image": {
+        "img": {
+            "attrs": ("alt", "height", "src", "title", "width"),
+            "styles": IMAGE_STYLE_PROPERTIES,
+        }
+    },
+    "table": {
+        "table": {"styles": TABLE_STYLE_PROPERTIES},
+        "colgroup": {},
+        "col": {"styles": TABLE_STYLE_PROPERTIES},
+        "tbody": {},
+    },
+    "tableRow": {"tr": {}},
+    "tableCell": {
+        "td": {"attrs": ("colspan", "colwidth", "rowspan"), "styles": CELL_STYLE_PROPERTIES}
+    },
+    "tableHeader": {
+        "th": {"attrs": ("colspan", "colwidth", "rowspan"), "styles": CELL_STYLE_PROPERTIES}
+    },
+    "subscript": {"sub": {}},
+    "superscript": {"sup": {}},
+    "characterCount": {},
+    "sourceView": {},
+}
+
+# Keys a single extension vocabulary entry may carry (also validated for the
+# per-tag vocabularies a project declares in TIPTAP_EXTRA_EXTENSIONS).
+VOCABULARY_KEYS = frozenset({"attrs", "styles"})
+
+# Built-in extension names the JS glue resolves, derived from the vocabulary
+# above so the two can never list different names. Consumer-registered
+# extensions are added to the allowlist via TIPTAP_EXTRA_EXTENSIONS.
+BUILTIN_EXTENSIONS = frozenset(EXTENSION_HTML_VOCABULARY)
+
+# Tags a project may never add through TIPTAP_EXTRA_EXTENSIONS: each one either
+# executes script, loads a document, or rewrites how the rest of the page
+# resolves URLs, so allowing one would defeat the sanitiser outright.
+FORBIDDEN_TAGS = frozenset(
     {
-        "document",
-        "text",
-        "paragraph",
-        "bold",
-        "italic",
-        "strike",
-        "code",
-        "codeBlock",
-        "heading",
-        "bulletList",
-        "orderedList",
-        "listItem",
-        "blockquote",
-        "horizontalRule",
-        "hardBreak",
-        "history",
-        "dropcursor",
-        "gapcursor",
-        "underline",
-        "textStyle",
-        "fontFamily",
-        "color",
-        "backgroundColor",
-        "highlight",
-        "fontSize",
-        "textAlign",
+        "base",
+        "embed",
+        "form",
+        "frame",
+        "frameset",
+        "iframe",
         "link",
-        "image",
-        "table",
-        "tableRow",
-        "tableCell",
-        "tableHeader",
-        "subscript",
-        "superscript",
-        "characterCount",
-        "sourceView",
+        "meta",
+        "noscript",
+        "object",
+        "script",
+        "style",
+        "svg",
+        "template",
     }
 )
+
+# Maximum node nesting a stored document may carry. The pure-Python walkers
+# (sanitize_doc, render_doc) recurse per level, so an unbounded document is a
+# cheap way to blow the interpreter's stack; a document deeper than this is
+# rejected as invalid instead of raising RecursionError somewhere downstream.
+# Real content sits one to two orders of magnitude below the limit.
+MAX_DOCUMENT_DEPTH = 100
 
 # Empty base config: JS fills defaults for omitted keys, so Python keeps no
 # duplicate default toolbar/extension lists that could drift from the glue.

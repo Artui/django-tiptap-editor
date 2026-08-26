@@ -18,8 +18,14 @@ class TipTapWidget(forms.Textarea):
 
     The textarea stays the form's serialization target; the glue writes
     ``editor.getHTML()`` back into ``textarea.value`` on every update, so a normal
-    POST submits HTML. Resolution order for the config (last wins):
-    ``get_default_config()`` → per-instance ``config=`` → subclass overrides.
+    POST submits HTML — which the server sanitizes on the way in, because the
+    glue runs in the browser and a client can post the field directly.
+
+    The config is merged by ``get_config``, and a subclass that adds a layer
+    decides where it goes: this class merges ``get_default_config()`` then the
+    per-instance ``config=``, so the instance wins. ``AdminTipTapWidget`` inserts
+    its own defaults *between* the two, so a per-instance ``config=`` still wins
+    over them. Read the concrete ``get_config`` for the order that applies.
 
     ``storage`` selects what the glue serializes: ``"html"`` (default) or
     ``"json"`` (a ``{doc, html}`` envelope, used by ``TipTapJSONField``). When
