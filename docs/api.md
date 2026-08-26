@@ -25,7 +25,10 @@ Renders a `<textarea>` carrying `data-tiptap-config`. Config resolution (last wi
 
 `django_tiptap_editor.admin.mixin.TipTapModelAdminMixin` — mix in before
 `admin.ModelAdmin`. Swaps `AdminTipTapWidget` onto `TextField`s.
-`tiptap_fields = "__all__"` (default) or an explicit list of field names.
+`tiptap_fields = "__all__"` (default) or an explicit list of field names. An explicit
+list is checked at startup: a name that is not a field on the model, or one naming a
+field the widget cannot apply to, is a system-check error
+(`django_tiptap_editor.E001`–`E003`) rather than a silent no-op.
 
 ### `TipTapFormField(forms.CharField)`
 
@@ -36,7 +39,9 @@ is `TipTapWidget`.
 
 `django_tiptap_editor.fields.tiptap_json_field.TipTapJSONField` — a model field storing a
 `{doc, html}` envelope. The Python value is a `TipTapValue`; the `doc` is protocol-allowlisted
-on save. Optional `link_protocols` / `image_protocols` tuples override the allowlists. Its form
+on save, and validated (`full_clean()`, a `ModelForm`, the admin) against the node and mark
+types the HTML mirror can render — see
+[Custom nodes and JSON storage](extending.md#custom-nodes-and-json-storage). Optional `link_protocols` / `image_protocols` tuples override the allowlists. Its form
 field is `TipTapJSONFormField` (a `forms.Field` whose widget is `TipTapWidget(storage="json")`).
 See [Storage format](storage.md).
 

@@ -1,8 +1,10 @@
 // Source-view: swap the editing surface for a raw-HTML textarea. Leaving source
 // view re-parses through the schema (lossy but consistent — the editor never
-// stores HTML it can't model), so what you see equals what gets saved. While in
-// source view the bound form <textarea> is kept in sync, and the rest of the
-// toolbar is disabled.
+// stores HTML it can't model), so what you see equals what gets saved. The bound
+// form <textarea> therefore only ever holds a schema-produced value in the
+// field's storage format, never raw mid-edit markup: submitting with source view
+// open flushes through that same re-parse first (flushSourceView, wired to the
+// form in index.ts). While in source view the rest of the toolbar is disabled.
 import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 
@@ -21,32 +23,47 @@ function shellOf(editor: Editor): HTMLElement | null {
   return (editor.view.dom as HTMLElement).closest(".django-tiptap");
 }
 
-function boundFormTextarea(editor: Editor): HTMLTextAreaElement | null {
-  const prev = shellOf(editor)?.previousElementSibling;
-  return prev instanceof HTMLTextAreaElement ? prev : null;
+function toolbarOf(editor: Editor): HTMLElement | null {
+  return shellOf(editor)?.querySelector<HTMLElement>(".django-tiptap__toolbar") ?? null;
+}
+
+// Close source view: re-parse the raw HTML through the schema, which fires
+// onUpdate and so writes the storage value back into the bound form textarea.
+// `refocus` is false for a flush — a submit must not steal the caret.
+function leaveSourceView(editor: Editor, state: SourceState, refocus: boolean): void {
+  const dom = editor.view.dom as HTMLElement;
+  const html = state.textarea.value;
+  state.textarea.remove();
+  state.note.remove();
+  dom.style.display = "";
+  toolbarOf(editor)?.classList.remove("is-source-mode");
+  states.delete(editor);
+  editor.setEditable(true);
+  editor.commands.setContent(html, true);
+  if (refocus) {
+    editor.commands.focus();
+  }
+}
+
+// Apply the open source view's content, if any, and close it. Synchronous, so
+// the bound textarea is up to date by the time a submit handler reads it.
+export function flushSourceView(editor: Editor): void {
+  const active = states.get(editor);
+  if (active) {
+    leaveSourceView(editor, active, false);
+  }
 }
 
 export function toggleSourceView(editor: Editor): void {
   const dom = editor.view.dom as HTMLElement;
   const content = dom.parentElement;
-  const shell = shellOf(editor);
-  const toolbar = shell?.querySelector<HTMLElement>(".django-tiptap__toolbar");
   if (!content) {
     return;
   }
 
   const active = states.get(editor);
   if (active) {
-    const html = active.textarea.value;
-    active.textarea.remove();
-    active.note.remove();
-    dom.style.display = "";
-    toolbar?.classList.remove("is-source-mode");
-    states.delete(editor);
-    editor.setEditable(true);
-    // Re-parse through the schema (fires onUpdate → form textarea sync).
-    editor.commands.setContent(html, true);
-    editor.commands.focus();
+    leaveSourceView(editor, active, true);
     return;
   }
 
@@ -59,20 +76,10 @@ export function toggleSourceView(editor: Editor): void {
   textarea.spellcheck = false;
   textarea.value = editor.getHTML();
 
-  // Live-sync raw source into the bound form textarea — but only in HTML mode.
-  // In JSON mode the form holds a {doc, html} envelope, so raw HTML would
-  // corrupt it; the editor re-parses and writes a valid envelope on switch-back.
-  const form = boundFormTextarea(editor);
-  if (form && form.getAttribute("data-tiptap-storage") !== "json") {
-    textarea.addEventListener("input", () => {
-      form.value = textarea.value;
-    });
-  }
-
   dom.style.display = "none";
   content.appendChild(note);
   content.appendChild(textarea);
-  toolbar?.classList.add("is-source-mode");
+  toolbarOf(editor)?.classList.add("is-source-mode");
   // Record state before setEditable, which fires the transaction that refreshes
   // the toolbar — the source button's active state must already be observable.
   states.set(editor, { textarea, note });

@@ -95,6 +95,18 @@ before.
 
 ### Fixed
 
+- **A JSON string assigned to `TipTapJSONField` is parsed instead of refused.**
+  `models.JSONField` defines no `to_python`, so this field's `super()` call was
+  `Field.to_python` -- a no-op that handed the string on unparsed. A value from a
+  fixture or a deserializer became an empty document without a word.
+
+- **A row seeded by the HTML-to-JSON migration survives its next save.** The
+  documented recipe seeds rows as `{"doc": {}, "html": "<p>legacy</p>"}`, and the
+  stored mirror was unconditionally re-derived from the doc -- which, for an empty
+  doc, renders `""`. Every migrated row was blanked the next time it was saved. The
+  seeded mirror is now kept when the doc has no content, and it is still sanitised,
+  because the value runs its HTML through the allowlist on construction.
+
 - **Stored XSS on the HTML path.** `TipTapFormField` accepted the POST body verbatim:
   a plain `forms.Form` fed `<img src=x onerror=…>` reported success and handed that
   string back on `cleaned_data`, and the docs said to render it with `|safe`. The field
@@ -133,6 +145,41 @@ before.
   Caveats section never mentioned that a direct POST bypasses every one of them. The
   page now describes where sanitisation actually happens and enumerates what survives.
 
+
+- **`TipTapJSONField` works in a `ModelForm`, `full_clean()` and the admin.** The
+  field had no `validate()`, so Django's `JSONField.validate` ran `json.dumps()`
+  over the `TipTapValue` the field hands back -- a dataclass, not JSON -- and
+  every non-empty document failed with "Value must be valid JSON". The plain ORM
+  path accepted the identical value, so the two entry points disagreed
+  completely and the field did not work in either of its most common
+  deployments. Validation now checks the `{doc, html}` mapping that actually
+  reaches the column, which keeps the JSON contract honest (a document carrying
+  something unserializable is still a validation error) while letting the real
+  Django paths through.
+
+- **Submitting with the source view open saves what the source view shows.**
+  Nothing flushed the raw-HTML textarea back into the form field, and the two
+  storage modes failed in opposite directions: HTML storage copied raw mid-edit
+  markup into the field on every keystroke, so a submit persisted markup the
+  schema would have dropped, while JSON storage copied nothing at all, so the
+  edit was silently lost. Both are the same defect -- the bound field held
+  something other than what the schema produces. Submitting now re-parses the
+  source through the schema first, exactly as closing the source view does, and
+  closes the view so the author sees the normalized result. The flush is wired
+  to `submit` (native and `requestSubmit()`) and to `formdata` (the ajax
+  submissions that build a `FormData` from the form), and the per-keystroke raw
+  sync is gone: the field only ever carries a schema-produced value in its
+  storage format.
+
+- **A `tiptap_fields` entry that matches nothing is a system-check error.**
+  `TipTapModelAdminMixin` silently ignored a name that is not a field on the
+  model, or one naming a field the widget cannot apply to: the admin just
+  rendered a plain textarea and nothing said why. Such an entry is now reported
+  by Django's check framework at startup (`django_tiptap_editor.E002` and
+  `E003`). A bare string other than `"__all__"` is reported too
+  (`django_tiptap_editor.E001`) -- it was matched with `in`, i.e. a substring
+  test, so `"somebody"` quietly turned `body` into an editor.
+
 ### Changed
 
 - Text and attribute values rendered by `render_doc` escape `&`, `<`, `>` and (in
@@ -142,6 +189,28 @@ before.
   attribute either way.
 - `get_extra_extensions()` returns a mapping of name to declared vocabulary (`None`
   when undeclared) rather than a `frozenset` of names.
+
+- **`TipTapJSONField` validates a document's node and mark vocabulary.** Nothing
+  checked a stored document's `type` names against anything. The only vocabulary
+  that existed at rest was the server-side renderer's dispatch, which keeps an
+  unknown node's children and drops the wrapper -- so because the `html` mirror
+  is re-derived from the `doc` on every save, a custom node registered by the
+  documented extension recipe round-tripped in the editor and was flattened out
+  of the stored mirror on the first save, silently. `full_clean()`, a
+  `ModelForm` and the admin now reject a document whose node or mark types the
+  mirror cannot render. Types your own extensions add are declared in
+  `TIPTAP_EXTRA_EXTENSIONS`, which already declares extension names for config
+  validation; declaring one means the `doc` keeps it and the derived mirror
+  still cannot represent it, so render those documents from `doc`. Documents the
+  editor itself produces are unaffected. Writes through the plain ORM are not
+  validated, as everywhere else in Django.
+
+### Docs
+
+- Extending: a section on custom nodes under JSON storage -- what
+  `TIPTAP_EXTRA_EXTENSIONS` now declares, and why a declared type still has to
+  be rendered from `doc` rather than from the `html` mirror.
+
 
 ## [0.9.0] — 2026-08-18
 

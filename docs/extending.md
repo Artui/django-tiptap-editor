@@ -67,6 +67,24 @@ Two things are refused outright, with `ImproperlyConfigured`: a tag that execute
 script or loads a document (`script`, `style`, `iframe`, `object`, `embed`, `base`,
 `meta`, `link`, `form`, `svg`, `template`, …), and any `on*` attribute.
 
+
+### Custom nodes and JSON storage
+
+`TIPTAP_EXTRA_EXTENSIONS` is also the vocabulary [`TipTapJSONField`](storage.md) validates
+a document against. A node or mark type outside it is **rejected** by `full_clean()`, a
+`ModelForm` and the admin, because the server-side renderer that derives the stored `html`
+mirror does not know the type and would flatten it to its text content — the wrapper and
+its attributes would silently disappear from the mirror on the first save.
+
+Declaring the type is you taking that on: the `doc` keeps it in full, and the derived
+`html` mirror still cannot represent it, so render those documents from `doc` (client-side
+via `DjangoTipTap.renderHTML`, or with your own template) rather than from `.html`. Name
+the *node/mark* type, which is not always the extension's registered name:
+
+```python
+# a "callout" extension whose Node.create({ name: "calloutBox" }) needs both
+TIPTAP_EXTRA_EXTENSIONS = ["callout", "calloutBox"]
+```
 ## Keyboard shortcuts
 
 ### The Enter key (built in)
