@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-08-26
+
 ### Upgrade note — content is now sanitised on the server
 
 **What changes.** Until now nothing on the server inspected what a project stored.
@@ -514,7 +516,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.6.0...v0.7.0
