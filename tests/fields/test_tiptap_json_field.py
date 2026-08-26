@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
@@ -20,12 +21,18 @@ def test_to_python_passthrough_and_none() -> None:
     assert field.to_python(None) is None
 
 
-def test_to_python_parses_str_and_dict() -> None:
-    field = TipTapJSONField()
-    from_str = field.to_python('{"doc": {"type": "doc"}, "html": "<p></p>"}')
-    from_dict = field.to_python({"doc": {"type": "doc"}, "html": "<p></p>"})
-    assert isinstance(from_str, TipTapValue)
+def test_to_python_parses_a_mapping() -> None:
+    from_dict = TipTapJSONField().to_python({"doc": {"type": "doc"}, "html": "<p></p>"})
     assert from_dict.doc == {"type": "doc"}
+
+
+def test_to_python_refuses_a_value_that_is_not_a_document() -> None:
+    # models.JSONField has no to_python of its own, so the str branch of this
+    # field's to_python is a no-op and the JSON string arrives here unparsed.
+    # It used to become an empty document without a word; now it is a
+    # ValidationError, which full_clean reports on the field.
+    with pytest.raises(ValidationError):
+        TipTapJSONField().to_python('{"doc": {"type": "doc"}, "html": "<p></p>"}')
 
 
 def test_get_prep_value_none() -> None:

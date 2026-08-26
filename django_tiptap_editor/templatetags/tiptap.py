@@ -25,6 +25,7 @@ from django_tiptap_editor.utils.get_asset_mode import get_asset_mode
 from django_tiptap_editor.utils.get_default_config import get_default_config
 from django_tiptap_editor.utils.get_import_map import get_import_map
 from django_tiptap_editor.utils.render_doc import render_doc
+from django_tiptap_editor.utils.sanitize_html import sanitize_html
 
 register = template.Library()
 
@@ -66,11 +67,19 @@ def tiptap_config() -> SafeString:
 
 @register.filter
 def tiptap_html(value: Any) -> SafeString:
-    """Render a stored TipTap value or raw ProseMirror ``doc`` to safe HTML.
+    """Render any stored TipTap value to safe HTML — the way to display content.
 
-    ``{{ article.body|tiptap_html }}`` — accepts a ``TipTapValue`` (uses its
-    mirror) or a bare ``doc`` dict (renders it server-side via ``render_doc``).
+    ``{{ article.body|tiptap_html }}`` works for all three storage shapes and
+    ends at the same guarantee, so a template never needs ``|safe``:
+
+    * a ``str`` (HTML storage) is put through ``sanitize_html``, which is what
+      makes the filter safe on content stored before the field sanitized it;
+    * a ``TipTapValue`` (JSON storage) uses its mirror, already sanitized by the
+      value's own invariant and re-derived from the sanitized ``doc`` on save;
+    * a bare ``doc`` mapping is rendered server-side by ``render_doc``.
     """
     if isinstance(value, TipTapValue):
         return mark_safe(str(value.html))
+    if isinstance(value, str):
+        return sanitize_html(value)
     return render_doc(value)

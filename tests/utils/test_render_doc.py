@@ -64,7 +64,9 @@ def test_link_mark_with_and_without_rel_target() -> None:
             )
         )
     )
-    assert out == '<p><a href="https://a" target="_blank" rel="noopener">x</a></p>'
+    # A link that opens a new browsing context always carries the full
+    # noopener noreferrer pair, whatever rel the document asked for.
+    assert out == ('<p><a href="https://a" target="_blank" rel="noopener noreferrer">x</a></p>')
 
 
 def test_link_with_whitespace_hidden_scheme_is_dropped() -> None:

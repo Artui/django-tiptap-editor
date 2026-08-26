@@ -25,14 +25,47 @@ To activate it:
 
 1. Register it (before mount — see [load order](#load-order)).
 2. List its name in `config.extensions`.
-3. Add the name to `TIPTAP_EXTRA_EXTENSIONS` so Python config validation accepts it.
+3. Add the name to `TIPTAP_EXTRA_EXTENSIONS` so Python config validation accepts it,
+   and declare the HTML it emits so the server-side sanitiser keeps it.
 
 ```python
-TIPTAP_EXTRA_EXTENSIONS = ["callout"]
+TIPTAP_EXTRA_EXTENSIONS = {"callout": {"aside": {"attrs": ["class"]}}}
 TipTapWidget(config={"extensions": ["callout"]})
 ```
 
 Built-in names are always active; unknown, unregistered names fail loudly at mount.
+
+### Declaring what an extension emits
+
+The server sanitises stored markup against an allowlist built from the extensions the
+editor mounts (see [Security](security.md)). It knows what the built-ins emit; it
+cannot know what yours does, so tell it:
+
+```python
+TIPTAP_EXTRA_EXTENSIONS = {
+    "callout": {"aside": {"attrs": ["class"], "styles": ["background-color"]}},
+    "shortcuts": {},  # emits no markup of its own
+}
+```
+
+Each tag maps to the attributes and the inline-style properties your extension puts on
+it. Style properties go under `styles`, never as a `style` entry in `attrs` — that is
+what keeps a declared extension from turning `style` into a passthrough.
+
+The plain list form still works and still passes config validation:
+
+```python
+TIPTAP_EXTRA_EXTENSIONS = ["callout"]
+```
+
+but it leaves the vocabulary undeclared. Building the schema then warns, naming the
+extension, and the sanitiser unwraps its tags — the wrapper is dropped on save and the
+text inside it is kept. Declare the vocabulary, or accept that the markup does not
+survive a round trip through the server.
+
+Two things are refused outright, with `ImproperlyConfigured`: a tag that executes
+script or loads a document (`script`, `style`, `iframe`, `object`, `embed`, `base`,
+`meta`, `link`, `form`, `svg`, `template`, …), and any `on*` attribute.
 
 ## Keyboard shortcuts
 
@@ -85,6 +118,7 @@ DjangoTipTap.registerExtension("shortcuts", (config, ctx) => {
 
 Activate it like any custom extension — list `"shortcuts"` in `config.extensions` and add it
 to `TIPTAP_EXTRA_EXTENSIONS` (and, for a project-wide default, in `TIPTAP_DEFAULT_CONFIG`).
+A shortcut-only extension emits no markup, so declare it as `{"shortcuts": {}}`.
 
 ## Toolbar buttons
 

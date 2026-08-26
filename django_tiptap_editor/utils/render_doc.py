@@ -9,19 +9,25 @@ with, the JS ``getHTML()`` output.
 
 **Safety, relied on wherever this output is marked safe:** the document is
 protocol-allowlisted first (``sanitize_doc``), text and attribute values are
-HTML-escaped, and inline ``style`` values pass a conservative CSS allowlist — so
-the result is safe for ``|safe`` even for untrusted JSON.
+HTML-escaped, inline ``style`` values pass a conservative CSS allowlist, and a
+link's ``target`` / ``rel`` are reduced to safe values — so the result is safe
+for ``|safe`` even for untrusted JSON.
 """
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
-from django.utils.html import escape
 from django.utils.safestring import SafeString, mark_safe
 
-from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK_PROTOCOLS
+from django_tiptap_editor.constants import (
+    DEFAULT_IMAGE_PROTOCOLS,
+    DEFAULT_LINK_PROTOCOLS,
+    IMAGE_STYLE_PROPERTIES,
+)
+from django_tiptap_editor.utils.escape_html import escape_html
+from django_tiptap_editor.utils.get_css_value import get_css_value
+from django_tiptap_editor.utils.get_link_attributes import get_link_attributes
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
 
 # Simple inline marks: mark type -> wrapping tag.
@@ -35,22 +41,6 @@ _SIMPLE_MARKS = {
     "superscript": "sup",
 }
 
-# Conservative CSS value allowlist: word chars, spaces, and the punctuation real
-# values use (#hex, %, commas, dots, parens for rgb(), hyphens). Rejects anything
-# with ``;`` ``:`` ``{`` ``}`` ``<`` ``>`` quotes — i.e. property-injection,
-# url(...:...) and markup — so style attributes can't smuggle script.
-_CSS_VALUE_RE = re.compile(r"^[#%(),.\-\s\w]+$")
-
-
-def _css_value(value: object) -> str:
-    """Return a CSS value if it is a safe simple token, else ``""``."""
-    if not isinstance(value, str):
-        return ""
-    token = value.strip()
-    if not token or not _CSS_VALUE_RE.match(token) or "expression" in token.lower():
-        return ""
-    return token
-
 
 def _css_length(value: object) -> str:
     """Return ``value`` if it is a CSS length, else ``""``.
@@ -61,36 +51,16 @@ def _css_length(value: object) -> str:
     value that carries a unit (``50%``, ``300px``) is the case where the style
     declaration is the only one that can express the size, so that one is kept.
     """
-    token = _css_value(value)
+    token = get_css_value(value)
     return "" if token.replace(".", "", 1).isdigit() else token
 
 
 # Properties an image's stored ``style`` may carry into the output. The editor
 # round-trips that attribute verbatim (the corpus needs ``float`` and ``margin``
 # to survive), so this path has to emit it too or JSON storage renders the image
-# differently from HTML storage. An allowlist rather than a pattern, because the
-# docs enumerate exactly what survives, and every value still passes _css_value.
-_IMAGE_STYLE_PROPERTIES = frozenset(
-    {
-        "border",
-        "border-radius",
-        "display",
-        "float",
-        "height",
-        "margin",
-        "margin-bottom",
-        "margin-left",
-        "margin-right",
-        "margin-top",
-        "padding",
-        "padding-bottom",
-        "padding-left",
-        "padding-right",
-        "padding-top",
-        "vertical-align",
-        "width",
-    }
-)
+# differently from HTML storage. Shared with the HTML sanitiser's allowlist --
+# one vocabulary, so the two paths keep an image's layout identically.
+_IMAGE_STYLE_PROPERTIES = frozenset(IMAGE_STYLE_PROPERTIES)
 
 # Sizing carried by the width/height attributes, which the editor writes when an
 # image is resized. A style declaration for the same property would outrank the
@@ -103,7 +73,7 @@ def _style_declarations(style: object, allowed: frozenset[str]) -> list[tuple[st
 
     Splitting on ``;`` and ``:`` and re-checking each half is what keeps the
     conservative guarantee: the property must be one this renderer emits, and
-    the value still has to pass ``_css_value``, which rejects anything carrying
+    the value still has to pass ``get_css_value``, which rejects anything carrying
     its own ``;``/``:`` (so ``url(...:...)`` never survives).
     """
     if not isinstance(style, str):
@@ -114,7 +84,7 @@ def _style_declarations(style: object, allowed: frozenset[str]) -> list[tuple[st
         if not separator:
             continue
         prop = name.strip().lower()
-        safe = _css_value(value)
+        safe = get_css_value(value)
         if prop in allowed and safe:
             pairs.append((prop, safe))
     return pairs
@@ -135,8 +105,8 @@ def _image_style(attrs: dict[str, Any]) -> str:
 def _style_attr(pairs: list[tuple[str, object]]) -> str:
     """Build a ``style="..."`` attribute from (prop, value) pairs, dropping
     empties and unsafe values. Returns ``""`` when nothing survives."""
-    decls = [f"{prop}: {safe}" for prop, value in pairs if (safe := _css_value(value))]
-    return f' style="{escape("; ".join(decls))}"' if decls else ""
+    decls = [f"{prop}: {safe}" for prop, value in pairs if (safe := get_css_value(value))]
+    return f' style="{escape_html("; ".join(decls), quote=True)}"' if decls else ""
 
 
 def _block_style(attrs: dict[str, Any]) -> str:
@@ -154,7 +124,7 @@ def _attr(name: str, value: object) -> str:
     """Render a single HTML attribute, or ``""`` for null/empty values."""
     if value is None or value == "":
         return ""
-    return f' {name}="{escape(str(value))}"'
+    return f' {name}="{escape_html(str(value), quote=True)}"'
 
 
 def _wrap_marks(text: str, marks: list[Any]) -> str:
@@ -169,9 +139,10 @@ def _wrap_marks(text: str, marks: list[Any]) -> str:
             tag = _SIMPLE_MARKS[kind]
             out = f"<{tag}>{out}</{tag}>"
         elif kind == "link":
+            safe_target, safe_rel = get_link_attributes(attrs.get("target"), attrs.get("rel"))
             href = _attr("href", attrs.get("href"))
-            target = _attr("target", attrs.get("target"))
-            rel = _attr("rel", attrs.get("rel"))
+            target = _attr("target", safe_target)
+            rel = _attr("rel", safe_rel)
             out = f"<a{href}{target}{rel}>{out}</a>"
         elif kind == "textStyle":
             style = _style_attr(
@@ -210,7 +181,7 @@ def _render_node(node: dict[str, Any]) -> str:
     attrs = node.get("attrs") or {}
 
     if kind == "text":
-        text = escape(str(node.get("text", "")))
+        text = escape_html(str(node.get("text", "")))
         marks = node.get("marks")
         return _wrap_marks(text, marks) if isinstance(marks, list) else text
     if kind == "paragraph":

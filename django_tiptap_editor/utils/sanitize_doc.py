@@ -7,39 +7,22 @@ on *parse*, which a stored-JSON path never runs — so a doc could carry a
 any URL whose scheme is outside the allowlist (relative / anchor URLs, having no
 scheme, are always kept), before the value is persisted.
 
-Deliberately narrow: it secures the URL-bearing attributes, not the full schema.
-Structural validation is the editor's job.
+Deliberately narrow: it secures the URL-bearing attributes and bounds the
+nesting, not the full schema. Structural validation is the editor's job.
 """
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
-from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK_PROTOCOLS
+from django.core.exceptions import ValidationError
 
-_SCHEME_RE = re.compile(r"^([a-zA-Z][a-zA-Z0-9+.\-]*):")
-
-# ASCII whitespace and C0/DEL control characters (``\x00``–``\x20`` and ``\x7f``).
-# A browser strips these while resolving a URL — tabs/newlines are removed from
-# anywhere in the string, leading controls/spaces are trimmed — so an attacker
-# embeds them mid-scheme (``java\nscript:``) to hide a disallowed scheme from a
-# naive parser. We remove them before scheme detection to see what the browser
-# will.
-_URL_STRIP_RE = re.compile(r"[\x00-\x20\x7f]")
-
-
-def _scheme(url: object) -> str:
-    """Return the lowercased URL scheme, or ``""`` for a relative/anchor URL."""
-    if not isinstance(url, str):
-        return ""
-    match = _SCHEME_RE.match(_URL_STRIP_RE.sub("", url))
-    return match.group(1).lower() if match else ""
-
-
-def _allowed(url: object, protocols: tuple[str, ...]) -> bool:
-    scheme = _scheme(url)
-    return scheme == "" or scheme in protocols
+from django_tiptap_editor.constants import (
+    DEFAULT_IMAGE_PROTOCOLS,
+    DEFAULT_LINK_PROTOCOLS,
+    MAX_DOCUMENT_DEPTH,
+)
+from django_tiptap_editor.utils.is_allowed_url import is_allowed_url
 
 
 def sanitize_doc(
@@ -53,15 +36,33 @@ def sanitize_doc(
     A node's ``image`` ``src`` outside ``image_protocols`` is blanked; a ``link``
     mark whose ``href`` is outside ``link_protocols`` is dropped. Non-dict input
     is returned unchanged (the field validates structure separately).
+
+    Raises ``ValidationError`` for a document nested deeper than
+    ``MAX_DOCUMENT_DEPTH``. Both this walk and the renderer's recurse per level,
+    so an unbounded document is a few kilobytes that costs the process its
+    stack; refusing it here turns a 500 into a field error.
     """
+    return _sanitize(doc, link_protocols, image_protocols, 0)
+
+
+def _sanitize(
+    doc: Any,
+    link_protocols: tuple[str, ...],
+    image_protocols: tuple[str, ...],
+    depth: int,
+) -> Any:
     if not isinstance(doc, dict):
         return doc
+    if depth >= MAX_DOCUMENT_DEPTH:
+        raise ValidationError(
+            f"TipTap document nests deeper than the maximum of {MAX_DOCUMENT_DEPTH} nodes."
+        )
 
     node: dict[str, Any] = {**doc}
 
     if node.get("type") == "image":
         attrs = node.get("attrs")
-        if isinstance(attrs, dict) and not _allowed(attrs.get("src"), image_protocols):
+        if isinstance(attrs, dict) and not is_allowed_url(attrs.get("src"), image_protocols):
             node["attrs"] = {**attrs, "src": ""}
 
     marks = node.get("marks")
@@ -72,15 +73,14 @@ def sanitize_doc(
             if not (
                 isinstance(mark, dict)
                 and mark.get("type") == "link"
-                and not _allowed((mark.get("attrs") or {}).get("href"), link_protocols)
+                and not is_allowed_url((mark.get("attrs") or {}).get("href"), link_protocols)
             )
         ]
 
     content = node.get("content")
     if isinstance(content, list):
         node["content"] = [
-            sanitize_doc(child, link_protocols=link_protocols, image_protocols=image_protocols)
-            for child in content
+            _sanitize(child, link_protocols, image_protocols, depth + 1) for child in content
         ]
 
     return node

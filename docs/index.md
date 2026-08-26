@@ -6,7 +6,7 @@ settings-driven config, and committed static assets — **node-free for consumer
 
 ## Highlights
 
-- **Stores HTML by default** (render with `|safe`); optional JSON storage via
+- **Stores HTML by default** (render with `|tiptap_html`); optional JSON storage via
   `TipTapJSONField` (canonical doc + safe, server-derived HTML mirror).
 - **Safe by construction** — ProseMirror's schema drops scripts and unknown nodes on
   parse; link and image protocols are allowlisted. See [Security](security.md).

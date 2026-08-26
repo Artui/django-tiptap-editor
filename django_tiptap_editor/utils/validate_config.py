@@ -51,7 +51,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
 
     extensions = config.get("extensions")
     if extensions is not None:
-        allowed = BUILTIN_EXTENSIONS | get_extra_extensions()
+        allowed = BUILTIN_EXTENSIONS | frozenset(get_extra_extensions())
         unknown_ext = [name for name in extensions if name not in allowed]
         if unknown_ext:
             raise ImproperlyConfigured(

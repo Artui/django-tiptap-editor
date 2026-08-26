@@ -151,14 +151,31 @@ Change a rule here and change the config with it, or they drift apart again.
 | Django | 4.2 | 4.2, 5.0, 5.1, 5.2, 6.0 (supported-combos excludes baked into `tests.yml`) |
 | TipTap | pinned per release | declared in `js/package.json`; a TipTap major bump that changes the primitive API is a major bump here too |
 
-## Security stance (consumers render with `|safe`)
+## Security stance (the boundary is on the server)
 
-- ProseMirror's schema drops scripts/unknown nodes on parse — safer than TinyMCE.
-- Link/image protocols are **allowlisted** (`linkProtocols`); `javascript:`/`data:`
-  rejected. Uploaded `location` and picker `value` are validated before becoming `src`.
-- Docs must enumerate exactly which tags/attributes/protocols survive, so `|safe` is
-  justified. Custom-extension authors own the sanitization implications of anything new
-  they introduce.
+- **The browser is not the boundary.** ProseMirror's schema drops scripts and unknown
+  nodes on parse, and link/image protocols are allowlisted (`linkProtocols`) — but all
+  of that runs in the browser, and the widget is a plain `<textarea>`. A client that
+  skips the editor posts whatever it likes. Treat the schema as a normalizer.
+- **Everything the package accepts is sanitized server-side.** `sanitize_html` on the
+  HTML path (form clean + the `tiptap_html` filter), `sanitize_doc` + `render_doc` on
+  the JSON path, and `TipTapValue` sanitizes its mirror in `__post_init__` so the
+  invariant holds for every instance, not just the ones that made a DB round trip.
+- **One vocabulary, no second allowlist.** `constants.EXTENSION_HTML_VOCABULARY` has
+  one entry per built-in extension declaring the tags/attributes/style properties it
+  emits; `BUILTIN_EXTENSIONS` is derived from its keys and `get_html_schema` unions the
+  entries into the allowlist. Add an extension, add its vocabulary in the same commit —
+  the fidelity test in `tests/utils/test_sanitize_html.py` enumerates the table and
+  fails if a tag, attribute or style property has no fixture proving it round-trips
+  byte-identically.
+- **Never silently drop content.** An unknown tag is unwrapped and its text kept;
+  `script`/`style` bodies are the one exception. A malformed value fails loudly with a
+  `ValidationError` rather than becoming an empty document.
+- Docs enumerate exactly which tags/attributes/protocols survive. Custom-extension
+  authors declare their vocabulary in `TIPTAP_EXTRA_EXTENSIONS`; a name declared
+  without one warns and has its markup unwrapped.
+- **No sanitization dependency.** The package's only dependency stays `django>=4.2`;
+  the allowlist is the package's own, built on `html.parser`.
 
 ## Boundaries
 

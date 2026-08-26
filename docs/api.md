@@ -43,9 +43,27 @@ See [Storage format](storage.md).
 ### `TipTapValue`
 
 `django_tiptap_editor.types.tiptap_value.TipTapValue` — frozen value with `.doc` (canonical
-ProseMirror JSON) and `.html` (the safe HTML mirror, re-derived from `doc` on save). `str(value)`
-/ `{{ value }}` render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}`
-mapping.
+ProseMirror JSON) and `.html` (the safe HTML mirror, re-derived from `doc` on save and sanitised
+on construction, so it is safe on every instance however it was built). `str(value)` /
+`{{ value }}` render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}`
+mapping or a bare doc, and raises `ValidationError` for anything else — assigning an HTML string
+does not convert it.
+
+### `sanitize_html`
+
+`django_tiptap_editor.utils.sanitize_html.sanitize_html(html, *, schema=None)` — reduces HTML to
+what the configured editor can emit and marks the result safe. Unknown tags are unwrapped (their
+text survives), unknown attributes dropped, `script`/`style` bodies discarded, link/image URLs
+protocol-allowlisted, inline styles filtered. Raises `ValidationError` past `MAX_DOCUMENT_DEPTH`.
+`TipTapFormField` applies it on clean and the `tiptap_html` filter applies it on display; call it
+directly to clean a column in a data migration. See [Security](security.md).
+
+### `get_html_schema` / `HtmlSchema`
+
+`django_tiptap_editor.utils.get_html_schema.get_html_schema()` returns the `HtmlSchema` the
+sanitiser enforces: the union of the HTML vocabularies of every extension the editor mounts, plus
+whatever `TIPTAP_EXTRA_EXTENSIONS` declares. Pass one to `sanitize_html(..., schema=...)` to
+sanitise against a different allowlist.
 
 ### `render_doc`
 
@@ -66,13 +84,13 @@ package's node/mark set with protocol allowlisting + CSS validation. The
 {% load tiptap %}
 {% tiptap_media %}            {# editor assets for the active asset mode #}
 {% tiptap_config %}           {# the default config as a JSON string #}
-{{ value|tiptap_html }}       {# render a TipTapValue / doc to safe HTML #}
+{{ value|tiptap_html }}       {# render stored HTML / a TipTapValue / a doc, safely #}
 ```
 
 All of `TipTapWidget`, `AdminTipTapWidget`, `TipTapModelAdminMixin`, `TipTapFormField`,
 `TipTapJSONField`, `TipTapJSONFormField`, `TipTapValue`, `BaseImageUploadView`,
-`ImageUploadError`, `get_default_config`, `render_doc`, and `validate_config` are re-exported from
-the package root.
+`ImageUploadError`, `HtmlSchema`, `get_default_config`, `get_html_schema`, `render_doc`,
+`sanitize_html`, and `validate_config` are re-exported from the package root.
 
 ## JavaScript — `window.DjangoTipTap`
 

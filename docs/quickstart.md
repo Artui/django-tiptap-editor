@@ -35,10 +35,12 @@ In the template, include the editor assets and render the form normally:
 The widget renders a `<textarea>`; the editor mounts onto it on load and writes its HTML
 back into the textarea on every change, so a normal POST submits HTML.
 
-Display the stored value with `|safe`:
+Display the stored value with the `tiptap_html` filter, which sanitises it against
+the same allowlist the form field applied on the way in:
 
 ```html
-{{ article.body|safe }}
+{% load tiptap %}
+{{ article.body|tiptap_html }}
 ```
 
 ## In the admin

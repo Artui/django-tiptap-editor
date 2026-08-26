@@ -6,9 +6,12 @@ from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
 from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
 from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
+from django_tiptap_editor.types.html_schema import HtmlSchema
 from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.render_doc import render_doc
+from django_tiptap_editor.utils.sanitize_html import sanitize_html
 from django_tiptap_editor.utils.validate_config import validate_config
 from django_tiptap_editor.version import __version__
 from django_tiptap_editor.views.base_image_upload_view import BaseImageUploadView
@@ -19,6 +22,7 @@ from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 __all__ = [
     "AdminTipTapWidget",
     "BaseImageUploadView",
+    "HtmlSchema",
     "ImageUploadError",
     "TipTapFormField",
     "TipTapJSONField",
@@ -28,6 +32,8 @@ __all__ = [
     "TipTapWidget",
     "__version__",
     "get_default_config",
+    "get_html_schema",
     "render_doc",
+    "sanitize_html",
     "validate_config",
 ]
