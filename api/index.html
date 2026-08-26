@@ -542,6 +542,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sanitize_html" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sanitize_html
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_html_schema-htmlschema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_html_schema / HtmlSchema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#render_doc" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1016,6 +1038,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sanitize_html" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sanitize_html
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_html_schema-htmlschema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_html_schema / HtmlSchema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#render_doc" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1134,21 +1178,40 @@
 <h3 id="tiptapmodeladminmixin"><code>TipTapModelAdminMixin</code><a class="headerlink" href="#tiptapmodeladminmixin" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.admin.mixin.TipTapModelAdminMixin</code> — mix in before
 <code>admin.ModelAdmin</code>. Swaps <code>AdminTipTapWidget</code> onto <code>TextField</code>s.
-<code>tiptap_fields = "__all__"</code> (default) or an explicit list of field names.</p>
+<code>tiptap_fields = "__all__"</code> (default) or an explicit list of field names. An explicit
+list is checked at startup: a name that is not a field on the model, or one naming a
+field the widget cannot apply to, is a system-check error
+(<code>django_tiptap_editor.E001</code>–<code>E003</code>) rather than a silent no-op.</p>
 <h3 id="tiptapformfieldformscharfield"><code>TipTapFormField(forms.CharField)</code><a class="headerlink" href="#tiptapformfieldformscharfield" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.forms.fields.TipTapFormField</code> — a <code>CharField</code> whose default widget
 is <code>TipTapWidget</code>.</p>
 <h3 id="tiptapjsonfieldmodelsjsonfield"><code>TipTapJSONField(models.JSONField)</code><a class="headerlink" href="#tiptapjsonfieldmodelsjsonfield" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.fields.tiptap_json_field.TipTapJSONField</code> — a model field storing a
 <code>{doc, html}</code> envelope. The Python value is a <code>TipTapValue</code>; the <code>doc</code> is protocol-allowlisted
-on save. Optional <code>link_protocols</code> / <code>image_protocols</code> tuples override the allowlists. Its form
+on save, and validated (<code>full_clean()</code>, a <code>ModelForm</code>, the admin) against the node and mark
+types the HTML mirror can render — see
+<a href="../extending/#custom-nodes-and-json-storage">Custom nodes and JSON storage</a>. Optional <code>link_protocols</code> / <code>image_protocols</code> tuples override the allowlists. Its form
 field is <code>TipTapJSONFormField</code> (a <code>forms.Field</code> whose widget is <code>TipTapWidget(storage="json")</code>).
 See <a href="../storage/">Storage format</a>.</p>
 <h3 id="tiptapvalue"><code>TipTapValue</code><a class="headerlink" href="#tiptapvalue" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.types.tiptap_value.TipTapValue</code> — frozen value with <code>.doc</code> (canonical
-ProseMirror JSON) and <code>.html</code> (the safe HTML mirror, re-derived from <code>doc</code> on save). <code>str(value)</code>
-/ <code>{{ value }}</code> render the mirror. <code>TipTapValue.from_stored({...})</code> builds one from a <code>{doc, html}</code>
-mapping.</p>
+ProseMirror JSON) and <code>.html</code> (the safe HTML mirror, re-derived from <code>doc</code> on save and sanitised
+on construction, so it is safe on every instance however it was built). <code>str(value)</code> /
+<code>{{ value }}</code> render the mirror. <code>TipTapValue.from_stored({...})</code> builds one from a <code>{doc, html}</code>
+mapping or a bare doc, and raises <code>ValidationError</code> for anything else — assigning an HTML string
+does not convert it.</p>
+<h3 id="sanitize_html"><code>sanitize_html</code><a class="headerlink" href="#sanitize_html" title="Permanent link">&para;</a></h3>
+<p><code>django_tiptap_editor.utils.sanitize_html.sanitize_html(html, *, schema=None)</code> — reduces HTML to
+what the configured editor can emit and marks the result safe. Unknown tags are unwrapped (their
+text survives), unknown attributes dropped, <code>script</code>/<code>style</code> bodies discarded, link/image URLs
+protocol-allowlisted, inline styles filtered. Raises <code>ValidationError</code> past <code>MAX_DOCUMENT_DEPTH</code>.
+<code>TipTapFormField</code> applies it on clean and the <code>tiptap_html</code> filter applies it on display; call it
+directly to clean a column in a data migration. See <a href="../security/">Security</a>.</p>
+<h3 id="get_html_schema-htmlschema"><code>get_html_schema</code> / <code>HtmlSchema</code><a class="headerlink" href="#get_html_schema-htmlschema" title="Permanent link">&para;</a></h3>
+<p><code>django_tiptap_editor.utils.get_html_schema.get_html_schema()</code> returns the <code>HtmlSchema</code> the
+sanitiser enforces: the union of the HTML vocabularies of every extension the editor mounts, plus
+whatever <code>TIPTAP_EXTRA_EXTENSIONS</code> declares. Pass one to <code>sanitize_html(..., schema=...)</code> to
+sanitise against a different allowlist.</p>
 <h3 id="render_doc"><code>render_doc</code><a class="headerlink" href="#render_doc" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…)</code>
 — renders a ProseMirror <code>doc</code> dict to a safe HTML string in pure Python (no Node), covering the
@@ -1162,12 +1225,12 @@ package's node/mark set with protocol allowlisting + CSS validation. The
 <div class="language-html highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{% load tiptap %}
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{% tiptap_media %}            {# editor assets for the active asset mode #}
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{% tiptap_config %}           {# the default config as a JSON string #}
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{{ value|tiptap_html }}       {# render a TipTapValue / doc to safe HTML #}
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{{ value|tiptap_html }}       {# render stored HTML / a TipTapValue / a doc, safely #}
 </span></code></pre></div>
 <p>All of <code>TipTapWidget</code>, <code>AdminTipTapWidget</code>, <code>TipTapModelAdminMixin</code>, <code>TipTapFormField</code>,
 <code>TipTapJSONField</code>, <code>TipTapJSONFormField</code>, <code>TipTapValue</code>, <code>BaseImageUploadView</code>,
-<code>ImageUploadError</code>, <code>get_default_config</code>, <code>render_doc</code>, and <code>validate_config</code> are re-exported from
-the package root.</p>
+<code>ImageUploadError</code>, <code>HtmlSchema</code>, <code>get_default_config</code>, <code>get_html_schema</code>, <code>render_doc</code>,
+<code>sanitize_html</code>, and <code>validate_config</code> are re-exported from the package root.</p>
 <h2 id="javascript-windowdjangotiptap">JavaScript — <code>window.DjangoTipTap</code><a class="headerlink" href="#javascript-windowdjangotiptap" title="Permanent link">&para;</a></h2>
 <div class="language-ts highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span><span class="w">   </span><span class="c1">// explicit mount; returns the editor</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w">                 </span><span class="c1">// editor handle | null</span>

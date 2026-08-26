@@ -962,8 +962,9 @@
 
 
 <h1 id="storage-format-html-or-json">Storage format — HTML or JSON<a class="headerlink" href="#storage-format-html-or-json" title="Permanent link">&para;</a></h1>
-<p>By default the editor stores <strong>HTML</strong>: the widget posts <code>editor.getHTML()</code>, you render it with
-<code>|safe</code>. That's the zero-config path and is right for most Django sites.</p>
+<p>By default the editor stores <strong>HTML</strong>: the widget posts <code>editor.getHTML()</code>, the form field
+sanitises it, and you render it with <code>|tiptap_html</code>. That's the zero-config path and is right for
+most Django sites.</p>
 <p>Optionally you can store <strong>ProseMirror JSON</strong> instead. JSON is the lossless canonical
 representation of the document — better for programmatic transforms, diffing, and feeding a
 separate frontend — while still giving you HTML to render server-side.</p>
@@ -993,6 +994,11 @@ it is re-derived from the sanitized <code>doc</code>, so it is safe whoever wrot
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">article</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">TipTapValue</span><span class="o">.</span><span class="n">from_stored</span><span class="p">({</span><span class="s2">&quot;doc&quot;</span><span class="p">:</span> <span class="n">some_doc</span><span class="p">})</span>  <span class="c1"># html is re-derived on save</span>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">article</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 </span></code></pre></div>
+<p>The value must be a <code>{doc, html}</code> envelope or a bare ProseMirror doc. Anything else —
+a string, a list, a number — raises <code>ValidationError</code>. In particular <strong>assigning HTML
+does not convert it</strong>: <code>article.body = "&lt;p&gt;hi&lt;/p&gt;"</code> is an error, not a conversion. See
+<a href="#converting--rendering-in-the-browser">Converting &amp; rendering in the browser</a> for the
+HTML-to-JSON path.</p>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>In JSON mode the editor writes both sides on every change — <code>editor.getJSON()</code> → <code>doc</code> and
 <code>editor.getHTML()</code> → <code>html</code> — into one JSON column. On save the field <strong>re-derives the <code>html</code>
@@ -1001,7 +1007,7 @@ so the stored mirror always reflects the canonical (and sanitized) document — 
 came from the editor, an API, or a hand-edit. Server-side display reads that stored <code>html</code>; no
 JavaScript and no Node are required.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>save ──▶ sanitize(doc) ──┬─▶ doc  (canonical, stored)
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                         └─▶ render_doc(doc) ──▶ html (mirror, stored, rendered with |safe)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                         └─▶ render_doc(doc) ──▶ html (mirror, stored, safe to render)
 </span></code></pre></div>
 <p>Because the mirror is re-derived server-side, any caller-supplied <code>html</code> is discarded — a benign
 <code>doc</code> can never ship hostile markup through the mirror. <code>{{ obj.body }}</code> works with no JavaScript
@@ -1072,7 +1078,7 @@ who wrote it. See <a href="../security/">Security</a> for the full boundary.</p>
 </tr>
 <tr>
 <td>Server display</td>
-<td><code>{{ body|safe }}</code></td>
+<td><code>{{ body|tiptap_html }}</code></td>
 <td><code>{{ body }}</code> (mirror)</td>
 </tr>
 <tr>

@@ -518,10 +518,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#where-sanitisation-happens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where sanitisation happens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-survives" class="md-nav__link">
     <span class="md-ellipsis">
       
         What survives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rendering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom extensions
       
     </span>
   </a>
@@ -816,10 +849,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#where-sanitisation-happens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where sanitisation happens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-survives" class="md-nav__link">
     <span class="md-ellipsis">
       
         What survives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rendering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom extensions
       
     </span>
   </a>
@@ -874,58 +940,145 @@
 
 
 <h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
-<p>The editor stores HTML and you render it with <code>|safe</code>, so the boundary matters. The
-design makes <code>|safe</code> defensible:</p>
+<p>The editor stores markup and your templates render it, so the boundary matters. The
+boundary is <strong>on the server</strong>: everything the package accepts is put through an
+allowlist before it is stored, and again when it is displayed.</p>
+<h2 id="where-sanitisation-happens">Where sanitisation happens<a class="headerlink" href="#where-sanitisation-happens" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>ProseMirror's schema is a sanitizer.</strong> Content is parsed into a strict document
-  model on load; anything the schema doesn't represent — <code>&lt;script&gt;</code>, event handlers,
-  unknown tags/attributes — is dropped, not stored. The editor never holds markup it
-  can't model.</li>
-<li><strong>Link protocols are allowlisted</strong> (<code>linkProtocols</code>, default <code>http</code>/<code>https</code>/<code>mailto</code>/
-  <code>tel</code>). <code>javascript:</code> and other schemes are stripped on parse.</li>
-<li><strong>Image <code>src</code> is protocol-validated</strong> — both the upload <code>location</code> and any picker
-  <code>value</code> are checked (<code>http</code>/<code>https</code>/<code>data</code>) before insertion; <code>javascript:</code> is refused.</li>
-<li><strong>Source view re-parses through the schema.</strong> Pasting raw HTML into the source view and
-  switching back normalizes anything unsupported away — what you see equals what is
-  stored.</li>
+<li><strong>HTML storage.</strong> <code>TipTapFormField</code> cleans the submitted markup with
+  <a href="../api/"><code>sanitize_html</code></a>: anything outside the allowlist is unwrapped, unknown
+  attributes are dropped, <code>script</code>/<code>style</code> bodies are discarded, link and image URLs
+  are protocol-allowlisted, and inline styles keep only allowed properties with safe
+  values.</li>
+<li><strong>Display.</strong> The <code>tiptap_html</code> filter sanitises again at render time, which is what
+  makes it safe on rows stored before this boundary existed.</li>
+<li><strong>JSON storage.</strong> <code>TipTapJSONField</code> protocol-allowlists the <code>doc</code> on every save and
+  re-derives the <code>html</code> mirror from it (<code>render_doc</code>); <code>TipTapValue</code> sanitises its
+  mirror on construction, so no caller can hand a template markup the editor could
+  not have produced.</li>
 </ul>
-<h2 id="what-survives">What survives<a class="headerlink" href="#what-survives" title="Permanent link">&para;</a></h2>
-<p>The serialized output is limited to the configured nodes/marks: paragraphs and headings
-(with alignment/margin), bold/italic/underline/strike/code, sub/superscript, font
-size/family/colour/highlight (as <code>&lt;span style&gt;</code>), links (allowlisted), images, tables,
-lists, blockquotes, and horizontal rules. Everything else normalizes away.</p>
-<h2 id="json-storage">JSON storage<a class="headerlink" href="#json-storage" title="Permanent link">&para;</a></h2>
-<p><a href="../storage/">JSON storage</a> (<code>TipTapJSONField</code>) keeps the same boundary, with one extra rule.
-Because protocol allowlisting happens on <em>parse</em> — which a stored-JSON document never runs —
-<strong>rendering arbitrary JSON is not automatically safe.</strong> So:</p>
+<p>The browser-side controls below are still there, and still worth having — they are
+what makes the editor <em>behave</em> well. They are not the security boundary, because they
+run in the browser:</p>
 <ul>
-<li>The field validates the stored <code>doc</code> on <strong>every save</strong>: the link/image protocol allowlist is
-  enforced in pure Python (no extra dependency), and disallowed <code>javascript:</code>/<code>vbscript:</code>/other
-  schemes on link <code>href</code> / image <code>src</code> are stripped. The canonical value is always safe,
-  whoever wrote it (form, API, import).</li>
-<li>The <code>html</code> mirror is <strong>re-derived from the sanitized <code>doc</code> on every save</strong> (never trusted from
-  the caller) by the built-in <strong><code>render_doc</code></strong>, which re-applies the protocol allowlist,
-  HTML-escapes text and attributes, and passes inline <code>style</code> values through a conservative CSS
-  allowlist (no <code>;</code>/<code>:</code> injection, no <code>url(...:...)</code>, no <code>expression</code>). An image's stored <code>style</code>
-  is split into declarations and filtered the same way, keeping only layout properties --
-  <code>float</code>, <code>display</code>, <code>vertical-align</code>, <code>margin</code>/<code>padding</code> (and their per-side forms), <code>border</code>,
-  <code>border-radius</code>, <code>width</code>, <code>height</code> -- so the float and margins the editor round-trips survive
-  without widening what a style attribute can carry. A write can set
-  <code>{doc, html}</code> directly (API / import / hand-edit); the supplied <code>html</code> is discarded, so the
-  rendered surface always reflects only the sanitized doc. The field marks <code>.html</code> safe on that
-  basis. <code>render_doc</code> is also available directly and via the <code>tiptap_html</code> filter for rendering
-  a bare <code>doc</code>.</li>
+<li><strong>ProseMirror's schema is a normalizer.</strong> Content is parsed into a strict document
+  model on load; anything the schema doesn't represent — <code>&lt;script&gt;</code>, event handlers,
+  unknown tags/attributes — is dropped. The editor never <em>holds</em> markup it can't model.</li>
+<li><strong>Link protocols are allowlisted</strong> (<code>linkProtocols</code>, default <code>http</code>/<code>https</code>/<code>mailto</code>/
+  <code>tel</code>) and <strong>image <code>src</code> is protocol-validated</strong> on insertion.</li>
+<li><strong>Source view re-parses through the schema</strong>, so what you see equals what the editor
+  submits.</li>
+</ul>
+<p>None of that survives a client that skips the editor: the widget is a plain
+<code>&lt;textarea&gt;</code>, and a direct POST reaches the field with whatever the client chose to
+send. That is the case the server-side allowlist exists for.</p>
+<h2 id="what-survives">What survives<a class="headerlink" href="#what-survives" title="Permanent link">&para;</a></h2>
+<p>The allowlist is not a second vocabulary maintained beside the editor: it is built
+from <code>EXTENSION_HTML_VOCABULARY</code>, one entry per built-in extension declaring the tags,
+attributes and style properties that extension emits. The same table is where the
+built-in extension names come from, so the editor's output and the sanitiser's
+allowlist cannot drift apart.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Kept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blocks</td>
+<td><code>p</code>, <code>h1</code>–<code>h6</code> (with <code>margin</code>, <code>margin-block-end</code>, <code>padding-left</code>, <code>text-align</code>), <code>blockquote</code>, <code>pre</code>/<code>code</code>, <code>hr</code>, <code>br</code>, <code>ul</code>, <code>ol</code> (<code>start</code>, <code>type</code>), <code>li</code></td>
+</tr>
+<tr>
+<td>Inline</td>
+<td><code>strong</code>, <code>em</code>, <code>u</code>, <code>s</code>, <code>code</code>, <code>sub</code>, <code>sup</code>, <code>span</code> (with <code>color</code>, <code>background-color</code>, <code>font-family</code>, <code>font-size</code>)</td>
+</tr>
+<tr>
+<td>Links</td>
+<td><code>a</code> with <code>href</code> (allowlisted protocols), <code>class</code>, <code>target</code> (<code>_blank</code>/<code>_self</code> only), <code>rel</code> (known tokens only)</td>
+</tr>
+<tr>
+<td>Images</td>
+<td><code>img</code> with <code>src</code> (allowlisted protocols), <code>alt</code>, <code>title</code>, <code>width</code>, <code>height</code>, and layout <code>style</code> (<code>float</code>, <code>display</code>, <code>vertical-align</code>, <code>margin</code>/<code>padding</code> and their per-side forms, <code>border</code>, <code>border-radius</code>, <code>width</code>, <code>height</code>)</td>
+</tr>
+<tr>
+<td>Tables</td>
+<td><code>table</code>, <code>colgroup</code>, <code>col</code>, <code>tbody</code>, <code>tr</code>, <code>th</code>/<code>td</code> with <code>colspan</code>, <code>rowspan</code>, <code>colwidth</code>, <code>background-color</code></td>
+</tr>
+</tbody>
+</table>
+<p>Everything else is unwrapped: the tag goes, the text inside it stays. A sanitiser that
+deleted what it did not recognise could quietly empty half a document, so it never
+deletes visible text — the one exception is <code>script</code> and <code>style</code>, whose bodies are
+code rather than prose and are dropped whole.</p>
+<p>A link that opens a new browsing context always carries <code>rel="noopener noreferrer"</code>,
+whatever the stored document asked for: <code>rel="opener"</code> re-enables the <code>window.opener</code>
+handle that <code>target="_blank"</code> otherwise implies away.</p>
+<p>Content nested deeper than <code>MAX_DOCUMENT_DEPTH</code> (100 elements or nodes) is refused
+with a <code>ValidationError</code> rather than recursed into.</p>
+<h2 id="rendering">Rendering<a class="headerlink" href="#rendering" title="Permanent link">&para;</a></h2>
+<p>Render with the <code>tiptap_html</code> filter, for either storage format:</p>
+<div class="language-django highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">{%</span> <span class="k">load</span> <span class="nv">tiptap</span> <span class="cp">%}</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="cp">{{</span> <span class="nv">article.body</span><span class="o">|</span><span class="nf">tiptap_html</span> <span class="cp">}}</span>
+</span></code></pre></div>
+<p><code>|safe</code> on an HTML-stored value renders whatever the column happens to hold. For a row
+written by this version of the package that is a sanitised value — but for a row
+written before it, or by anything other than the form, it is not. <code>|tiptap_html</code> costs
+one allowlist pass and does not depend on how the row got there.</p>
+<h2 id="custom-extensions">Custom extensions<a class="headerlink" href="#custom-extensions" title="Permanent link">&para;</a></h2>
+<p>A custom extension emits markup this package has never seen, so declare what it emits.
+<code>TIPTAP_EXTRA_EXTENSIONS</code> takes either a list of names or a mapping that carries the
+vocabulary:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">TIPTAP_EXTRA_EXTENSIONS</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="s2">&quot;callout&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;aside&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;attrs&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">],</span> <span class="s2">&quot;styles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;background-color&quot;</span><span class="p">]}},</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="s2">&quot;wordCount&quot;</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># emits no markup of its own</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>A declared vocabulary joins the allowlist and the extension's markup survives intact.
+A name given without one (the list form) raises a warning naming the extension, and
+its tags are unwrapped — the wrapper is lost, the text is not. Two declarations are
+refused outright: a tag that executes script or loads a document (<code>script</code>, <code>style</code>,
+<code>iframe</code>, <code>object</code>, <code>embed</code>, <code>base</code>, <code>meta</code>, <code>link</code>, <code>form</code>, <code>svg</code>, <code>template</code>, …) and
+any <code>on*</code> attribute.</p>
+<h2 id="json-storage">JSON storage<a class="headerlink" href="#json-storage" title="Permanent link">&para;</a></h2>
+<p><a href="../storage/">JSON storage</a> (<code>TipTapJSONField</code>) keeps the same boundary, with one extra
+rule. Because protocol allowlisting happens on <em>parse</em> — which a stored-JSON document
+never runs — <strong>rendering arbitrary JSON is not automatically safe.</strong> So:</p>
+<ul>
+<li>The field validates the stored <code>doc</code> on <strong>every save</strong>: the link/image protocol
+  allowlist is enforced in pure Python (no extra dependency), and disallowed
+  <code>javascript:</code>/<code>vbscript:</code>/other schemes on link <code>href</code> / image <code>src</code> are stripped.
+  The canonical value is always safe, whoever wrote it (form, API, import).</li>
+<li>The <code>html</code> mirror is <strong>re-derived from the sanitized <code>doc</code> on every save</strong> (never
+  trusted from the caller) by the built-in <strong><code>render_doc</code></strong>, which re-applies the
+  protocol allowlist, HTML-escapes text and attributes, reduces a link's
+  <code>target</code>/<code>rel</code>, and passes inline <code>style</code> values through a conservative CSS allowlist
+  (no <code>;</code>/<code>:</code> injection, no <code>url(...:...)</code>, no <code>expression</code>). An image's stored <code>style</code>
+  is split into declarations and filtered against the same layout-property list the
+  sanitiser uses. A write can set <code>{doc, html}</code> directly (API / import / hand-edit);
+  the supplied <code>html</code> is discarded, so the rendered surface always reflects only the
+  sanitized doc.</li>
+<li><code>TipTapValue</code> sanitises its <code>html</code> in <code>__post_init__</code>, so the mirror is safe on every
+  instance however it was built — including the one a <code>ModelForm</code> leaves on
+  <code>form.instance</code> after validation fails, which is redisplayed straight back to the
+  browser.</li>
 </ul>
 <h2 id="caveats">Caveats<a class="headerlink" href="#caveats" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>You still control the render context.</strong> <code>|safe</code> trusts the <em>stored</em> HTML; keep
-  untrusted input out of attributes you interpolate around it.</li>
-<li><strong>Custom extensions own their sanitization.</strong> Any new node/attribute a custom
-  extension introduces widens the surface — validate what it accepts.</li>
-<li><strong>External asset mode</strong> loads TipTap you provide; the guarantees above hold for the
-  pinned, bundled version. See <a href="../asset-modes/">Asset modes</a>.</li>
-<li><strong>Uploads are yours to police.</strong> <code>BaseImageUploadView</code> enforces the wire contract, not
-  file-type/size/virus policy — add those in <code>save</code>.</li>
+<li><strong>You still control the render context.</strong> The filter trusts the markup it produces;
+  keep untrusted input out of attributes you interpolate around it.</li>
+<li><strong>Content stored before this version was never sanitised.</strong> Rendering it with
+  <code>|tiptap_html</code> cleans it at display time; see the CHANGELOG for how to clean the
+  column itself.</li>
+<li><strong>Custom extensions widen the surface.</strong> Anything you declare in
+  <code>TIPTAP_EXTRA_EXTENSIONS</code> is accepted from then on — validate what your extension
+  itself accepts.</li>
+<li><strong>External asset mode</strong> loads TipTap you provide; the browser-side guarantees above
+  hold for the pinned, bundled version. See <a href="../asset-modes/">Asset modes</a>. The
+  server-side allowlist is unaffected.</li>
+<li><strong>Uploads are yours to police.</strong> <code>BaseImageUploadView</code> enforces the wire contract,
+  not file-type/size/virus policy — add those in <code>save</code>.</li>
 </ul>
 
 

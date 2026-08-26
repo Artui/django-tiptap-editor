@@ -899,8 +899,10 @@
 </span></code></pre></div>
 <p>The widget renders a <code>&lt;textarea&gt;</code>; the editor mounts onto it on load and writes its HTML
 back into the textarea on every change, so a normal POST submits HTML.</p>
-<p>Display the stored value with <code>|safe</code>:</p>
-<div class="language-html highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>{{ article.body|safe }}
+<p>Display the stored value with the <code>tiptap_html</code> filter, which sanitises it against
+the same allowlist the form field applied on the way in:</p>
+<div class="language-html highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>{% load tiptap %}
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{{ article.body|tiptap_html }}
 </span></code></pre></div>
 <h2 id="in-the-admin">In the admin<a class="headerlink" href="#in-the-admin" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">admin</span>
