@@ -13,6 +13,7 @@ import { registerExtension } from "./registry";
 import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
+import { flushSourceView } from "./toolbar/source-view";
 import { Editor, Extension, Mark, Node, mergeAttributes } from "./tiptap-runtime";
 import { ui } from "./ui";
 import { checkTipTapVersion, SUPPORTED_TIPTAP_VERSION } from "./version-check";
@@ -39,6 +40,9 @@ interface Instance {
   // Narrow per-editor observer that re-asserts the textarea's hidden state when a
   // morphing swap strips it (see watchTextareaAttributes). Disconnected on destroy.
   attrObserver: MutationObserver;
+  // Removes the form-submit listeners that flush an open source view (see
+  // watchFormSubmit). Called on destroy.
+  detachForm: () => void;
 }
 
 const instances = new Map<string, Instance>();
@@ -110,6 +114,30 @@ function watchTextareaAttributes(element: HTMLTextAreaElement): MutationObserver
   return observer;
 }
 
+// Submitting with source view open must not ship a stale value: in HTML mode the
+// raw source used to be copied into the field on every keystroke (un-normalised
+// markup the schema would have dropped), and in JSON mode nothing was copied at
+// all, so the edit was simply lost. Both are the same bug — the field held
+// something other than what the schema produces. Flushing re-parses the source
+// exactly as closing source view does, leaving the field in the storage format.
+// `submit` covers a native or requestSubmit() post; `formdata` covers the ajax
+// paths that build a FormData from the form (htmx, Turbo, hand-rolled). Bound on
+// the document in the capture phase so the flush runs before handlers on the form
+// itself read the value. A no-op unless source view is open.
+function watchFormSubmit(element: HTMLTextAreaElement, editor: Editor): () => void {
+  const flush = (event: Event): void => {
+    if (event.target === element.form) {
+      flushSourceView(editor);
+    }
+  };
+  document.addEventListener("submit", flush, true);
+  document.addEventListener("formdata", flush, true);
+  return () => {
+    document.removeEventListener("submit", flush, true);
+    document.removeEventListener("formdata", flush, true);
+  };
+}
+
 function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
@@ -179,7 +207,8 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
 
   element.setAttribute(BOUND_ATTR, "true");
   const attrObserver = watchTextareaAttributes(element);
-  instances.set(id, { editor, shell: shell.el, element, attrObserver });
+  const detachForm = watchFormSubmit(element, editor);
+  instances.set(id, { editor, shell: shell.el, element, attrObserver, detachForm });
   return editor;
 }
 
@@ -193,6 +222,7 @@ function destroy(id: string): void {
     return;
   }
   instance.attrObserver.disconnect();
+  instance.detachForm();
   instance.editor.destroy();
   instance.shell.remove();
   instances.delete(id);
