@@ -1,0 +1,331 @@
+# What a fresh install would get today, run on a schedule.
+#
+# The sibling packages all close the same gap with this workflow: the lockfile
+# is what every other job resolves against, so a dependency can be a wide range
+# in the manifest and still be frozen everywhere it is actually tested. They
+# resolve the newest versions the manifest admits and run the suite, so a
+# release that breaks them is found by a scheduled run rather than by a
+# consumer.
+#
+# Half of that transfers here and half does not, so this file has three jobs
+# rather than one.
+#
+# The Python half transfers unchanged. pyproject.toml declares `django>=4.2`
+# with no ceiling and every dev tool with a floor and no ceiling, while uv.lock
+# is what tests.yml installs -- the same gap, closed the same way.
+#
+# The JavaScript half does not transfer, and copying it would have produced a
+# job that can never fire. js/package.json declares no ranges: every dependency
+# is an exact version, because the bundles committed under
+# django_tiptap_editor/static/ are built from those versions and the fidelity
+# corpus is validated against that build. "Resolve the newest the manifest
+# allows" therefore resolves straight back to the pins, forever. The two JS jobs
+# below ask the two questions that are left once ranges are off the table:
+#
+#   js-line-latest  does the newest release inside each pinned line still build,
+#                   typecheck and round-trip the corpus? That is the measurement
+#                   the siblings get for free from their ranges, and the only
+#                   way a maintainer can know a bump is safe before making it.
+#   js-pin-drift    does a newer release exist at all, and do the places that
+#                   restate the TipTap pin by hand still agree with it? Exact
+#                   pins do not move on their own and this repo subscribes to no
+#                   npm update feed, so without this nothing here would ever say
+#                   the pins had aged.
+#
+# Deleting any of the three to quieten a noisy week means giving up what it
+# measures. Replace it rather than remove it.
+name: upstream drift
+
+on:
+  schedule:
+    # Mondays, 06:00 UTC. Weekly rather than nightly: the failure this guards
+    # against is an upstream release, which is measured in weeks, and a family
+    # of repos running nightly is a family of chances a day to learn nothing.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: upstream-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+# Actions are pinned to a commit SHA rather than a tag: a tag is mutable, and an
+# action owner (or anyone who takes over the account) can silently repoint one at
+# new code that then runs with this workflow's token. The trailing version comment
+# is not decoration -- Dependabot reads it to know which release the SHA is, and
+# rewrites both together when a newer one ships.
+jobs:
+  resolve-latest:
+    name: resolve unpinned + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: false
+
+      # One cell, not the matrix. The matrix answers "does this combination
+      # work"; this answers "has an upstream moved under us", and the newest
+      # supported Python is where a new release lands first.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Resolve the newest versions pyproject allows
+        run: uv lock --upgrade
+
+      - name: Report what changed against the committed lock
+        # Informational, and the most useful line in the log when this fails:
+        # it names the upgrade that broke the build.
+        run: git --no-pager diff --stat uv.lock || true
+
+      - name: Install
+        run: uv sync --all-groups
+
+      - name: Show the resolved versions
+        run: uv pip list
+
+      - name: Test
+        run: uv run pytest
+
+      - name: Open or update an issue on failure
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = "upstream drift: the unpinned resolve is failing";
+            const body = [
+              "The weekly unpinned resolve failed. A dependency released a version",
+              "that `pyproject.toml` admits and the suite does not survive.",
+              "",
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              "",
+              "The `git diff --stat uv.lock` step in that run names what moved.",
+              "",
+              "Fix forward (adopt the new version) or add a floor/ceiling that says",
+              "why, but do not silence the job -- it is the control that lets this",
+              "repo declare open-ended dependency windows.",
+            ].join("\n");
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === title);
+            if (match) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: match.number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ["upstream-drift"],
+              });
+            }
+
+  js-line-latest:
+    name: newest in each pinned JS line + corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The same version tests.yml builds the committed bundles on. This job is
+      # about a dependency having moved, so everything else stays where the
+      # green build has it.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      # The JS sibling warns against letting a tool rewrite the manifest, because
+      # the question there is what the ranges as written resolve to. Here the
+      # manifest is rewritten on purpose: as written it admits exactly one
+      # version per dependency, so asking what it admits answers nothing. The
+      # question this job can answer instead is what the pinned *line* admits,
+      # which is the bump a maintainer would actually consider. A caret is that
+      # line: `^2.27.2` stops below 3.0.0, and on a 0.x version it stops below
+      # the next minor, which is the same "next release that is not a migration"
+      # in both cases.
+      #
+      # The rewrite is never committed. It exists for the length of this job so
+      # the install has something to resolve.
+      - name: Relax every exact pin to its own line
+        working-directory: js
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+          import re
+
+          exact = re.compile(r"^\d+\.\d+\.\d+$")
+          manifest = pathlib.Path("package.json")
+          document = json.loads(manifest.read_text())
+          for section in ("dependencies", "devDependencies"):
+              # Anything already declared as a range is left exactly as written:
+              # it is someone's deliberate window, and widening it here would
+              # test a manifest nobody wrote.
+              document[section] = {
+                  name: f"^{spec}" if exact.match(spec) else spec
+                  for name, spec in document.get(section, {}).items()
+              }
+          manifest.write_text(json.dumps(document, indent=2) + "\n")
+          PY
+          git --no-pager diff -- package.json
+
+      - name: Install the newest release in each line
+        working-directory: js
+        # --no-package-lock so the committed lockfile is neither consulted nor
+        # rewritten. Consulted, it would pin the resolve back to the versions
+        # this job exists to move off.
+        run: npm install --no-package-lock
+
+      - name: Show the resolved versions
+        working-directory: js
+        run: npm ls --depth 0 || true
+
+      - name: Typecheck
+        working-directory: js
+        run: npm run typecheck
+
+      # The corpus is the schema's test of record: real TinyMCE output through
+      # the production extension set, asserting no content loss. It is the
+      # assertion a TipTap release can break silently, and the reason the pins
+      # are exact in the first place.
+      - name: Fidelity corpus
+        working-directory: js
+        run: npm test
+
+      # Deliberately no staleness diff of django_tiptap_editor/static after this.
+      # That check belongs to tests.yml, which rebuilds against the committed
+      # pins and is right to fail when the artifacts differ. This job built
+      # against different versions, so a difference is the expected outcome and
+      # diffing it would fail every week for the wrong reason. What is under test
+      # here is that the build still succeeds at all.
+      - name: Rebuild the bundles
+        working-directory: js
+        run: npm run build
+
+      # Nothing is committed from this job, so this is housekeeping rather than
+      # safety: it keeps a rewritten manifest from quietly becoming an input to
+      # any step added below it later.
+      - name: Discard the relaxed manifest
+        if: always()
+        run: git checkout -- js/package.json
+
+      - name: Open or update an issue on failure
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = "upstream drift: the newest release in a pinned JS line is failing";
+            const body = [
+              "The weekly build against the newest release inside each pinned line",
+              "failed. Something published within a line this repo already trusts",
+              "does not typecheck, does not round-trip the fidelity corpus, or does",
+              "not bundle.",
+              "",
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              "",
+              "The `npm ls --depth 0` step in that run names the versions it chose,",
+              "and the step that failed says which of the three broke.",
+              "",
+              "Nothing shipped is broken: the pins in `js/package.json` have not",
+              "moved, so tests.yml is still green and consumers are unaffected. Treat",
+              "this as a standing note that the next bump of that dependency is not",
+              "routine, rather than as a broken build.",
+              "Pinning the offending package back to its current version in this job",
+              "is the wrong fix -- it is already pinned; what would be lost is the",
+              "warning.",
+            ].join("\n");
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === title);
+            if (match) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: match.number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ["upstream-drift"],
+              });
+            }
+
+  js-pin-drift:
+    name: pinned JS versions vs the registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      # The check is stdlib-only and takes no arguments beyond where to write
+      # its report, so it runs the same way here as it does on a workstation.
+      # scripts/check_js_pins.py carries the reasoning; the exit codes are the
+      # interface: 0 clean, 1 drifted, anything else the check itself failed.
+      #
+      # Drift is not a build failure. Upstream publishing a patch is news, and a
+      # job that goes red for news teaches its reader to skip it -- by the time
+      # something is genuinely wrong, nobody is looking. So drift is routed to an
+      # issue and the job stays green; only a check that could not run turns it
+      # red, because that is the state where this workflow has stopped watching
+      # and nothing else would say so.
+      - name: Compare the pins against the registry
+        id: check
+        run: |
+          set -uo pipefail
+          status=0
+          python3 scripts/check_js_pins.py --report "${RUNNER_TEMP}/js-pin-drift.md" || status=$?
+          case "${status}" in
+            0) echo "drifted=false" >> "${GITHUB_OUTPUT}" ;;
+            1) echo "drifted=true" >> "${GITHUB_OUTPUT}" ;;
+            *) echo "::error::the pin check could not run; the pins are unwatched until it does"
+               exit "${status}" ;;
+          esac
+
+      # Body rewritten every run so the run link stays current; a comment only
+      # when the set of behind pins actually changed. Comments are what notify
+      # subscribers, and a weekly notification repeating a fact nobody has acted
+      # on yet is how a channel gets muted. The fingerprint the check embeds in
+      # the body is what makes "changed" answerable.
+      - name: Open or update an issue on drift
+        if: steps.check.outputs.drifted == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT_PATH: ${{ runner.temp }}/js-pin-drift.md
+        with:
+          script: |
+            const fs = require("fs");
+            const title = "upstream drift: the pinned JavaScript versions are behind";
+            const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [`Run: ${run}`, "", report].join("\n");
+            const fingerprint = (body.match(/<!-- js-pin-drift: ([0-9a-f]+) -->/) || [])[1];
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === title);
+            if (!match) {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ["upstream-drift"],
+              });
+              return;
+            }
+            const unchanged = (match.body || "").includes(`<!-- js-pin-drift: ${fingerprint} -->`);
+            await github.rest.issues.update({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, body,
+            });
+            if (!unchanged) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: match.number, body,
+              });
+            }
