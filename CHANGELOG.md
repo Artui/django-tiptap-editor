@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A weekly job that prices the next Tiptap major, in corpus cases.**
+  `check_js_pins.py` already reports that a newer *line* exists and stops there,
+  correctly -- crossing a major is a decision no check can make. What it could
+  not say is what crossing would cost. `js-next-line` now answers that: it takes
+  the newest Tiptap, holds the test toolchain at its pins, runs the fidelity
+  corpus, and reports how many of the 48 documents still round-trip.
+
+  It never gates and never proposes a bump. The pins have not moved. What it buys
+  is that a parked migration is repriced every week instead of ageing quietly,
+  and that the price moves on its own as upstream changes.
+
+  **Two design choices came from running it rather than reasoning about it.**
+  Moving every pin at once died on a jsdom/Node incompatibility that had nothing
+  to do with the schema and would have been reported as a fidelity result, so
+  only the Tiptap packages move. And a suite whose `beforeAll` throws leaves
+  vitest marking every case *skipped*, not failed -- counted naively that reads
+  as 48 documents losing their content, when in truth none were measured, so the
+  report distinguishes the three outcomes and says "blocked" rather than "zero".
+
 ### Changed
 
 - **The fidelity corpus is named for what it tests, not where it came from.**
