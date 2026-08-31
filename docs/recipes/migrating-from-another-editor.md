@@ -76,7 +76,7 @@ from django_tiptap_editor.fields import TipTapJSONField
 
 
 class Article(models.Model):
-    body = models.TextField()  # legacy TinyMCE HTML
+    body = models.TextField()  # legacy HTML from your previous editor
     body_doc = TipTapJSONField(null=True, blank=True)
 ```
 

@@ -85,5 +85,5 @@ nav:
   - Theming: theming.md
   - Recipes:
       - Live preview: recipes/preview.md
-      - Migrating from another editor: recipes/migrating-from-tinymce.md
+      - Migrating from another editor: recipes/migrating-from-another-editor.md
   - Versioning & stability: semver.md

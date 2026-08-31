@@ -1,5 +1,5 @@
 // Typed block-style attributes recovered from the fidelity corpus: legacy
-// editors (e.g. TinyMCE for email) emit inline margin / indent on paragraphs
+// editors (notably when authoring email) emit inline margin / indent on paragraphs
 // and headings, which the default schema drops. These are typed attributes
 // (not an opaque style passthrough) so the sanitization story stays clean; each
 // renders its own style fragment and merges with text-align on the same node.

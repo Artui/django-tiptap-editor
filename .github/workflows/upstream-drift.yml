@@ -188,7 +188,7 @@ jobs:
         working-directory: js
         run: npm run typecheck
 
-      # The corpus is the schema's test of record: real TinyMCE output through
+      # The corpus is the schema's test of record: real-world editor HTML through
       # the production extension set, asserting no content loss. It is the
       # assertion a TipTap release can break silently, and the reason the pins
       # are exact in the first place.
@@ -252,6 +252,109 @@ jobs:
               await github.rest.issues.create({
                 owner: context.repo.owner, repo: context.repo.repo,
                 title, body, labels: ["upstream-drift"],
+              });
+            }
+
+  js-next-line:
+    name: the next Tiptap line + corpus, priced
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.1.1
+
+      # `js-line-latest` relaxes each pin to a caret, which stops below the next
+      # major -- deliberately, since that is the bump a maintainer takes without
+      # thinking. This job removes that ceiling for the Tiptap packages only, to
+      # answer the question the caret cannot: what would crossing the major cost?
+      #
+      # **Only the Tiptap packages move, and the toolchain is held.** An earlier
+      # version of this moved every exact pin at once and the run died on
+      # `webidl.util.markAsUncloneable is not a function` -- a jsdom/Node
+      # incompatibility that had nothing to do with the schema and would have
+      # been reported as a fidelity result. Holding jsdom, vitest, typescript and
+      # esbuild at their committed pins is what makes the number attributable.
+      - name: Take the newest Tiptap, hold the toolchain
+        working-directory: js
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+          import re
+
+          exact = re.compile(r"^\d+\.\d+\.\d+$")
+          manifest = pathlib.Path("package.json")
+          document = json.loads(manifest.read_text())
+          for section in ("dependencies", "devDependencies"):
+              document[section] = {
+                  name: ("latest" if name.startswith("@tiptap/") and exact.match(spec) else spec)
+                  for name, spec in document.get(section, {}).items()
+              }
+          manifest.write_text(json.dumps(document, indent=2) + "\n")
+          PY
+          git --no-pager diff -- package.json
+
+      - name: Install
+        working-directory: js
+        run: npm install --no-package-lock
+
+      - name: Show the resolved versions
+        working-directory: js
+        run: npm ls --depth 0 --json > "${{ runner.temp }}/npm-ls.json" || true
+
+      # `|| true` on both: this job reports and never gates. A suite that cannot
+      # start is itself the finding, and the reporter says so rather than
+      # printing a zero that reads like 48 documents losing their content.
+      - name: Fidelity corpus against the newer line
+        working-directory: js
+        run: npx vitest run test/fidelity.test.ts --reporter=json --outputFile="${{ runner.temp }}/corpus.json" || true
+
+      - name: Write the report
+        run: uv run python scripts/price_next_line.py "${{ runner.temp }}/corpus.json" "${{ runner.temp }}/npm-ls.json" "${{ runner.temp }}/js-next-line.md"
+
+      - name: Discard the rewritten manifest
+        if: always()
+        run: git checkout -- js/package.json
+
+      # Always, not on failure: the report is the product, and "every case still
+      # holds" is as much worth recording as a regression. The body is updated
+      # every week and a comment is added only when the numbers or the resolved
+      # versions actually moved, so a standing issue does not become noise.
+      - name: Open or update the pricing issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT_PATH: ${{ runner.temp }}/js-next-line.md
+        with:
+          script: |
+            const fs = require("fs");
+            const title = "upstream: what the next Tiptap major would cost";
+            const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [`Run: ${run}`, "", report].join("\n");
+            const fingerprint = (body.match(/<!-- js-next-line: ([0-9a-f]+) -->/) || [])[1];
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === title);
+            if (!match) {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ["upstream-drift"],
+              });
+              return;
+            }
+            const unchanged = (match.body || "").includes(`<!-- js-next-line: ${fingerprint} -->`);
+            await github.rest.issues.update({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, body,
+            });
+            if (!unchanged) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: match.number, body,
               });
             }
 

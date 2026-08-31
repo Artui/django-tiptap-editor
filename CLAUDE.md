@@ -73,7 +73,7 @@ roadmap. This file governs *how* code is written.
 ## API style rules
 
 - **Clean, options-object APIs.** No positional-argument tails. This is a fresh,
-  semver-protected surface — do not clone TinyMCE's signatures.
+  semver-protected surface — do not clone another editor's signatures.
 - **Dataclasses over `dict[str, Any]` for structured data.** The config schema, asset-mode
   records, and any wire-shape payload are frozen `@dataclass`es with explicit field types.
   `dict[str, Any]` survives only at genuine serialisation boundaries (the
@@ -114,7 +114,7 @@ The full extension set, registry, toolbar, and theming build on top of this seam
   → `tests/foo/test_bar.py`.
 - `DJANGO_SETTINGS_MODULE=tests.conftest_settings`. DB tests use `@pytest.mark.django_db`.
 - The **fidelity corpus** is the schema's test of record: a node/jsdom
-  harness loads real, production-dumped TinyMCE HTML through the configured editor and
+  harness loads real, production-dumped HTML from another editor through the configured one and
   serializes back, asserting no meaningful loss. It is built *first* and drives the
   schema design.
 
@@ -185,7 +185,7 @@ Change a rule here and change the config with it, or they drift apart again.
   + extension points.
 - **No mandatory node dependency in consuming apps** — node lives only in this package's
   build; external mode uses CDN/import-maps, still node-free for the consumer.
-- **Fresh package, fresh API** — compatibility with TinyMCE is the migration guide +
+- **Fresh package, fresh API** — compatibility with a previous editor is the migration guide +
   fidelity corpus, not API shape.
 
 ## Branching
