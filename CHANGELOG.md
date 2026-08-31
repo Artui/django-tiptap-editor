@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The three JavaScript build pins moved to the newest release in their own
+  line** — `esbuild` 0.28.1 to 0.28.2, `typescript` 5.7.3 to 5.9.3, `vitest`
+  4.1.9 to 4.1.11.
+
+  Taken on evidence rather than on sight: the weekly `js-line-latest` job relaxes
+  these exact pins to carets, installs whatever that resolves, and runs the suite
+  and the bundle build against it. It was green on precisely these three
+  versions before the bump was made, which is what that job exists to answer.
+
+  **The committed bundles were rebuilt and did not change.** Moving a pin
+  obliges a rebuild, because the bundles are built from the pins and the fidelity
+  corpus is validated against that build — but an esbuild patch with no codegen
+  change produces the same bytes, and `typescript` and `vitest` are type-checking
+  and test tooling that never reach the output. All three are `devDependencies`,
+  so nothing a consumer installs is affected.
+
+  The Tiptap 2.x line, `jsdom` and `typescript` 7 are deliberately **not** moved
+  here. Each is a newer *line* rather than a newer release within one, which is a
+  migration decision no CI job can make; the weekly check lists them so the gap
+  stays on the record.
+
 ## [0.10.0] — 2026-08-26
 
 ### Upgrade note — content is now sanitised on the server
