@@ -28,7 +28,7 @@ describe("html <-> json conversion", () => {
   });
 
   it("applies schema normalization on conversion (div -> paragraph)", () => {
-    // A TinyMCE-ism with no schema node: <div> maps to a paragraph.
+    // A legacy-editor-ism with no schema node: <div> maps to a paragraph.
     expect(htmlToStored("<div>legacy</div>").html).toBe("<p>legacy</p>");
   });
 });

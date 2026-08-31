@@ -92,7 +92,7 @@ DjangoTipTap.htmlToStored(html);  // HTML → { doc, html } envelope (for migrat
 
 Use `renderHTML` to display JSON-stored content client-side without a server round-trip, and
 `htmlToStored` / `htmlToJSON` to convert existing HTML — see
-[Migrating from another editor](recipes/migrating-from-tinymce.md#migrating-into-tiptapjsonfield).
+[Migrating from another editor](recipes/migrating-from-another-editor.md#migrating-into-tiptapjsonfield).
 
 ## Server-side rendering (Python)
 

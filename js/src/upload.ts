@@ -1,6 +1,6 @@
 // Image upload + safe insertion. Uploads go to config.imageUploadUrl as
 // multipart/form-data (field "file") and expect {"location": "<url>"} back
-// (the TinyMCE-ecosystem convention). The returned URL — and any picker value —
+// (the convention classic editors settled on). The returned URL — and any picker value —
 // is inserted as a src only after protocol validation.
 import { configFor } from "./editor-config";
 import type { Editor } from "./tiptap-runtime";

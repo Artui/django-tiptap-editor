@@ -111,7 +111,7 @@ export function canonicalLoose(html: string): string {
 
 // All non-whitespace characters, in order — the strongest "no text loss"
 // guarantee. Whitespace is stripped entirely because block separation differs
-// between TinyMCE's pretty-printed output (newlines between blocks) and TipTap's
+// between the corpus's pretty-printed source HTML (newlines between blocks) and TipTap's
 // compact output; this check still catches any dropped character or word.
 export function textOf(html: string): string {
   const doc = new DOMParser().parseFromString(html, "text/html");

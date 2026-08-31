@@ -188,7 +188,7 @@ jobs:
         working-directory: js
         run: npm run typecheck
 
-      # The corpus is the schema's test of record: real TinyMCE output through
+      # The corpus is the schema's test of record: real-world editor HTML through
       # the production extension set, asserting no content loss. It is the
       # assertion a TipTap release can break silently, and the reason the pins
       # are exact in the first place.

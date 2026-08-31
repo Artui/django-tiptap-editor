@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The fidelity corpus is named for what it tests, not where it came from.**
+  `tinymce-corpus.json` is now `fidelity-corpus.json`, the round-trip suite is
+  "fidelity corpus round-trip", and the migration recipe is
+  `recipes/migrating-from-another-editor.md`. The corpus outgrew its origin: what
+  it asserts is that arbitrary real-world markup survives this schema, and naming
+  one vendor made that read as a compatibility claim about that vendor.
+
+  **The fixture's own `source` field is deliberately kept.** It records which
+  editor and version produced the 48 samples, which is what regenerating them
+  needs to know — a fixture that stopped naming its origin would be a double
+  describing content no editor actually emits. Naming a source inside the data is
+  provenance; naming it in the filename and the docs was positioning.
+
+  Note that **`docs/recipes/migrating-from-tinymce.md` moves**, so any external link to
+  that page will 404. No redirect plugin is configured and adding one for a single
+  rename did not seem proportionate; say so if you would rather have it.
+
+### Changed
+
 - **The three JavaScript build pins moved to the newest release in their own
   line** — `esbuild` 0.28.1 to 0.28.2, `typescript` 5.7.3 to 5.9.3, `vitest`
   4.1.9 to 4.1.11.

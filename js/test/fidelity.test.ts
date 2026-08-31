@@ -1,12 +1,18 @@
-// The schema's test of record. Feeds real TinyMCE output (the committed corpus)
-// through the production extension set and asserts no content loss. Locks in the
-// round-trip fidelity so future extension changes can't silently regress it.
+// The schema's test of record. Feeds real-world editor HTML (the committed
+// corpus) through the production extension set and asserts no content loss.
+// Locks in the round-trip fidelity so future extension changes can't silently
+// regress it.
+//
+// The corpus is production HTML dumped from another editor; which one is
+// recorded in the fixture's own `source` field, because regenerating it needs
+// to know. Nothing here depends on the answer -- what is under test is that
+// arbitrary real-world markup survives this schema.
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { buildExtensions } from "../src/build-extensions";
 import { Editor } from "../src/tiptap-runtime";
 import { canonicalLoose, textOf } from "./canonical";
-import corpus from "./fixtures/tinymce-corpus.json";
+import corpus from "./fixtures/fidelity-corpus.json";
 
 // Documented, content-preserving normalizations: text is intact, markup differs
 // in a defined way. If one of these starts round-tripping exactly, the test
@@ -21,7 +27,7 @@ const NORMALIZED: Record<string, string> = {
   "link-javascript": "empty stripped-href <a> dropped entirely (security)",
 };
 
-describe("TinyMCE corpus round-trip", () => {
+describe("fidelity corpus round-trip", () => {
   let editor: Editor;
 
   beforeAll(() => {

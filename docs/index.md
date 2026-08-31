@@ -28,5 +28,5 @@ settings-driven config, and committed static assets — **node-free for consumer
 ## Coming from another editor?
 
 Swapping editors is a content-validation exercise, not an automatic conversion — see
-[Migrating](recipes/migrating-from-tinymce.md), which centers on running the fidelity
+[Migrating](recipes/migrating-from-another-editor.md), which centers on running the fidelity
 corpus over your real content first.

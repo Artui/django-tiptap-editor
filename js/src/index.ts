@@ -70,7 +70,7 @@ function readConfig(textarea: HTMLTextAreaElement): TipTapConfig {
 
 // JSON storage mode: the textarea holds a {doc, html} envelope. Use the doc when
 // it has content; otherwise fall back to the html mirror (so a record seeded with
-// only legacy HTML — e.g. a migration that copied a TinyMCE column into the
+// only legacy HTML — e.g. a migration that copied another editor's column into the
 // mirror — is still editable, and converts to a real doc on first save). "" for
 // an empty/invalid field (a fresh form), so the editor starts blank.
 function readInitialContent(raw: string): object | string {
