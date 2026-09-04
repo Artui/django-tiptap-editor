@@ -47,8 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that page will 404. No redirect plugin is configured and adding one for a single
   rename did not seem proportionate; say so if you would rather have it.
 
-### Changed
-
 - **The three JavaScript build pins moved to the newest release in their own
   line** — `esbuild` 0.28.1 to 0.28.2, `typescript` 5.7.3 to 5.9.3, `vitest`
   4.1.9 to 4.1.11.
