@@ -173,12 +173,27 @@ jobs:
           PY
           git --no-pager diff -- package.json
 
+      # npm 10.9.8, the version node 22 bundles, crashes building the ideal
+      # tree for this manifest on Linux with `Cannot read properties of null
+      # (reading 'edgesOut')`, which took both JS jobs out from 2026-09-07. It
+      # is an npm bug rather than anything about these dependencies: the same
+      # npm resolves the same manifest cleanly on macOS, and npm 11 resolves it
+      # on the runner.
+      #
+      # Upgraded rather than worked around. `--legacy-peer-deps` also gets past
+      # the crash and was tried first, but it skips peer installation -- so the
+      # tree it builds is not the tree a user gets, and this job exists to
+      # measure exactly that tree. A workaround that changes the measurement is
+      # worse here than a red job, because it reports a number nobody can act
+      # on. Drop this line once the runner's bundled npm is past the bug.
       - name: Install the newest release in each line
         working-directory: js
         # --no-package-lock so the committed lockfile is neither consulted nor
         # rewritten. Consulted, it would pin the resolve back to the versions
         # this job exists to move off.
-        run: npm install --no-package-lock
+        run: |
+          npm install -g npm@11
+          npm install --no-package-lock
 
       - name: Show the resolved versions
         working-directory: js
@@ -296,9 +311,12 @@ jobs:
           PY
           git --no-pager diff -- package.json
 
+      # Same npm upgrade, same reason as the sibling job above.
       - name: Install
         working-directory: js
-        run: npm install --no-package-lock
+        run: |
+          npm install -g npm@11
+          npm install --no-package-lock
 
       - name: Show the resolved versions
         working-directory: js
