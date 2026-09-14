@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`js/pnpm-lock.yaml`, which nothing read and which was answering for the
+  tree on its own.** The Makefile and CI both install with `npm ci` against
+  `package-lock.json`; nothing in the repository mentions pnpm. That file had
+  not been regenerated since 0.10.0 and disagreed with `package.json` on three
+  pins -- vitest 4.1.9 against 4.1.11, esbuild 0.28.1 against 0.28.2,
+  typescript 5.7.3 against 5.9.3.
+
+  An unread lockfile is not inert, because the dependency graph reads every
+  lockfile it finds. Its stale vitest raised two advisories against versions
+  this repository does not install and has not installed for weeks, and the
+  security updater then failed on every attempt to patch a file no build
+  consumes -- six red runs, none of which named anything a maintainer could
+  act on. Deleting it removes the alerts and the failures together, and leaves
+  one answer to "what does an install resolve here".
+
 ### Added
 
 - **A weekly job that prices the next Tiptap major, in corpus cases.**
