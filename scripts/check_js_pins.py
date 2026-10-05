@@ -11,9 +11,10 @@ green forever, which is worse than no job at all.
 
 This is the check that replaces it. It asks the registry what exists rather than
 what a range admits, so a pin that has fallen behind is visible even though
-nothing in the repo can move on its own. It also re-checks the two places that
+nothing in the repo can move on its own. It also re-checks the places that
 restate the TipTap pin by hand, because a mirror that disagrees with the pin is
-the same failure arriving from the inside.
+the same failure arriving from the inside. That half needs no network, so
+tests/test_js_pin_mirrors.py runs it on every pull request as well.
 
 Exit codes are the interface the workflow reads:
 
@@ -49,10 +50,12 @@ ACCEPT = "application/vnd.npm.install-v1+json"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PACKAGE_JSON = REPO_ROOT / "js" / "package.json"
 
-# The two hand-written restatements of the TipTap pin. The third restatement --
-# the version baked into the committed bundles -- is deliberately absent: the
-# js-build job in tests.yml rebuilds and diffs those artifacts on every push, so
-# a bundle that disagrees with package.json already fails a required check.
+# The hand-written restatements of the TipTap pin. The version baked into the
+# committed bundles is deliberately absent: the js-build job in tests.yml
+# rebuilds and diffs those artifacts on every push, so a bundle that disagrees
+# with package.json already fails a required check. The docs page is here
+# because it is the import map a reader copies when overriding the default, and
+# a stale one there pins them to a TipTap the bundle was never validated with.
 MIRRORS: tuple[tuple[Path, str], ...] = (
     (
         REPO_ROOT / "django_tiptap_editor" / "constants.py",
@@ -61,6 +64,10 @@ MIRRORS: tuple[tuple[Path, str], ...] = (
     (
         REPO_ROOT / "js" / "vitest.config.ts",
         r"""__DTT_TIPTAP_VERSION__:\s*'"([^"]+)"'""",
+    ),
+    (
+        REPO_ROOT / "docs" / "asset-modes.md",
+        r'"@tiptap/core": "https://esm\.sh/@tiptap/core@([^"]+)"',
     ),
 )
 
