@@ -12,12 +12,24 @@ had gone wrong without anything failing:
 - Once the pins cross a major, ``latest`` is the pinned line again, and the job
   would go on reporting a corpus run under a heading about crossing a major.
 
-The three files under ``fixtures/next_line`` come from the producers rather than
-from memory: vitest 4.1.11's default and JSON reporters, and npm 11's
+The files under ``fixtures/next_line`` come from the producers rather than from
+memory: vitest 4.1.11's default and JSON reporters, and npm 11's
 ``npm ls --depth 0 --json``, all run against Tiptap 3.31.4 installed over the
-committed 2.x manifest the way the job installs it. The only edit is that
-absolute paths were cut back to repo-relative ones. The reporter's output is
-``blocked.txt`` rather than ``.log`` because the repository ignores ``*.log``.
+committed 2.x manifest the way the job installs it.
+
+- ``blocked.txt`` and ``blocked.json`` are one run, uncoloured.
+- ``blocked-ci.txt`` is the same run under ``CI=true GITHUB_ACTIONS=true`` in an
+  otherwise empty environment, which is what turns vitest's colours on; it
+  turns them off when it detects a coding agent, which is why the first
+  capture is plain.
+- ``startup-error-ci.txt`` is the same command pointed at a config that throws,
+  so vitest dies before collecting anything and writes no JSON.
+
+The only edits are that absolute paths were cut back to repo-relative ones, or
+to ``<repo>`` and ``<scratch>`` where the path was outside the repository, and
+that the end-of-file hook trimmed the blank lines vitest printed last. The
+reporter output is ``.txt`` rather than ``.log`` because the repository ignores
+``*.log``.
 """
 
 from __future__ import annotations
@@ -54,8 +66,27 @@ def _json(name: str) -> Any:
     return json.loads((_FIXTURES / name).read_text(encoding="utf-8"))
 
 
+def _text(name: str) -> str:
+    return (_FIXTURES / name).read_text(encoding="utf-8")
+
+
 def _log() -> str:
-    return (_FIXTURES / "blocked.txt").read_text(encoding="utf-8")
+    return _text("blocked.txt")
+
+
+def _quoted(body: str) -> str:
+    """The fenced block the report quotes, without its fences."""
+    return body.split("\n\n```\n", 1)[1].split("\n```\n", 1)[0]
+
+
+def _passing_report() -> Any:
+    """The blocked run's report as it reads once every case runs and holds."""
+    report = _json("blocked.json")
+    for suite in report["testResults"]:
+        suite["status"] = "passed"
+        for case in suite["assertionResults"]:
+            case["status"] = "passed"
+    return report
 
 
 def test_the_json_report_alone_does_not_name_what_blocked_the_suite() -> None:
@@ -75,7 +106,8 @@ def test_a_blocked_run_quotes_the_error_that_blocked_it() -> None:
     body = _script().render(_json("blocked.json"), _log(), _json("npm-ls.json"), _PINNED_2X)
 
     assert "## Blocked before anything could be measured" in body
-    quoted = body.split("What stopped it:\n\n```\n", 1)[1].split("\n```\n", 1)[0]
+    assert "What stopped it, from vitest's 'Failed Suites 1' section:" in body
+    quoted = _quoted(body)
     # Quoted as printed, indentation included, since the code frame below it
     # lines up a caret under the failing column.
     assert quoted.splitlines()[0] == " FAIL  test/fidelity.test.ts > fidelity corpus round-trip"
@@ -90,36 +122,77 @@ def test_a_blocked_run_quotes_the_error_that_blocked_it() -> None:
 
 
 def test_the_error_is_found_through_the_colours_ci_turns_on() -> None:
-    # Vitest colours its output when CI is set, which it is on every runner.
-    # The captured log is uncoloured, so colour it the way the reporter does
-    # around the two lines the parser keys on.
-    coloured = (
-        _log()
-        .replace(" Failed Suites 1 ", "\x1b[31m\x1b[1m Failed Suites 1 \x1b[22m\x1b[39m")
-        .replace(" FAIL ", "\x1b[41m\x1b[1m FAIL \x1b[22m\x1b[49m")
-    )
+    # On a runner vitest colours the dividers themselves as well as the titles,
+    # so both the section header and the divider that ends it start with an
+    # escape rather than with U+23AF.
+    coloured = _text("blocked-ci.txt")
+    assert "\x1b[31m\u23af" in coloured
+    assert "\x1b[31m\x1b[2m\u23af" in coloured
+
     script = _script()
-    assert "\x1b[" in coloured
+    assert script._error_section(coloured) == script._error_section(_log())
     assert script.render(
         _json("blocked.json"), coloured, _json("npm-ls.json"), _PINNED_2X
     ) == script.render(_json("blocked.json"), _log(), _json("npm-ls.json"), _PINNED_2X)
 
 
-def test_a_run_with_no_failed_suite_section_points_at_the_install_step() -> None:
+def test_a_vitest_that_cannot_start_quotes_its_startup_error() -> None:
+    # No JSON is written at all in this case, so the report reads none.
+    body = _script().render({}, _text("startup-error-ci.txt"), _json("npm-ls.json"), _PINNED_2X)
+
+    assert "## Blocked before anything could be measured" in body
+    assert "What stopped it, from vitest's 'Startup Error' section:" in body
+    quoted = _quoted(body)
+    # The section runs to the end of the output rather than to a closing
+    # divider, and the line before it is not part of it.
+    assert quoted.splitlines()[0] == "Error: config-broke-here"
+    assert "loadConfigFromFile" in quoted
+    assert "failed to load config" not in quoted
+
+
+def test_output_with_no_error_section_is_quoted_from_its_end() -> None:
+    script = _script()
+    log = "\n".join(["", *(f"line {n}" for n in range(40)), "sh: 1: vitest: not found", "", ""])
+    body = script.render({}, log, _json("npm-ls.json"), _PINNED_2X)
+
+    assert "Vitest printed no error section. Its output ended:" in body
+    quoted = _quoted(body).splitlines()
+    assert len(quoted) == script._ERROR_LINES
+    assert quoted[-1] == "sh: 1: vitest: not found"
+
+
+def test_a_vitest_step_with_no_output_says_there_is_nothing_to_quote() -> None:
     body = _script().render(_json("blocked.json"), "", _json("npm-ls.json"), _PINNED_2X)
 
     assert "## Blocked before anything could be measured" in body
-    assert "What stopped it:" not in body
-    assert "install step's log" in body
+    assert "```" not in body
+    assert "left no output" in body
+    # The install step cannot be where it is: a failed install stops the job
+    # before the report is written.
+    assert "install" not in body
 
 
 def test_the_quoted_error_is_capped() -> None:
     script = _script()
-    log = "\n".join([" Failed Suites 1 ", "", *(f"frame {n}" for n in range(100)), "\u23af" * 10])
-    assert script._failed_suites(log) == [f"frame {n}" for n in range(script._ERROR_LINES)]
+    divider = "\u23af" * 6
+    log = "\n".join(
+        [f"{divider} Failed Suites 1 {divider}", "", *(f"frame {n}" for n in range(100))]
+    )
+    assert script._error_section(log) == (
+        "Failed Suites 1",
+        [f"frame {n}" for n in range(script._ERROR_LINES)],
+    )
 
 
-@pytest.mark.parametrize("pinned_core", ["3.31.4", "3.0.0", "^3.31.4", "4.0.0"])
+def test_a_closing_divider_is_not_taken_for_a_section() -> None:
+    # It carries a counter, "[1/1]", with no spaces around it; read as a
+    # header, the output's ending would be quoted under the title "[1/1]".
+    script = _script()
+    log = "\n".join(["before", "\u23af" * 20 + "[1/1]" + "\u23af", "after"])
+    assert script._error_section(log) == ("", ["before", "\u23af" * 20 + "[1/1]\u23af", "after"])
+
+
+@pytest.mark.parametrize("pinned_core", ["3.31.4", "3.0.0", "^3.31.4", "~3.31.4", "4.0.0"])
 def test_no_newer_major_is_reported_as_such_and_not_priced(pinned_core: str) -> None:
     # 4.0.0 is the pins having moved past what `latest` resolved, which the
     # registry should never produce but which is still not a major to price.
@@ -159,6 +232,22 @@ def test_a_newer_major_is_still_priced(pinned: dict[str, object]) -> None:
 
     assert script.NOTHING_TO_PRICE not in body
     assert "## Blocked before anything could be measured" in body
+
+
+def test_a_corpus_that_holds_on_the_pinned_line_is_not_priced() -> None:
+    # The case the check exists for. Once the pins cross, `latest` is the line
+    # already pinned and the corpus passes on it, which without the check
+    # reads "48 of 48 documents still round-trip" under a heading about
+    # crossing a major.
+    script = _script()
+    body = script.render(_passing_report(), "", _json("npm-ls.json"), _PINNED_3X)
+
+    assert script.NOTHING_TO_PRICE in body
+    assert "round-trip" not in body
+    # And the same report under a 2.x pin is priced, so the fixture is one the
+    # pricing branch accepts.
+    priced = script.render(_passing_report(), "", _json("npm-ls.json"), _PINNED_2X)
+    assert "## 48 of 48 documents still round-trip" in priced
 
 
 def test_an_unresolved_core_is_priced_rather_than_closed() -> None:
@@ -209,7 +298,7 @@ def test_main_survives_a_log_the_step_never_wrote(tmp_path: Path) -> None:
     ]
 
     assert _script().main(argv) == 0
-    assert "install step's log" in out.read_text(encoding="utf-8")
+    assert "left no output" in out.read_text(encoding="utf-8")
 
 
 def test_main_refuses_the_old_three_file_call(capsys: pytest.CaptureFixture[str]) -> None:

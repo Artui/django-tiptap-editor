@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   vitest's JSON reporter alone, which records a suite whose setup threw as every
   case skipped and the suite's message as an empty string, so the error was
   printed nowhere. The job now runs the default reporter beside the JSON one and
-  the report quotes the failed suite's error, frame and code excerpt included --
-  for Tiptap 3 that is one line, `Table.configure` on an import that has no
-  default export.
+  the report quotes the error section vitest printed, frame and code excerpt
+  included: the failed suite's, or the startup error when vitest cannot load at
+  all, and the end of its output when it printed neither. For Tiptap 3 it names
+  `Table.configure` on an import that has no default export -- the first of
+  two, since `TextStyle` has none either and the suite stops at the first.
 - **The same report stops once there is no newer major to price.** It set every
   Tiptap package to `latest`, which is the next major only while one exists;
   once the pins cross it, the job would have gone on reporting a corpus run

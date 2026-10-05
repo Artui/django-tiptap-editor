@@ -24,7 +24,7 @@ Two failure modes are reported rather than hidden, because both are answers:
 - the install or the type-check falls over, which prices the migration as
   "blocked before the corpus can even run" -- more useful than a missing number,
   and only useful at all if the report quotes what fell over (see
-  ``_failed_suites``);
+  ``_error_section``);
 - a corpus case that is currently a documented *normalization* starts round-
   tripping exactly. The suite treats that as a failure on purpose (the exception
   should be deleted), so a raw pass count would score an improvement as a
@@ -53,12 +53,17 @@ MARKER = "js-next-line"
 # rather than keep a standing "what the next major would cost" with no answer.
 NOTHING_TO_PRICE = f"<!-- {MARKER}-status: no-newer-major -->"
 
-# Vitest's default reporter colours its output when it decides it may, and the
-# divider it draws around each failed suite is a run of U+23AF. Both are named
-# by escape rather than pasted, so the pattern survives an editor or a hook
-# that normalises either.
+# Vitest's default reporter colours its output on a CI runner, and the divider
+# it draws around each error section is a run of U+23AF. Both are named by
+# escape rather than pasted, so the pattern survives an editor or a hook that
+# normalises either.
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _DIVIDER = "\u23af"
+
+# A section is opened by a divider with a title in it -- "Failed Suites 1",
+# "Startup Error", "Unhandled Errors". The divider that closes one carries a
+# counter with no spaces around it ("[1/1]"), which this does not match.
+_SECTION = re.compile(rf"^{_DIVIDER}+ (.+?) {_DIVIDER}+$")
 
 # Enough of a stack to name the file and line in our code, which is all the
 # report needs; the run's own log has the rest.
@@ -113,8 +118,18 @@ def _cases(report: dict[str, object]) -> tuple[list[str], list[str], list[str]]:
     return held, broke, unrun
 
 
-def _failed_suites(log: str) -> list[str]:
-    """The first failed suite's error, as vitest's default reporter printed it.
+def _trim(lines: list[str]) -> list[str]:
+    """``lines`` without the blank lines at either end."""
+    start, end = 0, len(lines)
+    while start < end and not lines[start]:
+        start += 1
+    while end > start and not lines[end - 1]:
+        end -= 1
+    return lines[start:end]
+
+
+def _error_section(log: str) -> tuple[str, list[str]]:
+    """The first error section vitest's default reporter printed, and its title.
 
     **This exists because the JSON report does not carry it.** When the suite's
     ``beforeAll`` throws -- the front door a breaking major falls over first --
@@ -124,21 +139,25 @@ def _failed_suites(log: str) -> list[str]:
     read it, the issue said the run's log named the error while the workflow
     ran the JSON reporter alone, so the report priced the migration as blocked
     and nobody could see by what.
+
+    Any titled section is taken, not only that one: a vitest that cannot load
+    its config prints a "Startup Error" section instead, which runs to the end
+    of the output rather than to a closing divider, and writes no JSON at all.
+    With no section, the title is empty and the lines are the last ones the
+    output had, since whatever ended it is the nearest thing to a cause.
     """
     lines = _ANSI.sub("", log).splitlines()
-    start = next((i for i, line in enumerate(lines) if "Failed Suites" in line), None)
-    if start is None:
-        return []
-    block: list[str] = []
-    for line in lines[start + 1 :]:
-        if line.startswith(_DIVIDER):
-            break
-        block.append(line.rstrip())
-    while block and not block[0]:
-        block.pop(0)
-    while block and not block[-1]:
-        block.pop()
-    return block[:_ERROR_LINES]
+    for index, line in enumerate(lines):
+        header = _SECTION.match(line)
+        if header is None:
+            continue
+        block: list[str] = []
+        for body in lines[index + 1 :]:
+            if body.startswith(_DIVIDER):
+                break
+            block.append(body)
+        return header[1], _trim(block)[:_ERROR_LINES]
+    return "", _trim(lines)[-_ERROR_LINES:]
 
 
 def _major(version: str | None) -> int | None:
@@ -224,13 +243,17 @@ def render(
             "result at all -- it is the newer line failing to load.",
             "",
         ]
-        error = _failed_suites(log)
-        if error:
-            lines += ["What stopped it:", "", "```", *error, "```", ""]
+        title, error = _error_section(log)
+        if title:
+            lines += [f"What stopped it, from vitest's {title!r} section:", ""]
+            lines += ["```", *error, "```", ""]
+        elif error:
+            lines += ["Vitest printed no error section. Its output ended:", ""]
+            lines += ["```", *error, "```", ""]
         else:
             lines += [
-                "The vitest output has no failed-suite section, so it fell over before",
-                "the suite ran; the install step's log in the same run names it.",
+                "The vitest step left no output, so there is nothing to quote here;",
+                "that step in the run above is the place to look.",
                 "",
             ]
         lines += [

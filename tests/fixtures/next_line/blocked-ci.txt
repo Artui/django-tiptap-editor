@@ -1,0 +1,75 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mjs[39m
+
+ [31m❯[39m test/fidelity.test.ts [2m([22m[2m48 tests[22m[2m | [22m[33m48 skipped[39m[2m)[22m[32m 4[2mms[22m[39m
+     [2m[90m↓[39m[22m preserves content: paragraphs-basic
+     [2m[90m↓[39m[22m preserves content: inline-marks
+     [2m[90m↓[39m[22m preserves content: nested-marks
+     [2m[90m↓[39m[22m preserves content: font-size-span
+     [2m[90m↓[39m[22m preserves content: font-family-span
+     [2m[90m↓[39m[22m preserves content: color-span
+     [2m[90m↓[39m[22m preserves content: highlight-span
+     [2m[90m↓[39m[22m preserves content: text-align-center
+     [2m[90m↓[39m[22m preserves content: text-align-justify
+     [2m[90m↓[39m[22m preserves content: paragraph-margin-email
+     [2m[90m↓[39m[22m preserves content: margin-block-modern
+     [2m[90m↓[39m[22m preserves content: ul-nested
+     [2m[90m↓[39m[22m preserves content: ol-basic
+     [2m[90m↓[39m[22m preserves content: link-basic
+     [2m[90m↓[39m[22m preserves content: link-target-rel
+     [2m[90m↓[39m[22m preserves content: link-mailto
+     [2m[90m↓[39m[22m preserves content: link-tel
+     [2m[90m↓[39m[22m preserves content: link-javascript
+     [2m[90m↓[39m[22m preserves content: image-basic
+     [2m[90m↓[39m[22m preserves content: image-style
+     [2m[90m↓[39m[22m preserves content: table-basic
+     [2m[90m↓[39m[22m preserves content: table-styled
+     [2m[90m↓[39m[22m preserves content: headings
+     [2m[90m↓[39m[22m preserves content: blockquote
+     [2m[90m↓[39m[22m preserves content: sub-sup
+     [2m[90m↓[39m[22m preserves content: hr
+     [2m[90m↓[39m[22m preserves content: line-break
+     [2m[90m↓[39m[22m preserves content: messy-script
+     [2m[90m↓[39m[22m preserves content: messy-divs
+     [2m[90m↓[39m[22m preserves content: messy-style-attr
+     [2m[90m↓[39m[22m preserves content: combined-email
+     [2m[90m↓[39m[22m preserves content: cmd-bold
+     [2m[90m↓[39m[22m preserves content: cmd-italic
+     [2m[90m↓[39m[22m preserves content: cmd-underline
+     [2m[90m↓[39m[22m preserves content: cmd-strikethrough
+     [2m[90m↓[39m[22m preserves content: cmd-align-center
+     [2m[90m↓[39m[22m preserves content: cmd-align-right
+     [2m[90m↓[39m[22m preserves content: cmd-align-justify
+     [2m[90m↓[39m[22m preserves content: cmd-bullet-list
+     [2m[90m↓[39m[22m preserves content: cmd-numbered-list
+     [2m[90m↓[39m[22m preserves content: cmd-heading-h2
+     [2m[90m↓[39m[22m preserves content: cmd-blockquote
+     [2m[90m↓[39m[22m preserves content: cmd-fontsize
+     [2m[90m↓[39m[22m preserves content: cmd-fontname
+     [2m[90m↓[39m[22m preserves content: cmd-forecolor
+     [2m[90m↓[39m[22m preserves content: cmd-backcolor
+     [2m[90m↓[39m[22m preserves content: cmd-indent
+     [2m[90m↓[39m[22m preserves content: cmd-bold-then-italic
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/fidelity.test.ts[2m > [22mfidelity corpus round-trip
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'configure')[39m
+[36m [2m❯[22m buildExtensions src/build-extensions.ts:[2m102:11[22m[39m
+    [90m100|[39m     })[33m,[39m
+    [90m101|[39m     [33mInlineImage[39m[33m.[39m[34mconfigure[39m({ inline[33m:[39m [35mtrue[39m })[33m,[39m
+    [90m102|[39m     [33mTable[39m[33m.[39m[34mconfigure[39m({ resizable[33m:[39m [35mfalse[39m })[33m,[39m
+    [90m   |[39m           [31m^[39m
+    [90m103|[39m     [33mTableRow[39m[33m,[39m
+    [90m104|[39m     [33mTableHeader[39m[33m,[39m
+[90m [2m❯[22m test/fidelity.test.ts:[2m39:19[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [33m48 skipped[39m[90m (48)[39m
+[2m   Start at [22m 21:59:58
+[2m   Duration [22m 515ms[2m (transform 44ms, setup 0ms, import 95ms, tests 4ms, environment 293ms)[22m
+
+JSON report written to ci-corpus.json
