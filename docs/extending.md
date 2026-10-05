@@ -14,8 +14,8 @@ DjangoTipTap.registerExtension("callout", (config, ctx) => {
     name: "callout",
     group: "block",
     content: "block+",
-    parseHTML: () => [{ tag: "div.callout" }],
-    renderHTML: ({ HTMLAttributes }) => ["div", mergeAttributes(HTMLAttributes, { class: "callout" }), 0],
+    parseHTML: () => [{ tag: "aside.callout" }],
+    renderHTML: ({ HTMLAttributes }) => ["aside", mergeAttributes(HTMLAttributes, { class: "callout" }), 0],
   });
 });
 ```
