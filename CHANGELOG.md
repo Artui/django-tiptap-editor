@@ -63,8 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   provenance; naming it in the filename and the docs was positioning.
 
   Note that **`docs/recipes/migrating-from-tinymce.md` moves**, so any external link to
-  that page will 404. No redirect plugin is configured and adding one for a single
-  rename did not seem proportionate; say so if you would rather have it.
+  that page will 404. No redirect plugin is configured; adding one for a single
+  rename did not seem proportionate.
 
 - **The three JavaScript build pins moved to the newest release in their own
   line** — `esbuild` 0.28.1 to 0.28.2, `typescript` 5.7.3 to 5.9.3, `vitest`
@@ -82,10 +82,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and test tooling that never reach the output. All three are `devDependencies`,
   so nothing a consumer installs is affected.
 
-  The Tiptap 2.x line, `jsdom` and `typescript` 7 are deliberately **not** moved
-  here. Each is a newer *line* rather than a newer release within one, which is a
-  migration decision no CI job can make; the weekly check lists them so the gap
-  stays on the record.
+  Tiptap 3, `jsdom` 30, `typescript` 7 and `vitest` 5 are deliberately **not**
+  moved here. Each is a newer *line* rather than a newer release within one,
+  which is a migration decision no CI job can make; the weekly check lists them
+  so the gap stays on the record.
 
 ### Security
 
@@ -95,25 +95,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   **Its one source change is to `mergeAttributes()`**, the helper
   `DjangoTipTap.tiptap` and `ctx.tiptap` hand to custom extensions. An own
-  `__proto__` key in an argument, which is what `JSON.parse` produces, is now
-  stored as a plain property instead of replacing the merged object's prototype.
-  Before, ProseMirror's serializer walked that prototype like ordinary
-  attributes, so a custom node built the way `docs/extending.md` shows,
-  merging in attributes taken from the document, rendered
-  `<span onclick="alert(1)">` out of a JSON payload. The new
-  `merge-attributes.test.ts` fails on 2.27.2 with exactly that markup.
+  `__proto__` key in an argument is now stored as a plain property instead of
+  replacing the merged object's prototype. Before, ProseMirror's serializer
+  walked that prototype like ordinary attributes, so a key on it could render as
+  an event handler.
+
+  **The editor's own extensions and the `docs/extending.md` example were not
+  affected**: none of them hands `mergeAttributes()` an object taken from the
+  document. What was exposed is a custom extension that does -- in practice one
+  reading JSON storage, where `JSON.parse` keeps an own `__proto__` key and
+  `sanitize_doc` checks only link and image URLs. The new
+  `merge-attributes.test.ts` builds such an extension, and on 2.27.2 it renders
+  `<span onclick="alert(1)">`.
+
+  **External mode, a self-hosted Tiptap or a custom `TIPTAP_IMPORT_MAP` does
+  not get this from the bundle.** There `mergeAttributes()` comes from your own
+  `@tiptap/core`, which needs to be 2.27.3 or later. The startup version check
+  warns only on a different major, so an import map still pinned at 2.27.2
+  produces no warning.
 
   It is the same change, line for line, that `@tiptap/core` 3.30.4 made for
-  GHSA-cp6q-959q-f8rh. That advisory still records every 2.x release as
-  affected, so a scanner reading it will keep flagging 2.27.3 even though the
-  code it describes is fixed here.
+  GHSA-cp6q-959q-f8rh. That advisory's affected range is `< 3.30.4` and does
+  not list this backport, so a scanner reading it will keep flagging 2.27.3 even
+  though the code it describes is fixed here.
 
   **`@tiptap/pm` 2.27.3 also raises its `prosemirror-view` floor**, so the
   bundle moves `prosemirror-view` 1.41.9 to 1.42.6 and `prosemirror-model`
-  1.25.9 to 1.25.12. One consequence is visible to scripts: on Safari and
-  Firefox, ProseMirror now puts a zero-size `img.ProseMirror-separator` in front
-  of an image that opens a paragraph, so `querySelector("img")` inside the
-  editor can return the separator rather than the image. Take an image's element
+  1.25.9 to 1.25.12. One consequence is visible to scripts: in every browser,
+  ProseMirror now puts a zero-size `img.ProseMirror-separator` in front of an
+  inline atom such as an image when it opens a block or follows another atom, so
+  `querySelector("img")` inside the editor can return the separator rather than
+  the image. Take an image's element
   from `editor.view.nodeDOM(pos)`, as the resize overlay already does. The
   separator is view-only and never reaches saved content.
 

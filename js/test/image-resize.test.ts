@@ -31,9 +31,9 @@ async function makeEditor(m: Loaded, config: Record<string, unknown> = {}, conte
 
 // The image node's own element, as ProseMirror rendered it -- the element the
 // overlay measures. Not `querySelector("img")`: prosemirror-view puts a
-// zero-size `img.ProseMirror-separator` in front of an inline atom at the start
-// of a block on Safari and Firefox, and jsdom reports itself as Safari, so the
-// first <img> in the editor is that separator rather than the image.
+// zero-size `img.ProseMirror-separator` in front of an inline atom that opens a
+// block or follows another atom, with no browser check, so in jsdom as in any
+// browser the first <img> in the editor is that separator rather than the image.
 function imageDOM(editor: { view: { nodeDOM: (pos: number) => unknown } }): HTMLElement {
   return editor.view.nodeDOM(1) as HTMLElement;
 }
