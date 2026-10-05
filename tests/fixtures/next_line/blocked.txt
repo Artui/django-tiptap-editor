@@ -1,0 +1,75 @@
+
+ RUN  v4.1.11 js
+
+ ❯ test/fidelity.test.ts (48 tests | 48 skipped) 3ms
+     ↓ preserves content: paragraphs-basic
+     ↓ preserves content: inline-marks
+     ↓ preserves content: nested-marks
+     ↓ preserves content: font-size-span
+     ↓ preserves content: font-family-span
+     ↓ preserves content: color-span
+     ↓ preserves content: highlight-span
+     ↓ preserves content: text-align-center
+     ↓ preserves content: text-align-justify
+     ↓ preserves content: paragraph-margin-email
+     ↓ preserves content: margin-block-modern
+     ↓ preserves content: ul-nested
+     ↓ preserves content: ol-basic
+     ↓ preserves content: link-basic
+     ↓ preserves content: link-target-rel
+     ↓ preserves content: link-mailto
+     ↓ preserves content: link-tel
+     ↓ preserves content: link-javascript
+     ↓ preserves content: image-basic
+     ↓ preserves content: image-style
+     ↓ preserves content: table-basic
+     ↓ preserves content: table-styled
+     ↓ preserves content: headings
+     ↓ preserves content: blockquote
+     ↓ preserves content: sub-sup
+     ↓ preserves content: hr
+     ↓ preserves content: line-break
+     ↓ preserves content: messy-script
+     ↓ preserves content: messy-divs
+     ↓ preserves content: messy-style-attr
+     ↓ preserves content: combined-email
+     ↓ preserves content: cmd-bold
+     ↓ preserves content: cmd-italic
+     ↓ preserves content: cmd-underline
+     ↓ preserves content: cmd-strikethrough
+     ↓ preserves content: cmd-align-center
+     ↓ preserves content: cmd-align-right
+     ↓ preserves content: cmd-align-justify
+     ↓ preserves content: cmd-bullet-list
+     ↓ preserves content: cmd-numbered-list
+     ↓ preserves content: cmd-heading-h2
+     ↓ preserves content: cmd-blockquote
+     ↓ preserves content: cmd-fontsize
+     ↓ preserves content: cmd-fontname
+     ↓ preserves content: cmd-forecolor
+     ↓ preserves content: cmd-backcolor
+     ↓ preserves content: cmd-indent
+     ↓ preserves content: cmd-bold-then-italic
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/fidelity.test.ts > fidelity corpus round-trip
+TypeError: Cannot read properties of undefined (reading 'configure')
+ ❯ buildExtensions src/build-extensions.ts:102:11
+    100|     }),
+    101|     InlineImage.configure({ inline: true }),
+    102|     Table.configure({ resizable: false }),
+       |           ^
+    103|     TableRow,
+    104|     TableHeader,
+ ❯ test/fidelity.test.ts:39:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  48 skipped (48)
+   Start at  21:41:19
+   Duration  371ms (transform 46ms, setup 0ms, import 94ms, tests 3ms, environment 198ms)
+
+JSON report written to corpus.json

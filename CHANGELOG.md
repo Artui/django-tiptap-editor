@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The weekly next-major report now quotes what blocked it.** Since the job
+  was added it has reported the newer Tiptap as blocked before any corpus case
+  ran, and said the run's log named the error. It did not: the corpus ran under
+  vitest's JSON reporter alone, which records a suite whose setup threw as every
+  case skipped and the suite's message as an empty string, so the error was
+  printed nowhere. The job now runs the default reporter beside the JSON one and
+  the report quotes the failed suite's error, frame and code excerpt included --
+  for Tiptap 3 that is one line, `Table.configure` on an import that has no
+  default export.
+- **The same report stops once there is no newer major to price.** It set every
+  Tiptap package to `latest`, which is the next major only while one exists;
+  once the pins cross it, the job would have gone on reporting a corpus run
+  under a heading about crossing a major. It now compares the major it resolved
+  with the one `js/package.json` pins, and when they match it says so and closes
+  the issue rather than updating it.
+
 ### Docs
 
 - **The custom-extension example in Extending rendered a `div` while every
