@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 All `@tiptap/*` pins move from 2.27.3 to **3.31.4**, and the committed bundles are
 rebuilt from them. The fidelity corpus round-trips 48 of 48 cases as before, and the
 HTML the editor writes is byte-identical to 2.27.3's on 46 of them; the two that differ
-are tables, below. Tiptap 3 changes the primitive API custom extensions are written
+are tables, below. Outside the corpus, nested styled spans change too. Tiptap 3 changes the primitive API custom extensions are written
 against, so under the stability policy this is a breaking release.
 
 **What to check before upgrading.**
@@ -25,8 +25,9 @@ against, so under the stability policy this is a breaking release.
   rejected: it is read as empty options, so `setContent(html, false)` now emits an
   update. Write `{ emitUpdate: false }`. A node view's `getPos()` can return
   `undefined`. The undo extension is named `undoRedo` rather than `history`; its
-  `undo`/`redo` commands are unchanged, and `history` is still accepted as a no-op name
-  in `config.extensions`. Extending has a section on each.
+  `undo`/`redo` commands are unchanged, and `config.extensions`, where every built-in
+  name is a no-op, still names it `history` and refuses `undoRedo`. Extending has a
+  section on each.
 - **A `TIPTAP_IMPORT_MAP` override needs an `@tiptap/extensions` entry, and no longer
   needs `@tiptap/extension-character-count`.** Character count now comes from
   `@tiptap/extensions`, where Tiptap 3 moved it, so the glue imports that instead. An
@@ -43,13 +44,20 @@ against, so under the stability policy this is a breaking release.
   `#ff0000` where 2.27.3 stored `rgb(255, 0, 0)`, and `render_doc` renders it that
   way. The HTML the editor writes is unchanged, because ProseMirror sets styles
   through the browser, which serialises colours as `rgb()`.
+- **Nested styled spans are stored as one span.** Tiptap 3 turns on TextStyle's
+  `mergeNestedSpanStyles`, so `<span style="color: red"><span style="font-size: 18px">`
+  is read as both styles on the inner text, where 2.27.3 kept only the inner span's
+  and dropped the colour. Such content, usually pasted, keeps a style it used to
+  lose, and its markup changes the next time it is saved; the sanitiser keeps the
+  merged span as written. The corpus has no nested span, which is why it does not
+  show this.
 - **Backspace and Delete behave differently at the edges of a list item.** StarterKit 3
   includes ListKeymap and it is on: Backspace at the start of the last item lifts it
   out of the list, and Delete at the end of an item joins the next item onto it,
   where both used to move the paragraph into the item before it. It adds no schema and
   no markup.
 - **The bundle is about a fifth larger**: `tiptap.bundle.js` goes from 399,688 to
-  479,348 bytes (125,350 to 149,926 gzipped). Most of it is `@tiptap/core` itself and
+  479,348 bytes (125,350 to 149,909 gzipped). Most of it is `@tiptap/core` itself and
   the list package StarterKit 3 imports. The external-mode glue grows by 55 bytes.
 
 ### Added

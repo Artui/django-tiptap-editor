@@ -49,8 +49,9 @@ these are the changes a custom extension is likely to meet:
 - **A node view's `getPos()` can return `undefined`**, for a node that is no longer in
   the document. Check it before using it as a position.
 - **The undo extension is `undoRedo`**, where Tiptap 2 called it `history`. The
-  `undo` and `redo` commands keep their names. In `config.extensions` the built-in names
-  are no-ops either way, and `history` is still accepted there.
+  `undo` and `redo` commands keep their names. In `config.extensions`, where a built-in
+  name changes nothing because built-ins are always on, it is still `history`:
+  `undoRedo` there is refused as an unknown extension.
 - **Default exports are not guaranteed.** Tiptap 3 dropped them from
   `@tiptap/extension-table` and `@tiptap/extension-text-style`. Take what you need from
   `ctx.tiptap`, or import named exports in your own build.

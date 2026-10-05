@@ -41,10 +41,14 @@ _SIMPLE_MARKS = {
     "superscript": "sup",
 }
 
-# The alignments Tiptap renders for a table cell. Its cell node stores whatever
-# value it parsed but renders text-align only for these three, so a stored
-# "justify" (which the editor keeps and never shows) renders nothing here too.
-_CELL_ALIGNMENTS = frozenset({"left", "center", "right"})
+# The alignments Tiptap renders for a table cell. Its HTML parser keeps only
+# these three, but a document handed to the editor as JSON keeps whatever value
+# it carries and renders text-align only for these, so a stored "justify" (which
+# the editor keeps and never shows) renders nothing here too. A tuple, not a
+# set: the value is untrusted JSON, and a membership test against a set hashes
+# it -- a list or object there raised TypeError, a 500 rather than a skipped
+# style -- where a tuple compares it and answers no.
+_CELL_ALIGNMENTS = ("left", "center", "right")
 
 
 def _css_length(value: object) -> str:

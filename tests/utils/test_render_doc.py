@@ -287,6 +287,34 @@ def test_table_rendering() -> None:
     )
 
 
+@pytest.mark.parametrize("align", [["left"], {"left": True}])
+def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> None:
+    # The stored JSON is untrusted, and the alignment is read straight out of
+    # it: a list or object there must be skipped like any other value Tiptap
+    # does not render, not raise while being looked up.
+    doc = {
+        "type": "doc",
+        "content": [
+            {
+                "type": "table",
+                "content": [
+                    {
+                        "type": "tableRow",
+                        "content": [
+                            {
+                                "type": "tableCell",
+                                "attrs": {"align": align},
+                                "content": [_p_inner("c")],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    assert render_doc(doc) == "<table><tbody><tr><td><p>c</p></td></tr></tbody></table>"
+
+
 def test_children_not_a_list() -> None:
     # A paragraph whose content is missing renders empty.
     assert render_doc({"type": "doc", "content": [{"type": "paragraph"}]}) == "<p></p>"
