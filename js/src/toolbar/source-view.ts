@@ -39,7 +39,7 @@ function leaveSourceView(editor: Editor, state: SourceState, refocus: boolean): 
   toolbarOf(editor)?.classList.remove("is-source-mode");
   states.delete(editor);
   editor.setEditable(true);
-  editor.commands.setContent(html, true);
+  editor.commands.setContent(html, { emitUpdate: true });
   if (refocus) {
     editor.commands.focus();
   }

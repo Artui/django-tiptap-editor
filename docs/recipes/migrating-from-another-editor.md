@@ -32,7 +32,7 @@ meaningful loss. Reproduce that over your data:
 ```js
 const editor = DjangoTipTap.init(document.createElement("textarea"), {});
 for (const html of yourSamples) {
-  editor.commands.setContent(html, false);
+  editor.commands.setContent(html, { emitUpdate: false });
   const out = editor.getHTML();
   // diff `html` vs `out` (normalize whitespace) and flag real differences
 }

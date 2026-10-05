@@ -76,11 +76,20 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
   const protocols = config.linkProtocols ?? DEFAULT_LINK_PROTOCOLS;
 
   const baseline: AnyExtension[] = [
-    // StarterKit v2 covers the structural core (document/paragraph/text/bold/
-    // italic/strike/code/heading/lists/blockquote/hr/hardBreak/history/cursors).
-    // It does NOT include Underline/TextStyle/Link/Image/Table/etc., so the
-    // feature extensions below add no duplicates.
-    StarterKit,
+    // StarterKit v3 covers the structural core (document/paragraph/text/bold/
+    // italic/strike/code/heading/lists/blockquote/hr/hardBreak/undoRedo/cursors)
+    // and also bundles Link, Underline, ListKeymap and TrailingNode. Link and
+    // Underline are switched off because the configured ones below replace them
+    // (two registrations of one name is a tiptap warning and an undefined
+    // winner). TrailingNode appends an empty <p> after a doc ending in a list,
+    // heading or blockquote, which breaks byte-identical round trips. ListKeymap
+    // was not in the v2 baseline; it stays off so list editing is unchanged.
+    StarterKit.configure({
+      link: false,
+      underline: false,
+      trailingNode: false,
+      listKeymap: false,
+    }),
     // High-priority Enter/Shift-Enter override; "paragraph" (default) adds no
     // bindings, so it's a no-op unless config.enterKey opts into another mode.
     EnterKey.configure({ mode: config.enterKey ?? "paragraph" }),

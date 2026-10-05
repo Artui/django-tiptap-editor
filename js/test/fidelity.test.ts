@@ -42,7 +42,7 @@ describe("fidelity corpus round-trip", () => {
 
   for (const fx of corpus.results) {
     it(`preserves content: ${fx.id}`, () => {
-      editor.commands.setContent(fx.output, false);
+      editor.commands.setContent(fx.output, { emitUpdate: false });
       const out = editor.getHTML();
 
       // No visible-text loss for ANY fixture.
