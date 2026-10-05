@@ -209,7 +209,7 @@ DEFAULT_CONFIG: dict[str, object] = {}
 # TipTap version the committed glue is built + validated against. Keep in sync
 # with js/package.json (the build also bakes it into the glue for the
 # external-mode startup version check).
-TIPTAP_VERSION = "2.27.2"
+TIPTAP_VERSION = "2.27.3"
 
 # Bare `@tiptap/*` specifiers the glue ESM imports — the import map external mode
 # must resolve. (Matches the externalised imports in tiptap.glue.esm.js.)

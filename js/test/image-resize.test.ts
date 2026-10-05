@@ -29,20 +29,34 @@ async function makeEditor(m: Loaded, config: Record<string, unknown> = {}, conte
   return editor;
 }
 
+// The image node's own element, as ProseMirror rendered it -- the element the
+// overlay measures. Not `querySelector("img")`: prosemirror-view puts a
+// zero-size `img.ProseMirror-separator` in front of an inline atom at the start
+// of a block on Safari and Firefox, and jsdom reports itself as Safari, so the
+// first <img> in the editor is that separator rather than the image.
+function imageDOM(editor: { view: { nodeDOM: (pos: number) => unknown } }): HTMLElement {
+  return editor.view.nodeDOM(1) as HTMLElement;
+}
+
 // jsdom lays nothing out, so the overlay would read a zero-sized image. Give
-// the <img> the rect its attributes imply, and the editor a width for the clamp.
+// every <img> the rect its attributes imply, and the editor a width for the
+// clamp. On the prototype rather than on one element, because picking the
+// element is exactly what the separator above gets wrong, and a redraw would
+// hand the overlay a fresh element anyway; the separator carries no
+// width/height attributes, so it measures zero, as it does in a browser.
+// afterEach's restoreAllMocks takes the spy down.
 function stubLayout(editor: { view: { dom: HTMLElement } }, width: number): void {
   Object.defineProperty(editor.view.dom, "clientWidth", { value: width, configurable: true });
-  const img = editor.view.dom.querySelector("img");
-  if (img) {
-    img.getBoundingClientRect = () =>
-      ({
-        left: 0,
-        top: 0,
-        width: Number(img.getAttribute("width")) || 0,
-        height: Number(img.getAttribute("height")) || 0,
-      }) as DOMRect;
-  }
+  vi.spyOn(HTMLImageElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLImageElement,
+  ) {
+    return {
+      left: 0,
+      top: 0,
+      width: Number(this.getAttribute("width")) || 0,
+      height: Number(this.getAttribute("height")) || 0,
+    } as DOMRect;
+  });
 }
 
 // Select the image so the overlay shows its handles, the way a click does.
@@ -127,8 +141,11 @@ describe("resize overlay", () => {
 
     // No wrapper around the image: that is what keeps the caret beside it the
     // same as it is with resizing off.
-    const img = editor.view.dom.querySelector("img");
-    expect(img?.parentElement?.tagName).toBe("P");
+    // nodeDOM is the node's outermost element, so a wrapper would show up here
+    // as its tag, while still sitting in the paragraph.
+    const img = imageDOM(editor);
+    expect(img.tagName).toBe("IMG");
+    expect(img.parentElement?.tagName).toBe("P");
     expect(editor.view.dom.querySelector(".django-tiptap__img")).toBeNull();
 
     editor.destroy();
@@ -160,7 +177,7 @@ describe("resize overlay", () => {
     selectImage(editor);
 
     expect(document.querySelector(".django-tiptap__img-overlay")).toBeNull();
-    expect(editor.view.dom.querySelector("img")).not.toBeNull();
+    expect(imageDOM(editor).tagName).toBe("IMG");
 
     editor.destroy();
   });
@@ -170,6 +187,13 @@ describe("resize overlay", () => {
     const editor = await makeEditor(m);
     stubLayout(editor, 800);
     selectImage(editor);
+
+    // The fixture is only a test of *which* element gets measured while the
+    // first <img> in the editor is something else: here, the separator
+    // ProseMirror puts in front of an image that opens its paragraph.
+    expect(editor.view.dom.querySelector("img")).not.toBe(imageDOM(editor));
+    // View-only: the separator is not a node, so saved content never sees it.
+    expect(editor.getHTML()).not.toContain("ProseMirror-separator");
 
     const overlay = document.querySelector(".django-tiptap__img-overlay") as HTMLElement;
     expect(overlay.style.width).toBe("200px");
@@ -234,7 +258,7 @@ describe("resize overlay", () => {
 
     drag(handle("se"), 0, 100);
 
-    const img = editor.view.dom.querySelector("img") as HTMLImageElement;
+    const img = imageDOM(editor);
     expect(img.style.width).toBe("");
     expect(img.style.height).toBe("");
 

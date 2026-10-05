@@ -85,6 +85,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   migration decision no CI job can make; the weekly check lists them so the gap
   stays on the record.
 
+### Security
+
+- **The shipped editor moves to Tiptap 2.27.3**, all sixteen `@tiptap/*` pins,
+  and the committed bundles are rebuilt from it. External mode's default import
+  map follows, since it pins the same version.
+
+  **Its one source change is to `mergeAttributes()`**, the helper
+  `DjangoTipTap.tiptap` and `ctx.tiptap` hand to custom extensions. An own
+  `__proto__` key in an argument, which is what `JSON.parse` produces, is now
+  stored as a plain property instead of replacing the merged object's prototype.
+  Before, ProseMirror's serializer walked that prototype like ordinary
+  attributes, so a custom node built the way `docs/extending.md` shows,
+  merging in attributes taken from the document, rendered
+  `<span onclick="alert(1)">` out of a JSON payload. The new
+  `merge-attributes.test.ts` fails on 2.27.2 with exactly that markup.
+
+  It is the same change, line for line, that `@tiptap/core` 3.30.4 made for
+  GHSA-cp6q-959q-f8rh. That advisory still records every 2.x release as
+  affected, so a scanner reading it will keep flagging 2.27.3 even though the
+  code it describes is fixed here.
+
+  **`@tiptap/pm` 2.27.3 also raises its `prosemirror-view` floor**, so the
+  bundle moves `prosemirror-view` 1.41.9 to 1.42.6 and `prosemirror-model`
+  1.25.9 to 1.25.12. One consequence is visible to scripts: on Safari and
+  Firefox, ProseMirror now puts a zero-size `img.ProseMirror-separator` in front
+  of an image that opens a paragraph, so `querySelector("img")` inside the
+  editor can return the separator rather than the image. Take an image's element
+  from `editor.view.nodeDOM(pos)`, as the resize overlay already does. The
+  separator is view-only and never reaches saved content.
+
 ## [0.10.0] — 2026-08-26
 
 ### Upgrade note — content is now sanitised on the server
