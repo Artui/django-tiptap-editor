@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -148,3 +151,16 @@ def test_a_deeper_document_is_refused_before_it_costs_the_stack() -> None:
 def test_the_renderer_refuses_it_too() -> None:
     with pytest.raises(ValidationError, match="nests deeper"):
         render_doc(_nest(MAX_DOCUMENT_DEPTH + 1))
+
+
+def test_attributes_that_carry_no_url_pass_through_for_the_renderer_to_gate() -> None:
+    # sanitize_doc secures URL-bearing attributes and nesting depth, nothing
+    # else; render_doc decides what every other stored attribute becomes. So a
+    # link title and a cell alignment, including one Tiptap would not render,
+    # are stored as the editor wrote them, and test_render_doc holds the
+    # renderer to the editor's output for each.
+    cases = json.loads(
+        (Path(__file__).parent / "fixtures" / "editor_render.json").read_text(encoding="utf-8")
+    )["cases"]
+    for case in cases:
+        assert sanitize_doc(case["doc"]) == case["doc"]

@@ -33,4 +33,7 @@ export { default as TableCell } from "@tiptap/extension-table-cell";
 export { default as TableHeader } from "@tiptap/extension-table-header";
 export { default as Subscript } from "@tiptap/extension-subscript";
 export { default as Superscript } from "@tiptap/extension-superscript";
-export { default as CharacterCount } from "@tiptap/extension-character-count";
+// Tiptap 3 moved CharacterCount into @tiptap/extensions and keeps the old
+// package only as a re-export of it. Importing the real home means external
+// mode resolves one module for it, and the same one StarterKit already uses.
+export { CharacterCount } from "@tiptap/extensions";

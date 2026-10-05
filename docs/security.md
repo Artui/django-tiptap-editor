@@ -40,15 +40,17 @@ The allowlist is not a second vocabulary maintained beside the editor: it is bui
 from `EXTENSION_HTML_VOCABULARY`, one entry per built-in extension declaring the tags,
 attributes and style properties that extension emits. The same table is where the
 built-in extension names come from, so the editor's output and the sanitiser's
-allowlist cannot drift apart.
+allowlist cannot drift apart. The editor's half of that is tested rather than assumed:
+`js/test/html-vocabulary.test.ts` renders every attribute the editor's schema defines,
+and every case in the fidelity corpus, and fails if anything lands outside this table.
 
 | | Kept |
 | --- | --- |
 | Blocks | `p`, `h1`–`h6` (with `margin`, `margin-block-end`, `padding-left`, `text-align`), `blockquote`, `pre`/`code`, `hr`, `br`, `ul`, `ol` (`start`, `type`), `li` |
 | Inline | `strong`, `em`, `u`, `s`, `code`, `sub`, `sup`, `span` (with `color`, `background-color`, `font-family`, `font-size`) |
-| Links | `a` with `href` (allowlisted protocols), `class`, `target` (`_blank`/`_self` only), `rel` (known tokens only) |
+| Links | `a` with `href` (allowlisted protocols), `class`, `target` (`_blank`/`_self` only), `rel` (known tokens only), `title` |
 | Images | `img` with `src` (allowlisted protocols), `alt`, `title`, `width`, `height`, and layout `style` (`float`, `display`, `vertical-align`, `margin`/`padding` and their per-side forms, `border`, `border-radius`, `width`, `height`) |
-| Tables | `table`, `colgroup`, `col`, `tbody`, `tr`, `th`/`td` with `colspan`, `rowspan`, `colwidth`, `background-color` |
+| Tables | `table`, `colgroup`, `col`, `tbody`, `tr`, `th`/`td` with `colspan`, `rowspan`, `colwidth`, `background-color`, `text-align` |
 
 Everything else is unwrapped: the tag goes, the text inside it stays. A sanitiser that
 deleted what it did not recognise could quietly empty half a document, so it never

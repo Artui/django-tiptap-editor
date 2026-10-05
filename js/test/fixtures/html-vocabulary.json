@@ -1,0 +1,262 @@
+{
+  "generatedBy": "scripts/dump_html_vocabulary.py",
+  "extensions": [
+    "backgroundColor",
+    "blockquote",
+    "bold",
+    "bulletList",
+    "characterCount",
+    "code",
+    "codeBlock",
+    "color",
+    "document",
+    "dropcursor",
+    "fontFamily",
+    "fontSize",
+    "gapcursor",
+    "hardBreak",
+    "heading",
+    "highlight",
+    "history",
+    "horizontalRule",
+    "image",
+    "italic",
+    "link",
+    "listItem",
+    "orderedList",
+    "paragraph",
+    "sourceView",
+    "strike",
+    "subscript",
+    "superscript",
+    "table",
+    "tableCell",
+    "tableHeader",
+    "tableRow",
+    "text",
+    "textAlign",
+    "textStyle",
+    "underline"
+  ],
+  "tags": {
+    "a": {
+      "attributes": [
+        "class",
+        "href",
+        "rel",
+        "target",
+        "title"
+      ],
+      "styles": []
+    },
+    "blockquote": {
+      "attributes": [],
+      "styles": []
+    },
+    "br": {
+      "attributes": [],
+      "styles": []
+    },
+    "code": {
+      "attributes": [
+        "class"
+      ],
+      "styles": []
+    },
+    "col": {
+      "attributes": [],
+      "styles": [
+        "min-width",
+        "width"
+      ]
+    },
+    "colgroup": {
+      "attributes": [],
+      "styles": []
+    },
+    "em": {
+      "attributes": [],
+      "styles": []
+    },
+    "h1": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "h2": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "h3": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "h4": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "h5": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "h6": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "hr": {
+      "attributes": [],
+      "styles": []
+    },
+    "img": {
+      "attributes": [
+        "alt",
+        "height",
+        "src",
+        "title",
+        "width"
+      ],
+      "styles": [
+        "border",
+        "border-radius",
+        "display",
+        "float",
+        "height",
+        "margin",
+        "margin-bottom",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "padding",
+        "padding-bottom",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "vertical-align",
+        "width"
+      ]
+    },
+    "li": {
+      "attributes": [],
+      "styles": []
+    },
+    "ol": {
+      "attributes": [
+        "start",
+        "type"
+      ],
+      "styles": []
+    },
+    "p": {
+      "attributes": [],
+      "styles": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ]
+    },
+    "pre": {
+      "attributes": [],
+      "styles": []
+    },
+    "s": {
+      "attributes": [],
+      "styles": []
+    },
+    "span": {
+      "attributes": [],
+      "styles": [
+        "background-color",
+        "color",
+        "font-family",
+        "font-size"
+      ]
+    },
+    "strong": {
+      "attributes": [],
+      "styles": []
+    },
+    "sub": {
+      "attributes": [],
+      "styles": []
+    },
+    "sup": {
+      "attributes": [],
+      "styles": []
+    },
+    "table": {
+      "attributes": [],
+      "styles": [
+        "min-width",
+        "width"
+      ]
+    },
+    "tbody": {
+      "attributes": [],
+      "styles": []
+    },
+    "td": {
+      "attributes": [
+        "colspan",
+        "colwidth",
+        "rowspan"
+      ],
+      "styles": [
+        "background-color",
+        "text-align"
+      ]
+    },
+    "th": {
+      "attributes": [
+        "colspan",
+        "colwidth",
+        "rowspan"
+      ],
+      "styles": [
+        "background-color",
+        "text-align"
+      ]
+    },
+    "tr": {
+      "attributes": [],
+      "styles": []
+    },
+    "u": {
+      "attributes": [],
+      "styles": []
+    },
+    "ul": {
+      "attributes": [],
+      "styles": []
+    }
+  }
+}
