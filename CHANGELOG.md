@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Docs
+
+- **The custom-extension example in Extending rendered a `div` while every
+  settings block on the page declared an `aside`.** A reader who followed it
+  exactly had the callout's wrapper unwrapped by the server-side sanitiser on
+  the first save, and without the warning an undeclared extension gets,
+  because the extension *had* declared a vocabulary, just not the one it used.
+  The example now renders and parses `aside.callout`. `tests/test_documentation.py`
+  reads both halves out of the page and sanitises what the one renders under
+  what the other declares, so they cannot drift apart again.
+- **The import map on the Asset modes page is now checked against the TipTap
+  pin.** It restates the version a reader copies when overriding the default,
+  and nothing compared it with `js/package.json`. `check_js_pins.py` now
+  includes it, and the comparison of every restatement with the pin, which
+  needs no network, also runs on every pull request through
+  `tests/test_js_pin_mirrors.py` rather than only in the scheduled drift
+  workflow, where a release that missed one would be reported after it had
+  published.
+
 ## [0.10.1] — 2026-10-05
 
 ### Removed
