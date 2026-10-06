@@ -80,6 +80,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   still does not load: Django's XML deserializer decodes a `JSONField` value a
   second time after `to_python`, which this field has already parsed into a
   `TipTapValue`.
+- **`TipTapJSONField` sanitizes on save on every supported Django.** Django
+  4.2.0 and 4.2.1 never call a `JSONField`'s `get_prep_value` when saving. On
+  those two releases a mapping written through the ORM, an API or a fixture was
+  stored exactly as given, a `javascript:` link in the `doc` and an event
+  handler in the mirror included, and saving a `TipTapValue`, which is what the
+  form field and the admin save, raised `TypeError`. Reading a row back
+  re-sanitizes the mirror but not the `doc`. The Django floor is now 4.2.2,
+  where Django restored the call.
 
 ## [0.11.0] — 2026-10-06
 

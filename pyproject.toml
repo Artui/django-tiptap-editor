@@ -37,7 +37,9 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: HTML",
 ]
 dependencies = [
-    "django>=4.2",
+    # 4.2.0 and 4.2.1 never call a JSONField's get_prep_value when saving, so
+    # TipTapJSONField would store a document without sanitizing it.
+    "django>=4.2.2",
 ]
 
 [project.urls]

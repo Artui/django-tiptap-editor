@@ -148,7 +148,7 @@ Change a rule here and change the config with it, or they drift apart again.
 | | Minimum | Tested matrix |
 | --- | --- | --- |
 | Python | 3.10 | 3.10 – 3.14 |
-| Django | 4.2 | 4.2, 5.0, 5.1, 5.2, 6.0 (supported-combos excludes baked into `tests.yml`) |
+| Django | 4.2.2 | 4.2, 5.0, 5.1, 5.2, 6.0 (supported-combos excludes baked into `tests.yml`) |
 | TipTap | pinned per release | declared in `js/package.json`; a TipTap major bump that changes the primitive API is a major bump here too |
 
 ## Security stance (the boundary is on the server)
@@ -179,7 +179,7 @@ Change a rule here and change the config with it, or they drift apart again.
 - Docs enumerate exactly which tags/attributes/protocols survive. Custom-extension
   authors declare their vocabulary in `TIPTAP_EXTRA_EXTENSIONS`; a name declared
   without one warns and has its markup unwrapped.
-- **No sanitization dependency.** The package's only dependency stays `django>=4.2`;
+- **No sanitization dependency.** The package's only dependency stays `django>=4.2.2`;
   the allowlist is the package's own, built on `html.parser`.
 
 ## Boundaries

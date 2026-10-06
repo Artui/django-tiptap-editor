@@ -29,7 +29,7 @@ dependency** in your project. To bring your own TipTap from a CDN instead, see
 | | Minimum | Tested |
 | --- | --- | --- |
 | Python | 3.10 | 3.10 – 3.14 |
-| Django | 4.2 | 4.2, 5.0, 5.1, 5.2, 6.0 |
+| Django | 4.2.2 | 4.2, 5.0, 5.1, 5.2, 6.0 |
 
 The editor stores **HTML**; render it with `|tiptap_html` (see [Security](security.md) for why
 that is justified).
