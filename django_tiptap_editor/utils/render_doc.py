@@ -41,6 +41,15 @@ _SIMPLE_MARKS = {
     "superscript": "sup",
 }
 
+# The alignments Tiptap renders for a table cell. Its HTML parser keeps only
+# these three, but a document handed to the editor as JSON keeps whatever value
+# it carries and renders text-align only for these, so a stored "justify" (which
+# the editor keeps and never shows) renders nothing here too. A tuple, not a
+# set: the value is untrusted JSON, and a membership test against a set hashes
+# it -- a list or object there raised TypeError, a 500 rather than a skipped
+# style -- where a tuple compares it and answers no.
+_CELL_ALIGNMENTS = ("left", "center", "right")
+
 
 def _css_length(value: object) -> str:
     """Return ``value`` if it is a CSS length, else ``""``.
@@ -143,7 +152,9 @@ def _wrap_marks(text: str, marks: list[Any]) -> str:
             href = _attr("href", attrs.get("href"))
             target = _attr("target", safe_target)
             rel = _attr("rel", safe_rel)
-            out = f"<a{href}{target}{rel}>{out}</a>"
+            # Last, where the editor's link renders it.
+            title = _attr("title", attrs.get("title"))
+            out = f"<a{href}{target}{rel}{title}>{out}</a>"
         elif kind == "textStyle":
             style = _style_attr(
                 [
@@ -168,10 +179,16 @@ def _render_children(node: dict[str, Any]) -> str:
 
 def _cell(tag: str, node: dict[str, Any]) -> str:
     attrs = node.get("attrs") or {}
+    align = attrs.get("align")
     rendered = (
         _attr("colspan", attrs.get("colspan") if attrs.get("colspan", 1) != 1 else None)
         + _attr("rowspan", attrs.get("rowspan") if attrs.get("rowspan", 1) != 1 else None)
-        + _style_attr([("background-color", attrs.get("backgroundColor"))])
+        + _style_attr(
+            [
+                ("background-color", attrs.get("backgroundColor")),
+                ("text-align", align if align in _CELL_ALIGNMENTS else None),
+            ]
+        )
     )
     return f"<{tag}{rendered}>{_render_children(node)}</{tag}>"
 

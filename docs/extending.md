@@ -35,6 +35,27 @@ TipTapWidget(config={"extensions": ["callout"]})
 
 Built-in names are always active; unknown, unregistered names fail loudly at mount.
 
+### Writing against Tiptap 3
+
+`ctx.tiptap` and `DjangoTipTap.tiptap` hand you Tiptap 3's `Editor`, `Extension`, `Mark`,
+`Node` and `mergeAttributes`. Most extensions written for Tiptap 2 carry over unchanged;
+these are the changes a custom extension is likely to meet:
+
+- **`setContent` takes an options object.** Write
+  `editor.commands.setContent(html, { emitUpdate: false })`. A boolean second argument is
+  not rejected: it is read as an options object with nothing in it, so the Tiptap 2
+  spelling `setContent(html, false)` now emits an update, which writes the bound
+  textarea.
+- **A node view's `getPos()` can return `undefined`**, for a node that is no longer in
+  the document. Check it before using it as a position.
+- **The undo extension is `undoRedo`**, where Tiptap 2 called it `history`. The
+  `undo` and `redo` commands keep their names. In `config.extensions`, where a built-in
+  name changes nothing because built-ins are always on, it is still `history`:
+  `undoRedo` there is refused as an unknown extension.
+- **Default exports are not guaranteed.** Tiptap 3 dropped them from
+  `@tiptap/extension-table` and `@tiptap/extension-text-style`. Take what you need from
+  `ctx.tiptap`, or import named exports in your own build.
+
 ### Declaring what an extension emits
 
 The server sanitises stored markup against an allowlist built from the extensions the

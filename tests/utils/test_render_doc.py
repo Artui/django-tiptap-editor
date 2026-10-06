@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import json
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Any
+
 import pytest
 from django.utils.safestring import SafeString
 
@@ -282,6 +287,34 @@ def test_table_rendering() -> None:
     )
 
 
+@pytest.mark.parametrize("align", [["left"], {"left": True}])
+def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> None:
+    # The stored JSON is untrusted, and the alignment is read straight out of
+    # it: a list or object there must be skipped like any other value Tiptap
+    # does not render, not raise while being looked up.
+    doc = {
+        "type": "doc",
+        "content": [
+            {
+                "type": "table",
+                "content": [
+                    {
+                        "type": "tableRow",
+                        "content": [
+                            {
+                                "type": "tableCell",
+                                "attrs": {"align": align},
+                                "content": [_p_inner("c")],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    assert render_doc(doc) == "<table><tbody><tr><td><p>c</p></td></tr></tbody></table>"
+
+
 def test_children_not_a_list() -> None:
     # A paragraph whose content is missing renders empty.
     assert render_doc({"type": "doc", "content": [{"type": "paragraph"}]}) == "<p></p>"
@@ -380,3 +413,49 @@ def test_image_style_parity_with_the_editor_for_a_stored_document() -> None:
         render_doc(doc)
         == '<p><img src="https://placehold.co/120x60" style="float: right; margin: 8px"></p>'
     )
+
+
+# ---------------------------------------------------------------------------
+# Attributes rendered as the editor renders them.
+#
+# js/test/editor-render-fixture.test.ts records, for each case, the editor's
+# JSON for a document and the attributes Tiptap's renderHTML gives one of its
+# elements: names, order and values, before a browser re-serialises any style.
+# render_doc has to produce the same list from the same JSON, so a stored
+# document renders on the server the way it rendered in the editor.
+# ---------------------------------------------------------------------------
+
+_EDITOR_RENDER: list[dict[str, Any]] = json.loads(
+    (Path(__file__).parent / "fixtures" / "editor_render.json").read_text(encoding="utf-8")
+)["cases"]
+
+
+class _FirstElementAttributes(HTMLParser):
+    """Record the attributes of the first ``tag`` element, in document order."""
+
+    def __init__(self, tag: str) -> None:
+        super().__init__()
+        self.tag = tag
+        self.found: list[tuple[str, str | None]] | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == self.tag and self.found is None:
+            self.found = attrs
+
+
+@pytest.mark.parametrize("case", _EDITOR_RENDER, ids=[case["name"] for case in _EDITOR_RENDER])
+def test_renders_an_element_with_the_attributes_the_editor_gives_it(case: dict[str, Any]) -> None:
+    parser = _FirstElementAttributes(case["tag"])
+    parser.feed(str(render_doc(case["doc"])))
+    assert parser.found == [tuple(pair) for pair in case["attributes"]]
+
+
+def test_the_editor_render_cases_cover_both_attributes_tiptap_3_added() -> None:
+    # The parametrized test passes vacuously for a case whose element carries
+    # nothing, so pin that the fixture really exercises a title and every cell
+    # alignment Tiptap renders, on both cell types.
+    rendered = {(case["tag"], *pair) for case in _EDITOR_RENDER for pair in case["attributes"]}
+    assert ("a", "title", 'Say "hi" & wave') in rendered
+    for align in ("left", "center", "right"):
+        assert ("td", "style", f"text-align: {align}") in rendered
+    assert ("th", "style", "text-align: right") in rendered

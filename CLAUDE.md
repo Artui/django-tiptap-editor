@@ -167,7 +167,12 @@ Change a rule here and change the config with it, or they drift apart again.
   entries into the allowlist. Add an extension, add its vocabulary in the same commit —
   the fidelity test in `tests/utils/test_sanitize_html.py` enumerates the table and
   fails if a tag, attribute or style property has no fixture proving it round-trips
-  byte-identically.
+  byte-identically. That test can only see the table, so the editor's side is checked
+  in JS: `uv run python scripts/dump_html_vocabulary.py` writes the table to
+  `js/test/fixtures/html-vocabulary.json` (`tests/test_js_vocabulary_mirror.py` fails
+  while it is stale), and `js/test/html-vocabulary.test.ts` renders every attribute the
+  editor's schema defines and fails on anything outside it. A TipTap upgrade that starts
+  rendering something new fails there, not in a user's saved content.
 - **Never silently drop content.** An unknown tag is unwrapped and its text kept;
   `script`/`style` bodies are the one exception. A malformed value fails loudly with a
   `ValidationError` rather than becoming an empty document.

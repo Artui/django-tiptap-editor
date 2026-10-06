@@ -68,6 +68,8 @@ ENTER_KEY_MODES = frozenset({"paragraph", "hardBreak", "swap"})
 # margin-block-end / padding-left on paragraphs and headings, TextAlign adds
 # text-align, the TextStyle family writes colour / font declarations on a span,
 # the inline image keeps its layout style, and the table view sizes columns.
+# A table cell carries text-align from Tiptap 3 on, which parses a cell's inline
+# text-align (or a legacy align attribute) and renders it back as a style.
 BLOCK_STYLE_PROPERTIES = ("margin", "margin-block-end", "padding-left")
 TEXT_ALIGN_PROPERTIES = ("text-align",)
 TEXT_STYLE_PROPERTIES = ("background-color", "color", "font-family", "font-size")
@@ -91,7 +93,7 @@ IMAGE_STYLE_PROPERTIES = (
     "width",
 )
 TABLE_STYLE_PROPERTIES = ("min-width", "width")
-CELL_STYLE_PROPERTIES = ("background-color",)
+CELL_STYLE_PROPERTIES = ("background-color", "text-align")
 
 # Values a link's ``target`` may take, and the ``rel`` tokens that survive. A
 # stored ``rel="opener"`` re-enables the ``window.opener`` handle that
@@ -138,7 +140,7 @@ EXTENSION_HTML_VOCABULARY: dict[str, dict[str, dict[str, tuple[str, ...]]]] = {
     "textAlign": {
         tag: {"styles": TEXT_ALIGN_PROPERTIES} for tag in ("p", "h1", "h2", "h3", "h4", "h5", "h6")
     },
-    "link": {"a": {"attrs": ("class", "href", "rel", "target")}},
+    "link": {"a": {"attrs": ("class", "href", "rel", "target", "title")}},
     "image": {
         "img": {
             "attrs": ("alt", "height", "src", "title", "width"),
@@ -209,10 +211,11 @@ DEFAULT_CONFIG: dict[str, object] = {}
 # TipTap version the committed glue is built + validated against. Keep in sync
 # with js/package.json (the build also bakes it into the glue for the
 # external-mode startup version check).
-TIPTAP_VERSION = "2.27.3"
+TIPTAP_VERSION = "3.31.4"
 
 # Bare `@tiptap/*` specifiers the glue ESM imports — the import map external mode
-# must resolve. (Matches the externalised imports in tiptap.glue.esm.js.)
+# must resolve. tests/utils/test_get_import_map.py reads the imports out of the
+# committed tiptap.glue.esm.js and fails if this list differs from them.
 GLUE_IMPORT_SPECIFIERS = (
     "@tiptap/core",
     "@tiptap/starter-kit",
@@ -229,7 +232,7 @@ GLUE_IMPORT_SPECIFIERS = (
     "@tiptap/extension-table-header",
     "@tiptap/extension-subscript",
     "@tiptap/extension-superscript",
-    "@tiptap/extension-character-count",
+    "@tiptap/extensions",
 )
 
 # CDN base for the default external-mode import map (verified to mount + edit

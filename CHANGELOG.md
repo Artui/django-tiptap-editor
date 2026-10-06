@@ -7,6 +7,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-10-06
+
+### Upgrade note — the editor moves to Tiptap 3
+
+All `@tiptap/*` pins move from 2.27.3 to **3.31.4**, and the committed bundles are
+rebuilt from them. The fidelity corpus round-trips 48 of 48 cases as before, and the
+HTML the editor writes is byte-identical to 2.27.3's on 46 of them; the two that differ
+are tables, below. Outside the corpus, nested styled spans change too. Tiptap 3 changes the primitive API custom extensions are written
+against, so under the stability policy this is a breaking release.
+
+**What to check before upgrading.**
+
+- **Custom extensions** now receive Tiptap 3's `Editor`, `Extension`, `Mark`, `Node`
+  and `mergeAttributes` from `ctx.tiptap` and `DjangoTipTap.tiptap`.
+  `editor.commands.setContent` takes an options object, and a Tiptap 2 boolean is not
+  rejected: it is read as empty options, so `setContent(html, false)` now emits an
+  update. Write `{ emitUpdate: false }`. A node view's `getPos()` can return
+  `undefined`. The undo extension is named `undoRedo` rather than `history`; its
+  `undo`/`redo` commands are unchanged, and `config.extensions`, where every built-in
+  name is a no-op, still names it `history` and refuses `undoRedo`. Extending has a
+  section on each.
+- **A `TIPTAP_IMPORT_MAP` override needs an `@tiptap/extensions` entry, and no longer
+  needs `@tiptap/extension-character-count`.** Character count now comes from
+  `@tiptap/extensions`, where Tiptap 3 moved it, so the glue imports that instead. An
+  override replaces the default map rather than adding to it, and a module importing a
+  specifier no map entry resolves does not run. The default map follows on its own.
+  A self-hosted map pointing at the packages' own `dist/` files also has to resolve
+  what those files import, which in Tiptap 3 includes `@tiptap/core/jsx-runtime`,
+  `@tiptap/extension-list` and the StarterKit packages; Asset modes lists every one.
+- **Tables re-save without the default `colspan="1" rowspan="1"`.** Tiptap 3 omits
+  them, so a table stored by an earlier version changes its markup, not its content,
+  the next time it is saved.
+- **JSON storage keeps a colour as it was written.** Tiptap 3 reads `color` and
+  `background-color` from the style as authored, so a pasted `#ff0000` is stored as
+  `#ff0000` where 2.27.3 stored `rgb(255, 0, 0)`, and `render_doc` renders it that
+  way. The HTML the editor writes is unchanged, because ProseMirror sets styles
+  through the browser, which serialises colours as `rgb()`.
+- **Nested styled spans are stored as one span.** Tiptap 3 turns on TextStyle's
+  `mergeNestedSpanStyles`, so `<span style="color: red"><span style="font-size: 18px">`
+  is read as both styles on the inner text, where 2.27.3 kept only the inner span's
+  and dropped the colour. Such content, usually pasted, keeps a style it used to
+  lose, and its markup changes the next time it is saved; the sanitiser keeps the
+  merged span as written. The corpus has no nested span, which is why it does not
+  show this.
+- **Backspace and Delete behave differently at the edges of a list item.** StarterKit 3
+  includes ListKeymap and it is on: Backspace at the start of the last item lifts it
+  out of the list, and Delete at the end of an item joins the next item onto it,
+  where both used to move the paragraph into the item before it. It adds no schema and
+  no markup.
+- **The bundle is about a fifth larger**: `tiptap.bundle.js` goes from 399,688 to
+  479,348 bytes (125,350 to 149,909 gzipped). Most of it is `@tiptap/core` itself and
+  the list package StarterKit 3 imports. The external-mode glue grows by 55 bytes.
+
+### Added
+
+- **The sanitiser keeps a link `title` and table-cell `text-align`.** Tiptap 3 parses
+  both and renders them back, so without this the editor showed them and every save
+  stripped them. `text-align` on `td`/`th` passes the same value gate as on
+  paragraphs and headings, and `render_doc` writes both the way the editor's
+  `renderHTML` does, rendering a cell alignment only for the `left`, `center` and
+  `right` Tiptap renders, so a stored `justify` stays as invisible on the server as in
+  the editor. The cases come from the editor itself:
+  `js/test/editor-render-fixture.test.ts` generates
+  `tests/utils/fixtures/editor_render.json` and fails while it is stale.
+- **What the editor emits is now checked against what the server keeps.** Nothing
+  compared them before, which is how Tiptap 3's two new attributes would have shipped
+  stripped. `js/test/html-vocabulary.test.ts` renders every attribute in the editor's
+  schema, and every corpus case, and fails on any tag, attribute or style property
+  outside `EXTENSION_HTML_VOCABULARY`. It reads the vocabulary from a fixture
+  `scripts/dump_html_vocabulary.py` writes and `tests/test_js_vocabulary_mirror.py`
+  keeps current. The same test holds the JS registry's built-in names equal to the
+  vocabulary's keys, which also had no check.
+
+### Changed
+
+- **The default import map is checked against the glue it serves.**
+  `GLUE_IMPORT_SPECIFIERS` was a hand-kept list; `test_get_import_map` now reads the
+  imports out of the committed `tiptap.glue.esm.js` and fails if the two differ.
+
 ### Fixed
 
 - **The weekly next-major report now quotes what blocked it.** Since the job
@@ -27,8 +106,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the one `js/package.json` pins, and when they match it says so and closes
   the issue rather than updating it.
 
+### Security
+
+- **Tiptap 3.31.4 is outside GHSA-cp6q-959q-f8rh's affected range (`< 3.30.4`)**, so
+  scanners stop flagging the bundled `@tiptap/core`. 2.27.3 already carried the code
+  fix; this closes the alert as well.
+
 ### Docs
 
+- **Extending has a section on writing extensions against Tiptap 3**, and Asset
+  modes lists what a `TIPTAP_IMPORT_MAP` override must resolve, both for a rewriting
+  CDN and for a self-hosted map of the packages' own files.
+  `js/test/self-hosted-import-map.test.ts` regenerates both lists from the installed
+  packages and fails while the page differs. Security lists the two new attributes.
 - **A link on the Storage format page went nowhere on the published site.** It
   pointed at "Converting & rendering in the browser" with GitHub's slug for that
   heading, which keeps a hyphen on each side of the dropped `&`; MkDocs collapses
@@ -684,7 +774,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.8.0...v0.9.0

@@ -6,7 +6,12 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # The committed bundles are esbuild output, checked byte-for-byte against
+      # a fresh build in CI. They can legitimately end a line in spaces: Tiptap
+      # 3's HardBreak renders Markdown as a template literal holding "  \n", and
+      # stripping it both changes that string and fails the freshness check.
       - id: trailing-whitespace
+        exclude: '^django_tiptap_editor/static/django_tiptap_editor/tiptap\.'
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files

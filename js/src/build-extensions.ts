@@ -33,7 +33,9 @@ import {
 
 // Config names the always-on baseline already covers — the registry treats them
 // as known no-ops so consumers don't get spurious "unknown extension" warnings.
-const BUILTIN_NAMES = new Set<string>([
+// The server's EXTENSION_HTML_VOCABULARY is keyed by the same names, and
+// test/html-vocabulary.test.ts holds the two lists equal.
+export const BUILTIN_NAMES: ReadonlySet<string> = new Set<string>([
   "document",
   "text",
   "paragraph",
@@ -76,11 +78,21 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
   const protocols = config.linkProtocols ?? DEFAULT_LINK_PROTOCOLS;
 
   const baseline: AnyExtension[] = [
-    // StarterKit v2 covers the structural core (document/paragraph/text/bold/
-    // italic/strike/code/heading/lists/blockquote/hr/hardBreak/history/cursors).
-    // It does NOT include Underline/TextStyle/Link/Image/Table/etc., so the
-    // feature extensions below add no duplicates.
-    StarterKit,
+    // StarterKit v3 covers the structural core (document/paragraph/text/bold/
+    // italic/strike/code/heading/lists/blockquote/hr/hardBreak/undoRedo/cursors)
+    // and also bundles Link, Underline, ListKeymap and TrailingNode. Link and
+    // Underline are switched off because the configured ones below replace them
+    // (two registrations of one name is a tiptap warning and an undefined
+    // winner). TrailingNode appends an empty <p> after a doc ending in a list,
+    // heading or blockquote, which breaks byte-identical round trips. ListKeymap
+    // stays on: it is keyboard behaviour only (Backspace at the start of a list
+    // item lifts it, Delete at the end joins the next one), with no schema or
+    // markup of its own, so stored values are unchanged.
+    StarterKit.configure({
+      link: false,
+      underline: false,
+      trailingNode: false,
+    }),
     // High-priority Enter/Shift-Enter override; "paragraph" (default) adds no
     // bindings, so it's a no-op unless config.enterKey opts into another mode.
     EnterKey.configure({ mode: config.enterKey ?? "paragraph" }),

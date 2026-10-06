@@ -26,6 +26,15 @@ def test_unknown_extension_raises() -> None:
         validate_config({"extensions": ["bold", "bogus"]})
 
 
+def test_undo_extension_keeps_its_tiptap_2_name() -> None:
+    # Tiptap 3 renamed the extension undoRedo, but config.extensions names
+    # built-ins by the vocabulary key, which stayed "history": a config written
+    # for 0.10 keeps validating, and the new name is not a second spelling.
+    assert validate_config({"extensions": ["history"]})
+    with pytest.raises(ImproperlyConfigured, match="Unknown TipTap extension"):
+        validate_config({"extensions": ["undoRedo"]})
+
+
 @override_settings(TIPTAP_EXTRA_EXTENSIONS=["myExt"])
 def test_extra_extension_is_allowed() -> None:
     assert validate_config({"extensions": ["bold", "myExt"]})

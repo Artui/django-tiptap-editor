@@ -1,4 +1,5 @@
-// font-size as a TextStyle attribute (no official v2 extension). Symmetric with
+// font-size as a TextStyle attribute, written when Tiptap 2 had no official
+// extension (Tiptap 3's text-style package now exports one). Symmetric with
 // color / font-family / background-color: parses `span[style*=font-size]` and
 // renders `<span style="font-size: …">`.
 import { Extension } from "../tiptap-runtime";

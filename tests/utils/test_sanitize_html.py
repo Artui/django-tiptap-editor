@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from html.parser import HTMLParser
+from pathlib import Path
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -83,6 +85,15 @@ SERIALIZED.update(
         for level in range(1, 7)
     }
 )
+
+# What the editor itself renders for the attributes Tiptap 3 began emitting: a
+# link title and table-cell alignment. js/test/editor-render-fixture.test.ts
+# generates the file and fails while it is stale, so these are loaded rather
+# than pasted and cannot drift from the editor that produced them.
+EDITOR_RENDER = json.loads(
+    (Path(__file__).parent / "fixtures" / "editor_render.json").read_text(encoding="utf-8")
+)
+SERIALIZED.update({f"editor: {case['name']}": case["html"] for case in EDITOR_RENDER["cases"]})
 
 
 class _Vocabulary(HTMLParser):
@@ -197,6 +208,7 @@ FULL_DOC: dict = {
                                 "href": "https://example.test/?a=1&b=2",
                                 "target": "_blank",
                                 "rel": "nofollow",
+                                "title": "t",
                             },
                         }
                     ],
@@ -243,12 +255,16 @@ FULL_DOC: dict = {
                     "content": [
                         {
                             "type": "tableHeader",
-                            "attrs": {"colspan": 2, "backgroundColor": "#eeeeee"},
+                            "attrs": {
+                                "colspan": 2,
+                                "backgroundColor": "#eeeeee",
+                                "align": "center",
+                            },
                             "content": [{"type": "paragraph"}],
                         },
                         {
                             "type": "tableCell",
-                            "attrs": {"rowspan": 2},
+                            "attrs": {"rowspan": 2, "align": "right"},
                             "content": [{"type": "paragraph"}],
                         },
                     ],

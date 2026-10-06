@@ -1,0 +1,406 @@
+{
+  "generatedBy": "js/test/editor-render-fixture.test.ts",
+  "cases": [
+    {
+      "name": "link with a title",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null
+            },
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://example.test/",
+                      "target": null,
+                      "rel": null,
+                      "class": null,
+                      "title": "Say \"hi\" & wave"
+                    }
+                  }
+                ],
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p><a href=\"https://example.test/\" title=\"Say &quot;hi&quot; &amp; wave\">x</a></p>",
+      "tag": "a",
+      "attributes": [
+        [
+          "href",
+          "https://example.test/"
+        ],
+        [
+          "title",
+          "Say \"hi\" & wave"
+        ]
+      ]
+    },
+    {
+      "name": "link without a title",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null
+            },
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "link",
+                    "attrs": {
+                      "href": "https://example.test/",
+                      "target": null,
+                      "rel": null,
+                      "class": null,
+                      "title": null
+                    }
+                  }
+                ],
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p><a href=\"https://example.test/\">x</a></p>",
+      "tag": "a",
+      "attributes": [
+        [
+          "href",
+          "https://example.test/"
+        ]
+      ]
+    },
+    {
+      "name": "table cell aligned left",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "left"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td style=\"text-align: left;\"><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": [
+        [
+          "style",
+          "text-align: left"
+        ]
+      ]
+    },
+    {
+      "name": "table cell aligned center",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "center"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td style=\"text-align: center;\"><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": [
+        [
+          "style",
+          "text-align: center"
+        ]
+      ]
+    },
+    {
+      "name": "table cell aligned right",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "right"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td style=\"text-align: right;\"><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": [
+        [
+          "style",
+          "text-align: right"
+        ]
+      ]
+    },
+    {
+      "name": "table header aligned right",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "right"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><th style=\"text-align: right;\"><p>x</p></th></tr></tbody></table>",
+      "tag": "th",
+      "attributes": [
+        [
+          "style",
+          "text-align: right"
+        ]
+      ]
+    },
+    {
+      "name": "table cell spanning two columns, aligned",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 2,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "center"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"min-width: 50px;\"><colgroup><col style=\"min-width: 25px;\"><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td colspan=\"2\" style=\"text-align: center;\"><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": [
+        [
+          "colspan",
+          "2"
+        ],
+        [
+          "style",
+          "text-align: center"
+        ]
+      ]
+    },
+    {
+      "name": "table cell with an alignment the editor does not render",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "justify"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": []
+    }
+  ]
+}
