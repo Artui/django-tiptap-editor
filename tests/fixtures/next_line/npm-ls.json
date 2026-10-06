@@ -1,0 +1,177 @@
+{
+  "version": "0.0.0",
+  "name": "django-tiptap-editor-js",
+  "problems": [
+    "invalid: @tiptap/core@3.31.4 js/node_modules/@tiptap/core",
+    "invalid: @tiptap/extension-character-count@3.31.4 js/node_modules/@tiptap/extension-character-count",
+    "invalid: @tiptap/extension-color@3.31.4 js/node_modules/@tiptap/extension-color",
+    "invalid: @tiptap/extension-font-family@3.31.4 js/node_modules/@tiptap/extension-font-family",
+    "invalid: @tiptap/extension-image@3.31.4 js/node_modules/@tiptap/extension-image",
+    "invalid: @tiptap/extension-link@3.31.4 js/node_modules/@tiptap/extension-link",
+    "invalid: @tiptap/extension-subscript@3.31.4 js/node_modules/@tiptap/extension-subscript",
+    "invalid: @tiptap/extension-superscript@3.31.4 js/node_modules/@tiptap/extension-superscript",
+    "invalid: @tiptap/extension-table-cell@3.31.4 js/node_modules/@tiptap/extension-table-cell",
+    "invalid: @tiptap/extension-table-header@3.31.4 js/node_modules/@tiptap/extension-table-header",
+    "invalid: @tiptap/extension-table-row@3.31.4 js/node_modules/@tiptap/extension-table-row",
+    "invalid: @tiptap/extension-table@3.31.4 js/node_modules/@tiptap/extension-table",
+    "invalid: @tiptap/extension-text-align@3.31.4 js/node_modules/@tiptap/extension-text-align",
+    "invalid: @tiptap/extension-text-style@3.31.4 js/node_modules/@tiptap/extension-text-style",
+    "invalid: @tiptap/extension-underline@3.31.4 js/node_modules/@tiptap/extension-underline",
+    "invalid: @tiptap/starter-kit@3.31.4 js/node_modules/@tiptap/starter-kit"
+  ],
+  "dependencies": {
+    "@tiptap/core": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/core@3.31.4 js/node_modules/@tiptap/core"
+      ]
+    },
+    "@tiptap/extension-character-count": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-character-count@3.31.4 js/node_modules/@tiptap/extension-character-count"
+      ]
+    },
+    "@tiptap/extension-color": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-color@3.31.4 js/node_modules/@tiptap/extension-color"
+      ]
+    },
+    "@tiptap/extension-font-family": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-font-family@3.31.4 js/node_modules/@tiptap/extension-font-family"
+      ]
+    },
+    "@tiptap/extension-image": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-image@3.31.4 js/node_modules/@tiptap/extension-image"
+      ]
+    },
+    "@tiptap/extension-link": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-link@3.31.4 js/node_modules/@tiptap/extension-link"
+      ]
+    },
+    "@tiptap/extension-subscript": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-subscript@3.31.4 js/node_modules/@tiptap/extension-subscript"
+      ]
+    },
+    "@tiptap/extension-superscript": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-superscript@3.31.4 js/node_modules/@tiptap/extension-superscript"
+      ]
+    },
+    "@tiptap/extension-table-cell": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-table-cell@3.31.4 js/node_modules/@tiptap/extension-table-cell"
+      ]
+    },
+    "@tiptap/extension-table-header": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-table-header@3.31.4 js/node_modules/@tiptap/extension-table-header"
+      ]
+    },
+    "@tiptap/extension-table-row": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-table-row@3.31.4 js/node_modules/@tiptap/extension-table-row"
+      ]
+    },
+    "@tiptap/extension-table": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-table@3.31.4 js/node_modules/@tiptap/extension-table"
+      ]
+    },
+    "@tiptap/extension-text-align": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-text-align@3.31.4 js/node_modules/@tiptap/extension-text-align"
+      ]
+    },
+    "@tiptap/extension-text-style": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-text-style@3.31.4 js/node_modules/@tiptap/extension-text-style"
+      ]
+    },
+    "@tiptap/extension-underline": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/extension-underline@3.31.4 js/node_modules/@tiptap/extension-underline"
+      ]
+    },
+    "@tiptap/starter-kit": {
+      "version": "3.31.4",
+      "overridden": false,
+      "invalid": "\"latest\" from the root project",
+      "problems": [
+        "invalid: @tiptap/starter-kit@3.31.4 js/node_modules/@tiptap/starter-kit"
+      ]
+    },
+    "esbuild": {
+      "version": "0.28.2",
+      "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+      "overridden": false
+    },
+    "jsdom": {
+      "version": "25.0.1",
+      "resolved": "https://registry.npmjs.org/jsdom/-/jsdom-25.0.1.tgz",
+      "overridden": false
+    },
+    "typescript": {
+      "version": "5.9.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+      "overridden": false
+    },
+    "vitest": {
+      "version": "4.1.11",
+      "resolved": "https://registry.npmjs.org/vitest/-/vitest-4.1.11.tgz",
+      "overridden": false
+    }
+  },
+  "error": {
+    "code": "ELSPROBLEMS",
+    "summary": "invalid: @tiptap/core@3.31.4 js/node_modules/@tiptap/core\ninvalid: @tiptap/extension-character-count@3.31.4 js/node_modules/@tiptap/extension-character-count\ninvalid: @tiptap/extension-color@3.31.4 js/node_modules/@tiptap/extension-color\ninvalid: @tiptap/extension-font-family@3.31.4 js/node_modules/@tiptap/extension-font-family\ninvalid: @tiptap/extension-image@3.31.4 js/node_modules/@tiptap/extension-image\ninvalid: @tiptap/extension-link@3.31.4 js/node_modules/@tiptap/extension-link\ninvalid: @tiptap/extension-subscript@3.31.4 js/node_modules/@tiptap/extension-subscript\ninvalid: @tiptap/extension-superscript@3.31.4 js/node_modules/@tiptap/extension-superscript\ninvalid: @tiptap/extension-table-cell@3.31.4 js/node_modules/@tiptap/extension-table-cell\ninvalid: @tiptap/extension-table-header@3.31.4 js/node_modules/@tiptap/extension-table-header\ninvalid: @tiptap/extension-table-row@3.31.4 js/node_modules/@tiptap/extension-table-row\ninvalid: @tiptap/extension-table@3.31.4 js/node_modules/@tiptap/extension-table\ninvalid: @tiptap/extension-text-align@3.31.4 js/node_modules/@tiptap/extension-text-align\ninvalid: @tiptap/extension-text-style@3.31.4 js/node_modules/@tiptap/extension-text-style\ninvalid: @tiptap/extension-underline@3.31.4 js/node_modules/@tiptap/extension-underline\ninvalid: @tiptap/starter-kit@3.31.4 js/node_modules/@tiptap/starter-kit",
+    "detail": ""
+  }
+}

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.11.0] — 2026-10-05
+## [0.11.0] — 2026-10-06
 
 ### Upgrade note — the editor moves to Tiptap 3
 
@@ -86,6 +86,26 @@ against, so under the stability policy this is a breaking release.
   `GLUE_IMPORT_SPECIFIERS` was a hand-kept list; `test_get_import_map` now reads the
   imports out of the committed `tiptap.glue.esm.js` and fails if the two differ.
 
+### Fixed
+
+- **The weekly next-major report now quotes what blocked it.** Since the job
+  was added it has reported the newer Tiptap as blocked before any corpus case
+  ran, and said the run's log named the error. It did not: the corpus ran under
+  vitest's JSON reporter alone, which records a suite whose setup threw as every
+  case skipped and the suite's message as an empty string, so the error was
+  printed nowhere. The job now runs the default reporter beside the JSON one and
+  the report quotes the error section vitest printed, frame and code excerpt
+  included: the failed suite's, or the startup error when vitest cannot load at
+  all, and the end of its output when it printed neither. For Tiptap 3 it names
+  `Table.configure` on an import that has no default export -- the first of
+  two, since `TextStyle` has none either and the suite stops at the first.
+- **The same report stops once there is no newer major to price.** It set every
+  Tiptap package to `latest`, which is the next major only while one exists;
+  once the pins cross it, the job would have gone on reporting a corpus run
+  under a heading about crossing a major. It now compares the major it resolved
+  with the one `js/package.json` pins, and when they match it says so and closes
+  the issue rather than updating it.
+
 ### Security
 
 - **Tiptap 3.31.4 is outside GHSA-cp6q-959q-f8rh's affected range (`< 3.30.4`)**, so
@@ -99,6 +119,13 @@ against, so under the stability policy this is a breaking release.
   CDN and for a self-hosted map of the packages' own files.
   `js/test/self-hosted-import-map.test.ts` regenerates both lists from the installed
   packages and fails while the page differs. Security lists the two new attributes.
+- **A link on the Storage format page went nowhere on the published site.** It
+  pointed at "Converting & rendering in the browser" with GitHub's slug for that
+  heading, which keeps a hyphen on each side of the dropped `&`; MkDocs collapses
+  them, so the anchor did not exist. MkDocs reports that at INFO, which a
+  `--strict` build lets through. The link now uses the slug the site generates,
+  and `mkdocs.yml` raises missing anchors to a warning, so the docs build fails
+  on the next one.
 - **The custom-extension example in Extending rendered a `div` while every
   settings block on the page declared an `aside`.** A reader who followed it
   exactly had the callout's wrapper unwrapped by the server-side sanitiser on

@@ -1,0 +1,14 @@
+[31mfailed to load config from <scratch>/broken.vitest.config.mjs[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Startup Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯⎯[39m
+Error: config-broke-here
+    at file://<scratch>/broken.vitest.config.mjs.timestamp-1791230399542-6408030e9e243.mjs:2:7
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:639:26)
+    at async loadConfigFromBundledFile (file://<repo>/js/node_modules/vite/dist/node/chunks/node.js:37918:12)
+    at async bundleAndLoadConfigFile (file://<repo>/js/node_modules/vite/dist/node/chunks/node.js:37764:21)
+    at async loadConfigFromFile (file://<repo>/js/node_modules/vite/dist/node/chunks/node.js:37724:42)
+    at async resolveConfig (file://<repo>/js/node_modules/vite/dist/node/chunks/node.js:37325:22)
+    at async _createServer (file://<repo>/js/node_modules/vite/dist/node/chunks/node.js:24628:65)
+    at async createViteServer (file://<repo>/js/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:8902:17)
+    at async createVitest (file://<repo>/js/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14288:18)

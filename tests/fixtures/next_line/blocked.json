@@ -1,0 +1,568 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 48,
+  "numPassedTests": 0,
+  "numFailedTests": 0,
+  "numPendingTests": 48,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791229279669,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: paragraphs-basic",
+          "status": "skipped",
+          "title": "preserves content: paragraphs-basic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: inline-marks",
+          "status": "skipped",
+          "title": "preserves content: inline-marks",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: nested-marks",
+          "status": "skipped",
+          "title": "preserves content: nested-marks",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: font-size-span",
+          "status": "skipped",
+          "title": "preserves content: font-size-span",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: font-family-span",
+          "status": "skipped",
+          "title": "preserves content: font-family-span",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: color-span",
+          "status": "skipped",
+          "title": "preserves content: color-span",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: highlight-span",
+          "status": "skipped",
+          "title": "preserves content: highlight-span",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: text-align-center",
+          "status": "skipped",
+          "title": "preserves content: text-align-center",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: text-align-justify",
+          "status": "skipped",
+          "title": "preserves content: text-align-justify",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: paragraph-margin-email",
+          "status": "skipped",
+          "title": "preserves content: paragraph-margin-email",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: margin-block-modern",
+          "status": "skipped",
+          "title": "preserves content: margin-block-modern",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: ul-nested",
+          "status": "skipped",
+          "title": "preserves content: ul-nested",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: ol-basic",
+          "status": "skipped",
+          "title": "preserves content: ol-basic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: link-basic",
+          "status": "skipped",
+          "title": "preserves content: link-basic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: link-target-rel",
+          "status": "skipped",
+          "title": "preserves content: link-target-rel",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: link-mailto",
+          "status": "skipped",
+          "title": "preserves content: link-mailto",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: link-tel",
+          "status": "skipped",
+          "title": "preserves content: link-tel",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: link-javascript",
+          "status": "skipped",
+          "title": "preserves content: link-javascript",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: image-basic",
+          "status": "skipped",
+          "title": "preserves content: image-basic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: image-style",
+          "status": "skipped",
+          "title": "preserves content: image-style",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: table-basic",
+          "status": "skipped",
+          "title": "preserves content: table-basic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: table-styled",
+          "status": "skipped",
+          "title": "preserves content: table-styled",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: headings",
+          "status": "skipped",
+          "title": "preserves content: headings",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: blockquote",
+          "status": "skipped",
+          "title": "preserves content: blockquote",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: sub-sup",
+          "status": "skipped",
+          "title": "preserves content: sub-sup",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: hr",
+          "status": "skipped",
+          "title": "preserves content: hr",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: line-break",
+          "status": "skipped",
+          "title": "preserves content: line-break",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: messy-script",
+          "status": "skipped",
+          "title": "preserves content: messy-script",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: messy-divs",
+          "status": "skipped",
+          "title": "preserves content: messy-divs",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: messy-style-attr",
+          "status": "skipped",
+          "title": "preserves content: messy-style-attr",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: combined-email",
+          "status": "skipped",
+          "title": "preserves content: combined-email",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-bold",
+          "status": "skipped",
+          "title": "preserves content: cmd-bold",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-italic",
+          "status": "skipped",
+          "title": "preserves content: cmd-italic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-underline",
+          "status": "skipped",
+          "title": "preserves content: cmd-underline",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-strikethrough",
+          "status": "skipped",
+          "title": "preserves content: cmd-strikethrough",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-align-center",
+          "status": "skipped",
+          "title": "preserves content: cmd-align-center",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-align-right",
+          "status": "skipped",
+          "title": "preserves content: cmd-align-right",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-align-justify",
+          "status": "skipped",
+          "title": "preserves content: cmd-align-justify",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-bullet-list",
+          "status": "skipped",
+          "title": "preserves content: cmd-bullet-list",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-numbered-list",
+          "status": "skipped",
+          "title": "preserves content: cmd-numbered-list",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-heading-h2",
+          "status": "skipped",
+          "title": "preserves content: cmd-heading-h2",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-blockquote",
+          "status": "skipped",
+          "title": "preserves content: cmd-blockquote",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-fontsize",
+          "status": "skipped",
+          "title": "preserves content: cmd-fontsize",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-fontname",
+          "status": "skipped",
+          "title": "preserves content: cmd-fontname",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-forecolor",
+          "status": "skipped",
+          "title": "preserves content: cmd-forecolor",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-backcolor",
+          "status": "skipped",
+          "title": "preserves content: cmd-backcolor",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-indent",
+          "status": "skipped",
+          "title": "preserves content: cmd-indent",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "fidelity corpus round-trip"
+          ],
+          "fullName": "fidelity corpus round-trip preserves content: cmd-bold-then-italic",
+          "status": "skipped",
+          "title": "preserves content: cmd-bold-then-italic",
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791229279669,
+      "endTime": 1791229279669,
+      "status": "failed",
+      "message": "",
+      "name": "js/test/fidelity.test.ts"
+    }
+  ]
+}
