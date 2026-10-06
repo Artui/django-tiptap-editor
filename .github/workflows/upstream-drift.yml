@@ -291,9 +291,14 @@ jobs:
       # incompatibility that had nothing to do with the schema and would have
       # been reported as a fidelity result. Holding jsdom, vitest, typescript and
       # esbuild at their committed pins is what makes the number attributable.
+      #
+      # The committed manifest is kept aside first, because the report compares
+      # the major it pins with the one `latest` resolved: once the pins have
+      # crossed, there is no newer major and nothing to price.
       - name: Take the newest Tiptap, hold the toolchain
         working-directory: js
         run: |
+          cp package.json "${{ runner.temp }}/package.pinned.json"
           python3 - <<'PY'
           import json
           import pathlib
@@ -325,12 +330,28 @@ jobs:
       # `|| true` on both: this job reports and never gates. A suite that cannot
       # start is itself the finding, and the reporter says so rather than
       # printing a zero that reads like 48 documents losing their content.
+      #
+      # **Two reporters, because neither carries both halves.** The JSON one is
+      # what the cases are counted from, but when the suite's setup throws it
+      # records every case as skipped and the suite's error as an empty string;
+      # only the default reporter prints the error. Its output is kept so the
+      # report can quote it, rather than pointing at a log that never had it.
       - name: Fidelity corpus against the newer line
         working-directory: js
-        run: npx vitest run test/fidelity.test.ts --reporter=json --outputFile="${{ runner.temp }}/corpus.json" || true
+        run: |
+          npx vitest run test/fidelity.test.ts \
+            --reporter=default --reporter=json \
+            --outputFile.json="${{ runner.temp }}/corpus.json" \
+            2>&1 | tee "${{ runner.temp }}/corpus.log" || true
 
       - name: Write the report
-        run: uv run python scripts/price_next_line.py "${{ runner.temp }}/corpus.json" "${{ runner.temp }}/npm-ls.json" "${{ runner.temp }}/js-next-line.md"
+        run: |
+          uv run python scripts/price_next_line.py \
+            "${{ runner.temp }}/corpus.json" \
+            "${{ runner.temp }}/corpus.log" \
+            "${{ runner.temp }}/npm-ls.json" \
+            "${{ runner.temp }}/package.pinned.json" \
+            "${{ runner.temp }}/js-next-line.md"
 
       - name: Discard the rewritten manifest
         if: always()
@@ -340,6 +361,10 @@ jobs:
       # holds" is as much worth recording as a regression. The body is updated
       # every week and a comment is added only when the numbers or the resolved
       # versions actually moved, so a standing issue does not become noise.
+      #
+      # The one report that is not a price is "no newer major exists", which
+      # follows a major being crossed. That closes the issue instead of
+      # updating it, and opens nothing when there is no issue to close.
       - name: Open or update the pricing issue
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
@@ -357,6 +382,19 @@ jobs:
               state: "open", labels: "upstream-drift",
             });
             const match = existing.data.find((issue) => issue.title === title);
+            if (report.includes("<!-- js-next-line-status: no-newer-major -->")) {
+              if (match) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: match.number, body,
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: match.number, state: "closed", state_reason: "completed",
+                });
+              }
+              return;
+            }
             if (!match) {
               await github.rest.issues.create({
                 owner: context.repo.owner, repo: context.repo.repo,

@@ -1,6 +1,7 @@
 """Report what the next major line beyond each JS pin would cost, in corpus cases.
 
-    python scripts/price_next_line.py <vitest-report.json> <npm-ls.json> <out.md>
+    python scripts/price_next_line.py <vitest-report.json> <vitest.log> <npm-ls.json> \
+        <pinned-package.json> <out.md>
 
 `check_js_pins.py` already says a newer *line* exists -- Tiptap 3.x beyond a
 pinned 2.x, and so on -- and stops there, correctly: whether to cross a major is
@@ -21,7 +22,9 @@ buys is that the decision is repriced weekly instead of aging quietly.
 Two failure modes are reported rather than hidden, because both are answers:
 
 - the install or the type-check falls over, which prices the migration as
-  "blocked before the corpus can even run" -- more useful than a missing number;
+  "blocked before the corpus can even run" -- more useful than a missing number,
+  and only useful at all if the report quotes what fell over (see
+  ``_error_section``);
 - a corpus case that is currently a documented *normalization* starts round-
   tripping exactly. The suite treats that as a failure on purpose (the exception
   should be deleted), so a raw pass count would score an improvement as a
@@ -32,6 +35,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
 
 # The prefix every corpus assertion is titled with, from `fidelity.test.ts`.
@@ -43,6 +47,27 @@ CASE_PREFIX = "preserves content: "
 # since last week. Only the numbers feed it, so a reworded preamble does not
 # ping a thread nobody needs to re-read.
 MARKER = "js-next-line"
+
+# The second marker the workflow reads. When the newest Tiptap is inside the
+# pinned major there is nothing to price, and the workflow closes the issue
+# rather than keep a standing "what the next major would cost" with no answer.
+NOTHING_TO_PRICE = f"<!-- {MARKER}-status: no-newer-major -->"
+
+# Vitest's default reporter colours its output on a CI runner, and the divider
+# it draws around each error section is a run of U+23AF. Both are named by
+# escape rather than pasted, so the pattern survives an editor or a hook that
+# normalises either.
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+_DIVIDER = "\u23af"
+
+# A section is opened by a divider with a title in it -- "Failed Suites 1",
+# "Startup Error", "Unhandled Errors". The divider that closes one carries a
+# counter with no spaces around it ("[1/1]"), which this does not match.
+_SECTION = re.compile(rf"^{_DIVIDER}+ (.+?) {_DIVIDER}+$")
+
+# Enough of a stack to name the file and line in our code, which is all the
+# report needs; the run's own log has the rest.
+_ERROR_LINES = 24
 
 
 def _packages(npm_ls: dict[str, object]) -> dict[str, str]:
@@ -93,6 +118,72 @@ def _cases(report: dict[str, object]) -> tuple[list[str], list[str], list[str]]:
     return held, broke, unrun
 
 
+def _trim(lines: list[str]) -> list[str]:
+    """``lines`` without the blank lines at either end."""
+    start, end = 0, len(lines)
+    while start < end and not lines[start]:
+        start += 1
+    while end > start and not lines[end - 1]:
+        end -= 1
+    return lines[start:end]
+
+
+def _error_section(log: str) -> tuple[str, list[str]]:
+    """The first error section vitest's default reporter printed, and its title.
+
+    **This exists because the JSON report does not carry it.** When the suite's
+    ``beforeAll`` throws -- the front door a breaking major falls over first --
+    vitest's JSON reporter records every case as skipped, the suite as failed,
+    and the suite's ``message`` as an empty string. The error itself is printed
+    only by the default reporter, under a "Failed Suites" divider. Before this
+    read it, the issue said the run's log named the error while the workflow
+    ran the JSON reporter alone, so the report priced the migration as blocked
+    and nobody could see by what.
+
+    Any titled section is taken, not only that one: a vitest that cannot load
+    its config prints a "Startup Error" section instead, which runs to the end
+    of the output rather than to a closing divider, and writes no JSON at all.
+    With no section, the title is empty and the lines are the last ones the
+    output had, since whatever ended it is the nearest thing to a cause.
+    """
+    lines = _ANSI.sub("", log).splitlines()
+    for index, line in enumerate(lines):
+        header = _SECTION.match(line)
+        if header is None:
+            continue
+        block: list[str] = []
+        for body in lines[index + 1 :]:
+            if body.startswith(_DIVIDER):
+                break
+            block.append(body)
+        return header[1], _trim(block)[:_ERROR_LINES]
+    return "", _trim(lines)[-_ERROR_LINES:]
+
+
+def _major(version: str | None) -> int | None:
+    """The leading number of a version or exact pin, or None if there is none."""
+    matched = re.match(r"\s*[\^~]?(\d+)\.", version or "")
+    return int(matched[1]) if matched else None
+
+
+def _no_newer_major(resolved: dict[str, str], pinned: dict[str, object]) -> bool:
+    """Whether the newest Tiptap this run resolved is inside the pinned major.
+
+    The job sets every Tiptap package to ``latest``, which is the next major
+    only while one exists. Once the pins have crossed it, ``latest`` is the
+    pinned line again, and a corpus run against it would be reported as "every
+    case held" under a heading about crossing a major -- a true number
+    answering a question nobody asked.
+    """
+    dependencies = pinned.get("dependencies")
+    pin = dependencies.get("@tiptap/core") if isinstance(dependencies, dict) else None
+    pinned_major = _major(pin if isinstance(pin, str) else None)
+    resolved_major = _major(resolved.get("@tiptap/core"))
+    if pinned_major is None or resolved_major is None:
+        return False
+    return resolved_major <= pinned_major
+
+
 def _fingerprint(held: list[str], broke: list[str], resolved: dict[str, str]) -> str:
     """A digest of the answer, so an unchanged answer is not re-announced.
 
@@ -109,11 +200,31 @@ def _fingerprint(held: list[str], broke: list[str], resolved: dict[str, str]) ->
     return hashlib.sha256(payload.encode()).hexdigest()[:12]
 
 
-def render(report: dict[str, object], npm_ls: dict[str, object]) -> str:
+def render(
+    report: dict[str, object],
+    log: str,
+    npm_ls: dict[str, object],
+    pinned: dict[str, object],
+) -> str:
     """The markdown body of the issue."""
     resolved = _packages(npm_ls)
     held, broke, unrun = _cases(report)
     measured = len(held) + len(broke)
+
+    if _no_newer_major(resolved, pinned):
+        lines = [
+            "## No newer Tiptap major has been published",
+            "",
+            f"The newest `@tiptap/core` is {resolved['@tiptap/core']}, inside the",
+            "major `js/package.json` already pins, so there is no migration to",
+            "price. The pinned-line job covers the newest release in that major.",
+            "",
+            "This closes the issue; the first run that finds a newer major opens",
+            "a fresh one.",
+            "",
+            NOTHING_TO_PRICE,
+        ]
+        return "\n".join(lines) + "\n"
 
     lines = [
         "The weekly run against the newest release of every Tiptap package --",
@@ -129,9 +240,23 @@ def render(report: dict[str, object], npm_ls: dict[str, object]) -> str:
             f"{len(unrun) or 'No'} corpus cases were collected and none of them ran.",
             "The suite builds one editor before the first case; when that throws,",
             "every case is skipped rather than failed. So this is not a fidelity",
-            "result at all -- it is the newer line failing to load, which the run's",
-            "own log names.",
+            "result at all -- it is the newer line failing to load.",
             "",
+        ]
+        title, error = _error_section(log)
+        if title:
+            lines += [f"What stopped it, from vitest's {title!r} section:", ""]
+            lines += ["```", *error, "```", ""]
+        elif error:
+            lines += ["Vitest printed no error section. Its output ended:", ""]
+            lines += ["```", *error, "```", ""]
+        else:
+            lines += [
+                "The vitest step left no output, so there is nothing to quote here;",
+                "that step in the run above is the place to look.",
+                "",
+            ]
+        lines += [
             "That is still an answer, and a cheap one: it prices the migration as",
             "*blocked at the front door* rather than expensive in the corpus, and",
             "the front door is usually one import or one renamed export.",
@@ -214,12 +339,24 @@ def _load(path: str) -> dict[str, object]:
     return loaded if isinstance(loaded, dict) else {}
 
 
+def _read(path: str) -> str:
+    """A text file's contents, or empty if the step never wrote it."""
+    try:
+        return pathlib.Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 4:
-        print(f"usage: {argv[0]} <vitest-report.json> <npm-ls.json> <out.md>", file=sys.stderr)
+    if len(argv) != 6:
+        print(
+            f"usage: {argv[0]} <vitest-report.json> <vitest.log> <npm-ls.json>"
+            " <pinned-package.json> <out.md>",
+            file=sys.stderr,
+        )
         return 2
-    body = render(_load(argv[1]), _load(argv[2]))
-    pathlib.Path(argv[3]).write_text(body, encoding="utf-8")
+    body = render(_load(argv[1]), _read(argv[2]), _load(argv[3]), _load(argv[4]))
+    pathlib.Path(argv[5]).write_text(body, encoding="utf-8")
     print(body)
     return 0
 
