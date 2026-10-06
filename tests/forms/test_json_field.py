@@ -7,7 +7,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
 
-from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH
+from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH, MAX_JSON_DEPTH
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
 from django_tiptap_editor.types.tiptap_value import TipTapValue
 
@@ -182,6 +182,29 @@ def test_a_deeply_nested_document_is_a_field_error() -> None:
     form = DocumentForm(data={"document": json.dumps({"doc": doc, "html": ""})})
     assert not form.is_valid()
     assert "nests deeper" in form.errors["document"][0]
+
+
+def _nested_in_attrs(depth: int) -> str:
+    """A body whose paragraph's ``attrs`` is ``depth`` nested arrays."""
+    attrs = "[" * depth + "]" * depth
+    return (
+        '{"doc": {"type": "doc", "content": [{"type": "paragraph", "attrs": '
+        + attrs
+        + '}]}, "html": ""}'
+    )
+
+
+def test_a_body_nested_deep_inside_attrs_is_a_field_error() -> None:
+    # It decodes, so the parse guard is not what answers, and it is shallow in
+    # content, so neither is sanitize_doc's node limit: the depth is all inside
+    # one node's attrs, short of json.loads' own limit even on Python 3.10.
+    body = _nested_in_attrs(MAX_JSON_DEPTH + 100)
+    json.loads(body)
+    form = DocumentForm(data={"document": body})
+    assert not form.is_valid()
+    assert form.errors["document"] == [
+        f"TipTap document nests values deeper than the maximum of {MAX_JSON_DEPTH} levels."
+    ]
 
 
 @pytest.mark.parametrize(("body", "raised"), _UNDECODABLE)

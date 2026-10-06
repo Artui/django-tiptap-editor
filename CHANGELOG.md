@@ -32,6 +32,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3.10, so a 2 KB POST) and `ValueError` on an integer longer than 4300 digits.
   Both were a 500. `TipTapJSONField` had the same gap where it parses a string
   value from a fixture or a deserializer, and raises `ValidationError` there now.
+- **A JSON document nested deep inside a node's `attrs` is a field error rather
+  than a 500 through a `ModelForm` or the admin.** Such a body parses, and
+  `sanitize_doc` bounds only how deeply nodes nest, so the form field accepted
+  it. Django's `JSONField` then re-encodes the value with `json.dumps` in
+  `validate` and again on save, and the encoder recurses once per level: on
+  Python 3.10 an array some 945 levels deep, a 2 KB POST, passed validation and
+  raised `RecursionError` in `save()`. Any value nested deeper than the new
+  `MAX_JSON_DEPTH` (400 levels, counting every object and array) is now refused
+  with a `ValidationError` by `TipTapJSONFormField`, by `TipTapJSONField.validate`
+  and by `TipTapJSONField.get_prep_value`, the last because `save()` runs no
+  validation. A document at the node limit reaches about 200 levels. Reading and
+  rendering are unchanged, so a row already stored deeper still renders.
 
 ## [0.11.0] — 2026-10-06
 

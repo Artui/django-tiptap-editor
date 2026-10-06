@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.forms import modelform_factory
 from django.test import override_settings
 
+from django_tiptap_editor.constants import MAX_JSON_DEPTH
 from django_tiptap_editor.fields.tiptap_json_field import (
     _RENDERABLE_MARK_TYPES,
     _RENDERABLE_NODE_TYPES,
@@ -244,6 +245,47 @@ def test_full_clean_rejects_a_non_serializable_document() -> None:
     with pytest.raises(ValidationError) as exc:
         article.full_clean()
     assert "document" in exc.value.message_dict
+
+
+def _attrs_nested(depth: int) -> dict[str, object]:
+    """A stored value whose paragraph's ``attrs`` is ``depth`` nested arrays."""
+    attrs: list[object] = []
+    for _ in range(depth - 1):
+        attrs = [attrs]
+    return {"doc": {"type": "doc", "content": [{"type": "paragraph", "attrs": attrs}]}, "html": ""}
+
+
+_TOO_DEEP = f"TipTap document nests values deeper than the maximum of {MAX_JSON_DEPTH} levels."
+
+
+@pytest.mark.django_db
+def test_model_form_refuses_a_value_nested_deep_inside_attrs() -> None:
+    # The admin's path. The form field answers before the model field's
+    # validate re-encodes the value with json.dumps, which recurses per level:
+    # on Python 3.10 a body some 950 levels deep parsed and then raised
+    # RecursionError there, a 500 from a 2 KB POST.
+    body = json.dumps(_attrs_nested(MAX_JSON_DEPTH + 100))
+    form = ArticleForm(data={"title": "t", "body": "b", "document": body})
+    assert not form.is_valid()
+    assert form.errors["document"] == [_TOO_DEEP]
+
+
+@pytest.mark.django_db
+def test_full_clean_refuses_a_value_nested_past_the_bound() -> None:
+    # A value an API assigns reaches validate without the form field's check.
+    article = Article(title="t", body="b", document=_attrs_nested(MAX_JSON_DEPTH + 1))
+    with pytest.raises(ValidationError) as exc:
+        article.full_clean()
+    assert exc.value.message_dict["document"] == [_TOO_DEEP]
+
+
+def test_get_prep_value_refuses_a_value_nested_past_the_bound() -> None:
+    # save() runs no validate, and get_prep_value is its json.dumps.
+    with pytest.raises(ValidationError, match="nests values deeper"):
+        TipTapJSONField().get_prep_value(_attrs_nested(MAX_JSON_DEPTH + 1))
+    # The document, its content array and the paragraph are the other three
+    # levels, so this one sits exactly at the bound, which is inclusive.
+    TipTapJSONField().get_prep_value(_attrs_nested(MAX_JSON_DEPTH - 3))
 
 
 @pytest.mark.django_db

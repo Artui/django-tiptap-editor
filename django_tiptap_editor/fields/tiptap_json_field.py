@@ -14,6 +14,7 @@ from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
 from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
+from django_tiptap_editor.utils.validate_json_depth import validate_json_depth
 
 # The node and mark vocabulary the server-side renderer can express. Kept in
 # sync with render_doc's dispatch chain: a type outside it is flattened to its
@@ -147,6 +148,10 @@ class TipTapJSONField(models.JSONField):
             super().validate(value, model_instance)
             return
         coerced = value if isinstance(value, TipTapValue) else TipTapValue.from_stored(value)
+        # ``JSONField.validate`` is a ``json.dumps``, which recurses per level, so
+        # the depth is bounded first; ``full_clean`` on a value an API assigned
+        # reaches here without passing through the form field's check.
+        validate_json_depth(coerced.doc)
         super().validate(coerced.to_stored(), model_instance)
         # ``get_extra_extensions`` returns a mapping of name to the HTML vocabulary
         # the extension emits (``None`` when the project declared only the name), so
@@ -170,6 +175,8 @@ class TipTapJSONField(models.JSONField):
         if value is None:
             return super().get_prep_value(None)
         coerced = value if isinstance(value, TipTapValue) else TipTapValue.from_stored(value)
+        # Saving is the other ``json.dumps``, and ``save()`` runs no ``validate``.
+        validate_json_depth(coerced.doc)
         doc = sanitize_doc(
             coerced.doc,
             link_protocols=self.link_protocols,
