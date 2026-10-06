@@ -568,6 +568,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#overriding-the-map-and-self-hosting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overriding the map, and self-hosting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-skew-caveat" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -845,6 +856,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#overriding-the-map-and-self-hosting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overriding the map, and self-hosting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-skew-caveat" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -904,12 +926,78 @@ an <strong>import map</strong>. For consumers who load TipTap from a CDN or thei
 <code>&lt;script type="module"&gt;</code>. By default the import map pins every required <code>@tiptap/*</code>
 specifier to the validated version on a CDN (<code>esm.sh</code>); override deliberately:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">TIPTAP_IMPORT_MAP</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s2">&quot;@tiptap/core&quot;</span><span class="p">:</span> <span class="s2">&quot;https://esm.sh/@tiptap/core@2.27.3&quot;</span><span class="p">,</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="s2">&quot;@tiptap/core&quot;</span><span class="p">:</span> <span class="s2">&quot;https://esm.sh/@tiptap/core@3.31.4&quot;</span><span class="p">,</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="c1"># … or your self-hosted URLs. Set {} to opt out of the default.</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">}</span>
 </span></code></pre></div>
 <p><code>class Media</code> always serves the self-contained bundle, so the admin stays node-free even
 when external mode is on; external mode applies to templates that use <code>{% tiptap_media %}</code>.</p>
+<h3 id="overriding-the-map-and-self-hosting">Overriding the map, and self-hosting<a class="headerlink" href="#overriding-the-map-and-self-hosting" title="Permanent link">&para;</a></h3>
+<p><code>TIPTAP_IMPORT_MAP</code> replaces the default map rather than adding to it, so an override
+must resolve every specifier the glue imports:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>@tiptap/core
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>@tiptap/starter-kit
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>@tiptap/extension-underline
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>@tiptap/extension-text-style
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>@tiptap/extension-font-family
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>@tiptap/extension-color
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>@tiptap/extension-text-align
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>@tiptap/extension-link
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>@tiptap/extension-image
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>@tiptap/extension-table
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>@tiptap/extension-table-row
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>@tiptap/extension-table-cell
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>@tiptap/extension-table-header
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>@tiptap/extension-subscript
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>@tiptap/extension-superscript
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>@tiptap/extensions
+</span></code></pre></div>
+<p>A CDN that rewrites each package's own imports into URLs, as esm.sh does, needs nothing
+more. A map pointing at the packages' own <code>dist/</code> files does: those import their
+dependencies by bare specifier too, so the map must also resolve each of these:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>@tiptap/core/jsx-runtime
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>@tiptap/extension-blockquote
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>@tiptap/extension-bold
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>@tiptap/extension-code
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>@tiptap/extension-code-block
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>@tiptap/extension-document
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>@tiptap/extension-hard-break
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>@tiptap/extension-heading
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>@tiptap/extension-horizontal-rule
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>@tiptap/extension-italic
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>@tiptap/extension-list
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>@tiptap/extension-paragraph
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>@tiptap/extension-strike
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>@tiptap/extension-text
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>@tiptap/pm/commands
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>@tiptap/pm/dropcursor
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>@tiptap/pm/gapcursor
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>@tiptap/pm/history
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>@tiptap/pm/keymap
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>@tiptap/pm/model
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>@tiptap/pm/schema-list
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>@tiptap/pm/state
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>@tiptap/pm/tables
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>@tiptap/pm/transform
+</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>@tiptap/pm/view
+</span><span id="__span-4-26"><a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>linkifyjs
+</span><span id="__span-4-27"><a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>orderedmap
+</span><span id="__span-4-28"><a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>prosemirror-commands
+</span><span id="__span-4-29"><a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>prosemirror-dropcursor
+</span><span id="__span-4-30"><a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>prosemirror-gapcursor
+</span><span id="__span-4-31"><a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>prosemirror-history
+</span><span id="__span-4-32"><a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>prosemirror-keymap
+</span><span id="__span-4-33"><a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>prosemirror-model
+</span><span id="__span-4-34"><a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>prosemirror-schema-list
+</span><span id="__span-4-35"><a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>prosemirror-state
+</span><span id="__span-4-36"><a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>prosemirror-tables
+</span><span id="__span-4-37"><a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>prosemirror-transform
+</span><span id="__span-4-38"><a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>prosemirror-view
+</span><span id="__span-4-39"><a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>rope-sequence
+</span><span id="__span-4-40"><a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>w3c-keyname
+</span></code></pre></div>
+<p>Both lists are for the validated TipTap version, and <code>js/test/self-hosted-import-map.test.ts</code>
+regenerates them from the installed packages, so they move when it does.</p>
 <h3 id="version-skew-caveat">Version-skew caveat<a class="headerlink" href="#version-skew-caveat" title="Permanent link">&para;</a></h3>
 <p>The lossless guarantee is validated against the <strong>pinned, bundled</strong> TipTap version. Under
 external mode you can load a <em>different</em> version, and skew can silently reintroduce

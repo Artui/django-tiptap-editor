@@ -977,7 +977,9 @@ send. That is the case the server-side allowlist exists for.</p>
 from <code>EXTENSION_HTML_VOCABULARY</code>, one entry per built-in extension declaring the tags,
 attributes and style properties that extension emits. The same table is where the
 built-in extension names come from, so the editor's output and the sanitiser's
-allowlist cannot drift apart.</p>
+allowlist cannot drift apart. The editor's half of that is tested rather than assumed:
+<code>js/test/html-vocabulary.test.ts</code> renders every attribute the editor's schema defines,
+and every case in the fidelity corpus, and fails if anything lands outside this table.</p>
 <table>
 <thead>
 <tr>
@@ -996,7 +998,7 @@ allowlist cannot drift apart.</p>
 </tr>
 <tr>
 <td>Links</td>
-<td><code>a</code> with <code>href</code> (allowlisted protocols), <code>class</code>, <code>target</code> (<code>_blank</code>/<code>_self</code> only), <code>rel</code> (known tokens only)</td>
+<td><code>a</code> with <code>href</code> (allowlisted protocols), <code>class</code>, <code>target</code> (<code>_blank</code>/<code>_self</code> only), <code>rel</code> (known tokens only), <code>title</code></td>
 </tr>
 <tr>
 <td>Images</td>
@@ -1004,7 +1006,7 @@ allowlist cannot drift apart.</p>
 </tr>
 <tr>
 <td>Tables</td>
-<td><code>table</code>, <code>colgroup</code>, <code>col</code>, <code>tbody</code>, <code>tr</code>, <code>th</code>/<code>td</code> with <code>colspan</code>, <code>rowspan</code>, <code>colwidth</code>, <code>background-color</code></td>
+<td><code>table</code>, <code>colgroup</code>, <code>col</code>, <code>tbody</code>, <code>tr</code>, <code>th</code>/<code>td</code> with <code>colspan</code>, <code>rowspan</code>, <code>colwidth</code>, <code>background-color</code>, <code>text-align</code></td>
 </tr>
 </tbody>
 </table>

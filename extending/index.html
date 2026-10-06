@@ -584,6 +584,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#writing-against-tiptap-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing against Tiptap 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#declaring-what-an-extension-emits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -917,6 +928,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#writing-against-tiptap-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing against Tiptap 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#declaring-what-an-extension-emits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1063,8 +1085,8 @@ building blocks it contains on <code>DjangoTipTap.tiptap</code> (<code>Editor</c
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;callout&quot;</span><span class="p">,</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nx">group</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;block&quot;</span><span class="p">,</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;block+&quot;</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nx">parseHTML</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">tag</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;div.callout&quot;</span><span class="w"> </span><span class="p">}],</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nx">renderHTML</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">HTMLAttributes</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;div&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">mergeAttributes</span><span class="p">(</span><span class="nx">HTMLAttributes</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kd">class</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;callout&quot;</span><span class="w"> </span><span class="p">}),</span><span class="w"> </span><span class="mf">0</span><span class="p">],</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nx">parseHTML</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">tag</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;aside.callout&quot;</span><span class="w"> </span><span class="p">}],</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nx">renderHTML</span><span class="o">:</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">HTMLAttributes</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;aside&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">mergeAttributes</span><span class="p">(</span><span class="nx">HTMLAttributes</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kd">class</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;callout&quot;</span><span class="w"> </span><span class="p">}),</span><span class="w"> </span><span class="mf">0</span><span class="p">],</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="p">});</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">});</span>
 </span></code></pre></div>
@@ -1080,6 +1102,26 @@ To activate it:</p>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">TipTapWidget</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;extensions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;callout&quot;</span><span class="p">]})</span>
 </span></code></pre></div>
 <p>Built-in names are always active; unknown, unregistered names fail loudly at mount.</p>
+<h3 id="writing-against-tiptap-3">Writing against Tiptap 3<a class="headerlink" href="#writing-against-tiptap-3" title="Permanent link">&para;</a></h3>
+<p><code>ctx.tiptap</code> and <code>DjangoTipTap.tiptap</code> hand you Tiptap 3's <code>Editor</code>, <code>Extension</code>, <code>Mark</code>,
+<code>Node</code> and <code>mergeAttributes</code>. Most extensions written for Tiptap 2 carry over unchanged;
+these are the changes a custom extension is likely to meet:</p>
+<ul>
+<li><strong><code>setContent</code> takes an options object.</strong> Write
+  <code>editor.commands.setContent(html, { emitUpdate: false })</code>. A boolean second argument is
+  not rejected: it is read as an options object with nothing in it, so the Tiptap 2
+  spelling <code>setContent(html, false)</code> now emits an update, which writes the bound
+  textarea.</li>
+<li><strong>A node view's <code>getPos()</code> can return <code>undefined</code></strong>, for a node that is no longer in
+  the document. Check it before using it as a position.</li>
+<li><strong>The undo extension is <code>undoRedo</code></strong>, where Tiptap 2 called it <code>history</code>. The
+  <code>undo</code> and <code>redo</code> commands keep their names. In <code>config.extensions</code>, where a built-in
+  name changes nothing because built-ins are always on, it is still <code>history</code>:
+  <code>undoRedo</code> there is refused as an unknown extension.</li>
+<li><strong>Default exports are not guaranteed.</strong> Tiptap 3 dropped them from
+  <code>@tiptap/extension-table</code> and <code>@tiptap/extension-text-style</code>. Take what you need from
+  <code>ctx.tiptap</code>, or import named exports in your own build.</li>
+</ul>
 <h3 id="declaring-what-an-extension-emits">Declaring what an extension emits<a class="headerlink" href="#declaring-what-an-extension-emits" title="Permanent link">&para;</a></h3>
 <p>The server sanitises stored markup against an allowlist built from the extensions the
 editor mounts (see <a href="../security/">Security</a>). It knows what the built-ins emit; it

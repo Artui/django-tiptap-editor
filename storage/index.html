@@ -997,7 +997,7 @@ it is re-derived from the sanitized <code>doc</code>, so it is safe whoever wrot
 <p>The value must be a <code>{doc, html}</code> envelope or a bare ProseMirror doc. Anything else —
 a string, a list, a number — raises <code>ValidationError</code>. In particular <strong>assigning HTML
 does not convert it</strong>: <code>article.body = "&lt;p&gt;hi&lt;/p&gt;"</code> is an error, not a conversion. See
-<a href="#converting--rendering-in-the-browser">Converting &amp; rendering in the browser</a> for the
+<a href="#converting-rendering-in-the-browser">Converting &amp; rendering in the browser</a> for the
 HTML-to-JSON path.</p>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>In JSON mode the editor writes both sides on every change — <code>editor.getJSON()</code> → <code>doc</code> and
