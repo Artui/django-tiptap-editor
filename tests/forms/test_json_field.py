@@ -107,6 +107,34 @@ def test_a_javascript_href_is_stripped_from_the_document() -> None:
     assert form.cleaned_data["document"].html == "<p>x</p>"
 
 
+def _text_in(node_type: str, attrs: object, marks: list) -> dict:
+    text = {"type": "text", "text": "x", "marks": marks}
+    return {"type": "doc", "content": [{"type": node_type, "attrs": attrs, "content": [text]}]}
+
+
+@pytest.mark.parametrize(
+    ("doc", "html"),
+    [
+        (_text_in("heading", {"level": [2]}, []), "<h1>x</h1>"),
+        (_text_in("paragraph", {}, [{"type": ["bold"]}]), "<p>x</p>"),
+        (
+            _text_in("paragraph", {}, [{"type": "link", "attrs": {"href": "/a", "target": {}}}]),
+            '<p><a href="/a">x</a></p>',
+        ),
+        (_text_in("paragraph", ["textAlign"], []), "<p>x</p>"),
+        (_text_in("paragraph", {}, [{"type": "link", "attrs": "/a"}]), "<p><a>x</a></p>"),
+    ],
+    ids=["heading-level", "mark-type", "link-target", "node-attrs", "mark-attrs"],
+)
+def test_a_value_of_the_wrong_type_is_skipped_rather_than_a_500(doc: dict, html: str) -> None:
+    # Each of these is a crafted POST the editor never sends, and each raised
+    # TypeError or AttributeError out of clean(): a 500 for the client rather
+    # than a value rendered the way the editor would render it.
+    form = DocumentForm(data={"document": json.dumps({"doc": doc, "html": ""})})
+    assert form.is_valid()
+    assert form.cleaned_data["document"].html == html
+
+
 @pytest.mark.parametrize("payload", ["[]", '"oops"', "42", "null"])
 def test_a_payload_that_is_not_a_document_is_a_field_error(payload: str) -> None:
     # Each of these used to clean successfully into an empty document: the form

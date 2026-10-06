@@ -13,7 +13,8 @@ def test_self_target_is_kept() -> None:
     assert get_link_attributes("_self", None) == ("_self", "")
 
 
-@pytest.mark.parametrize("target", ["evilframe", "_parent", "_top", 5])
+# A list or object is unhashable, and a set membership test raised on it.
+@pytest.mark.parametrize("target", ["evilframe", "_parent", "_top", 5, ["_blank"], {"_blank": 1}])
 def test_an_unknown_target_is_dropped(target: object) -> None:
     assert get_link_attributes(target, None)[0] == ""
 

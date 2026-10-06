@@ -107,7 +107,10 @@ html = render_doc(article.body.doc)  # a safe HTML string
 
 It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,
 and validates inline CSS — so the result is safe to render directly. The output is **faithful to,
-but not byte-identical with**, the editor's `getHTML()` (the browser normalizes some CSS).
+but not byte-identical with**, the editor's `getHTML()` (the browser normalizes some CSS). A value
+of the wrong type, such as a list where a heading's `level` belongs or a string where a node's
+`attrs` do, is read the way the editor reads it rather than raised on: the attribute takes its
+default or renders nothing.
 `TipTapJSONField` uses it automatically to re-derive the mirror from the sanitized doc on save.
 
 A template filter is also available:

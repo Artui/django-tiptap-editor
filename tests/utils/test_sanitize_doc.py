@@ -38,6 +38,29 @@ def test_drops_disallowed_link_href() -> None:
     assert sanitize_doc(node)["marks"] == []
 
 
+@pytest.mark.parametrize("attrs", [["href", "javascript:alert(1)"], "javascript:alert(1)", 1])
+def test_a_link_whose_attrs_are_not_a_mapping_is_kept_as_one_with_no_url(attrs: object) -> None:
+    # The editor reads such a link as one with no href, so there is no URL to
+    # refuse and the mark stays; reading .get off it raised AttributeError. The
+    # renderer emits it with no href either, so nothing in it reaches the page.
+    node = {"type": "text", "text": "x", "marks": [{"type": "link", "attrs": attrs}]}
+    assert sanitize_doc(node)["marks"] == node["marks"]
+    doc = {"type": "doc", "content": [{"type": "paragraph", "content": [node]}]}
+    assert render_doc(doc) == "<p><a>x</a></p>"
+
+
+def test_only_a_link_is_dropped_for_its_href() -> None:
+    # The href is read only off a link: no other mark renders one, so dropping
+    # a bold mark that happens to carry a hostile href would lose the formatting
+    # and protect nothing.
+    node = {
+        "type": "text",
+        "text": "x",
+        "marks": [{"type": "bold", "attrs": {"href": "javascript:alert(1)"}}],
+    }
+    assert sanitize_doc(node)["marks"] == node["marks"]
+
+
 def test_keeps_relative_link_and_other_marks() -> None:
     node = {
         "type": "text",

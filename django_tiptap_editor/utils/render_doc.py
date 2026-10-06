@@ -30,7 +30,8 @@ from django_tiptap_editor.utils.get_css_value import get_css_value
 from django_tiptap_editor.utils.get_link_attributes import get_link_attributes
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
 
-# Simple inline marks: mark type -> wrapping tag.
+# Simple inline marks: mark type -> wrapping tag. Looked up only for a string
+# type: a list or object there is unhashable, and the lookup raised TypeError.
 _SIMPLE_MARKS = {
     "bold": "strong",
     "italic": "em",
@@ -49,6 +50,34 @@ _SIMPLE_MARKS = {
 # it -- a list or object there raised TypeError, a 500 rather than a skipped
 # style -- where a tuple compares it and answers no.
 _CELL_ALIGNMENTS = ("left", "center", "right")
+
+
+def _attrs(item: dict[str, Any]) -> dict[str, Any]:
+    """Return a node's or mark's ``attrs``, or ``{}`` when it is not a mapping.
+
+    ProseMirror reads each attribute off ``attrs`` by name, so a list or string
+    there gives every attribute its default -- the same as no ``attrs`` at all.
+    Calling ``.get`` on it raised AttributeError instead, a 500 through the form
+    field for a document the editor would have opened.
+    """
+    attrs = item.get("attrs")
+    return attrs if isinstance(attrs, dict) else {}
+
+
+def _heading_level(value: object) -> int:
+    """Return the level a heading renders at: 1 to 6, else 1.
+
+    Tiptap renders a stored level only when it is one of its levels, compared as
+    numbers, and otherwise its first. JSON's ``2.0`` is the number 2 to the
+    editor, so it renders as ``h2`` here too. ``true`` is not a level there, but
+    it equals 1 in Python and a membership test let it through as ``<hTrue>``,
+    while a list or object raised TypeError while being hashed.
+    """
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 6:
+        return value
+    return 1
 
 
 def _css_length(value: object) -> str:
@@ -143,8 +172,8 @@ def _wrap_marks(text: str, marks: list[Any]) -> str:
         if not isinstance(mark, dict):
             continue
         kind = mark.get("type")
-        attrs = mark.get("attrs") or {}
-        if kind in _SIMPLE_MARKS:
+        attrs = _attrs(mark)
+        if isinstance(kind, str) and kind in _SIMPLE_MARKS:
             tag = _SIMPLE_MARKS[kind]
             out = f"<{tag}>{out}</{tag}>"
         elif kind == "link":
@@ -178,7 +207,7 @@ def _render_children(node: dict[str, Any]) -> str:
 
 
 def _cell(tag: str, node: dict[str, Any]) -> str:
-    attrs = node.get("attrs") or {}
+    attrs = _attrs(node)
     align = attrs.get("align")
     rendered = (
         _attr("colspan", attrs.get("colspan") if attrs.get("colspan", 1) != 1 else None)
@@ -195,7 +224,7 @@ def _cell(tag: str, node: dict[str, Any]) -> str:
 
 def _render_node(node: dict[str, Any]) -> str:
     kind = node.get("type")
-    attrs = node.get("attrs") or {}
+    attrs = _attrs(node)
 
     if kind == "text":
         text = escape_html(str(node.get("text", "")))
@@ -204,8 +233,7 @@ def _render_node(node: dict[str, Any]) -> str:
     if kind == "paragraph":
         return f"<p{_block_style(attrs)}>{_render_children(node)}</p>"
     if kind == "heading":
-        level = attrs.get("level", 1)
-        level = level if level in {1, 2, 3, 4, 5, 6} else 1
+        level = _heading_level(attrs.get("level"))
         return f"<h{level}{_block_style(attrs)}>{_render_children(node)}</h{level}>"
     if kind == "bulletList":
         return f"<ul>{_render_children(node)}</ul>"

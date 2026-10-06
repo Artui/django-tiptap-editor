@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A stored document carrying a value of the wrong type renders instead of
+  raising.** `render_doc` raised `TypeError` on a list or object where a
+  heading's `level`, a link's `target` or a mark's `type` belongs, because each
+  was looked up in a set or a dict, and `AttributeError` on `attrs` that is not a
+  mapping, on any node or mark; `sanitize_doc` raised the same on a link's. A
+  crafted POST through `TipTapJSONFormField` was therefore a 500 rather than a
+  cleaned value, and so was saving such a document through `TipTapJSONField` or
+  rendering it with the `tiptap_html` filter. Each is now read the way the editor
+  reads it: `attrs` that is not a mapping gives every attribute its default, and a
+  value the editor would not render renders nothing. A heading's level is matched
+  as a number, as the editor matches it, so `2.0` renders `h2` rather than
+  `<h2.0>`, and `true` renders `h1` rather than `<hTrue>`.
+
 ## [0.11.0] — 2026-10-06
 
 ### Upgrade note — the editor moves to Tiptap 3
