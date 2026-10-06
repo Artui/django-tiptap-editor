@@ -69,6 +69,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and make header cells bold. A cell's own background colour still applies, and
   so does a host's alignment for header cells: the admin's are left and top
   aligned.
+- **`dumpdata` serializes a model with a `TipTapJSONField`.** The field handed
+  the serializer the `TipTapValue` on the instance, which no serializer can
+  encode, so `dumpdata` raised `CommandError` on the first row with a document
+  and the whole dump failed, every other app's tables included. A fixture now
+  carries the stored `{doc, html}` mapping, the column's own shape, and
+  `loaddata` reads it back to the same value in JSON and JSONL. An XML fixture
+  is written but still does not load: Django's XML deserializer decodes a
+  `JSONField` value a second time after `to_python`, which this field has
+  already parsed into a `TipTapValue`.
 
 ## [0.11.0] — 2026-10-06
 

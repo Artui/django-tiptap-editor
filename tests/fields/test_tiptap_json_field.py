@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
+from django.core import serializers
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.forms import modelform_factory
 from django.test import override_settings
 
@@ -149,6 +152,63 @@ def test_db_roundtrip_returns_tiptap_value() -> None:
 def test_db_roundtrip_null() -> None:
     article = Article.objects.create(title="t", body="", document=None)
     assert Article.objects.get(pk=article.pk).document is None
+
+
+def _documents() -> dict[int, TipTapValue | None]:
+    return {article.pk: article.document for article in Article.objects.all()}
+
+
+# ``dumpdata`` and ``loaddata`` go through these serializers. A loaded instance
+# holds a ``TipTapValue``, which none of them can encode, so serializing raised a
+# ``TypeError`` and ``dumpdata`` lost the whole dump to one field.
+@pytest.mark.django_db
+@pytest.mark.parametrize("fmt", ["json", "jsonl"])
+def test_a_fixture_round_trips_the_document(fmt: str) -> None:
+    Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    Article.objects.create(title="b", body="", document=None)
+    before = _documents()
+    fixture = serializers.serialize(fmt, Article.objects.order_by("pk"))
+    Article.objects.all().delete()
+    for loaded in serializers.deserialize(fmt, fixture):
+        loaded.save()
+    assert _documents() == before
+
+
+@pytest.mark.django_db
+def test_a_fixture_carries_the_stored_mapping() -> None:
+    # The column's own shape, so a fixture reads and hand-edits like the table.
+    article = Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    [row] = json.loads(serializers.serialize("json", Article.objects.filter(pk=article.pk)))
+    assert row["fields"]["document"] == {"doc": DOC, "html": "<p>hi</p>"}
+
+
+@pytest.mark.django_db
+def test_dumpdata_and_loaddata_round_trip_the_document(tmp_path: Path) -> None:
+    Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    before = _documents()
+    fixture = tmp_path / "articles.json"
+    call_command("dumpdata", "testapp.article", output=str(fixture), verbosity=0)
+    Article.objects.all().delete()
+    call_command("loaddata", str(fixture), verbosity=0)
+    assert _documents() == before
+
+
+def test_value_to_string_hands_an_unsaved_mapping_on_unchanged() -> None:
+    article = Article(title="a", body="", document={"doc": DOC})
+    assert Article._meta.get_field("document").value_to_string(article) == {"doc": DOC}
+
+
+@pytest.mark.django_db
+def test_an_xml_fixture_is_written_but_does_not_load() -> None:
+    # Django's XML deserializer runs ``json.loads`` over what ``to_python``
+    # returns, assuming a ``JSONField`` hands the string back unparsed. This field
+    # parses it into a ``TipTapValue``, as Django documents ``to_python`` should,
+    # so the load fails loudly instead. Pinned so a change on either side shows.
+    Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    fixture = serializers.serialize("xml", Article.objects.all())
+    assert "&lt;p&gt;hi&lt;/p&gt;" in fixture
+    with pytest.raises(TypeError, match="not TipTapValue"):
+        list(serializers.deserialize("xml", fixture))
 
 
 def test_get_prep_value_derives_mirror_when_html_missing() -> None:

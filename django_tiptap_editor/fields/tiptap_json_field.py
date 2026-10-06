@@ -204,6 +204,18 @@ class TipTapJSONField(models.JSONField):
         clean = TipTapValue(doc=doc, html=html)
         return super().get_prep_value(clean.to_stored())
 
+    def value_to_string(self, obj: Any) -> Any:
+        """The stored ``{doc, html}`` mapping, for the serialization framework.
+
+        ``JSONField.value_to_string`` hands the attribute on unchanged for the
+        serializer to encode, and on an instance loaded from the database that is a
+        ``TipTapValue``, which no serializer can encode -- so ``dumpdata`` raised on
+        the first such row and the whole dump failed with it. The mapping is the
+        column's own shape, which ``to_python`` reads back on ``loaddata``.
+        """
+        value = self.value_from_object(obj)
+        return value.to_stored() if isinstance(value, TipTapValue) else value
+
     def formfield(self, **kwargs: Any) -> Any:
         kwargs.setdefault("form_class", TipTapJSONFormField)
         # Skip JSONField.formfield (which forces forms.JSONField) — go to the
