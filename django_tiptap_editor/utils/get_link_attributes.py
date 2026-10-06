@@ -16,7 +16,9 @@ def get_link_attributes(target: object, rel: object) -> tuple[str, str]:
     emits, the rel is reduced to known-safe tokens, and a link that does open a
     new context always carries ``noopener noreferrer``.
     """
-    safe_target = str(target) if target in LINK_TARGETS else ""
+    # A string first: the value is untrusted JSON, and testing a list or object
+    # for membership in the set hashes it, which raised TypeError.
+    safe_target = target if isinstance(target, str) and target in LINK_TARGETS else ""
     tokens = (
         [token for token in str(rel).lower().split() if token in LINK_REL_TOKENS]
         if isinstance(rel, str)

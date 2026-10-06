@@ -124,7 +124,10 @@ class TipTapJSONField(models.JSONField):
             # ``from_stored`` as the mapping it represents rather than being refused.
             try:
                 value = json.loads(value)
-            except json.JSONDecodeError as exc:
+            # As in the form field: too deep to decode is a RecursionError, and
+            # an integer too long to convert a ValueError, which JSONDecodeError
+            # subclasses.
+            except (ValueError, RecursionError) as exc:
                 raise ValidationError(
                     "Value must be valid JSON.", code="invalid", params={"value": value}
                 ) from exc

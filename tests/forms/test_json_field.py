@@ -14,6 +14,25 @@ from django_tiptap_editor.types.tiptap_value import TipTapValue
 DOC = {"type": "doc", "content": [{"type": "paragraph"}]}
 
 
+# Bodies ``json.loads`` raises on with something other than JSONDecodeError. The
+# decoder's depth limit is the recursion limit on Python 3.10 and 3.11, about ten
+# thousand on 3.12 and 3.13, and the C stack on 3.14 (some 74,000 levels on an
+# 8 MB stack), so a million levels is past every one of them for a 2 MB string.
+# The integer is past the 4300-digit conversion limit Python 3.10.7 introduced.
+_UNDECODABLE = [
+    pytest.param(
+        '{"doc": {"type": "doc", "attrs": ' + "[" * 1_000_000 + "]" * 1_000_000 + '}, "html": ""}',
+        RecursionError,
+        id="too-deep",
+    ),
+    pytest.param(
+        '{"doc": {"type": "doc", "attrs": {"n": ' + "1" * 5000 + '}}, "html": ""}',
+        ValueError,
+        id="too-many-digits",
+    ),
+]
+
+
 def test_widget_defaults_to_json_storage() -> None:
     assert TipTapJSONFormField().widget.storage == "json"
 
@@ -53,6 +72,12 @@ def test_to_python_parses_envelope() -> None:
     result = TipTapJSONFormField().to_python('{"doc": {"type": "doc"}, "html": "<p>x</p>"}')
     assert isinstance(result, TipTapValue)
     assert result.html == "<p>x</p>"
+
+
+def test_to_python_rejects_a_value_that_is_not_a_string() -> None:
+    # json.loads raises TypeError, not a decode error, on anything but a string.
+    with pytest.raises(ValidationError):
+        TipTapJSONFormField().to_python(42)
 
 
 def test_to_python_rejects_invalid_json() -> None:
@@ -107,6 +132,34 @@ def test_a_javascript_href_is_stripped_from_the_document() -> None:
     assert form.cleaned_data["document"].html == "<p>x</p>"
 
 
+def _text_in(node_type: str, attrs: object, marks: list) -> dict:
+    text = {"type": "text", "text": "x", "marks": marks}
+    return {"type": "doc", "content": [{"type": node_type, "attrs": attrs, "content": [text]}]}
+
+
+@pytest.mark.parametrize(
+    ("doc", "html"),
+    [
+        (_text_in("heading", {"level": [2]}, []), "<h1>x</h1>"),
+        (_text_in("paragraph", {}, [{"type": ["bold"]}]), "<p>x</p>"),
+        (
+            _text_in("paragraph", {}, [{"type": "link", "attrs": {"href": "/a", "target": {}}}]),
+            '<p><a href="/a">x</a></p>',
+        ),
+        (_text_in("paragraph", ["textAlign"], []), "<p>x</p>"),
+        (_text_in("paragraph", {}, [{"type": "link", "attrs": "/a"}]), "<p><a>x</a></p>"),
+    ],
+    ids=["heading-level", "mark-type", "link-target", "node-attrs", "mark-attrs"],
+)
+def test_a_value_of_the_wrong_type_is_skipped_rather_than_a_500(doc: dict, html: str) -> None:
+    # Each of these is a crafted POST the editor never sends, and each raised
+    # TypeError or AttributeError out of clean(): a 500 for the client rather
+    # than a value rendered the way the editor would render it.
+    form = DocumentForm(data={"document": json.dumps({"doc": doc, "html": ""})})
+    assert form.is_valid()
+    assert form.cleaned_data["document"].html == html
+
+
 @pytest.mark.parametrize("payload", ["[]", '"oops"', "42", "null"])
 def test_a_payload_that_is_not_a_document_is_a_field_error(payload: str) -> None:
     # Each of these used to clean successfully into an empty document: the form
@@ -129,3 +182,17 @@ def test_a_deeply_nested_document_is_a_field_error() -> None:
     form = DocumentForm(data={"document": json.dumps({"doc": doc, "html": ""})})
     assert not form.is_valid()
     assert "nests deeper" in form.errors["document"][0]
+
+
+@pytest.mark.parametrize(("body", "raised"), _UNDECODABLE)
+def test_a_body_json_cannot_decode_is_a_field_error_rather_than_a_500(
+    body: str, raised: type[Exception]
+) -> None:
+    # json.loads raises each of these itself, and neither is the JSONDecodeError
+    # the parse used to catch, so this is the guard that answers.
+    with pytest.raises(raised) as excinfo:
+        json.loads(body)
+    assert not isinstance(excinfo.value, json.JSONDecodeError)
+    form = DocumentForm(data={"document": body})
+    assert not form.is_valid()
+    assert form.errors["document"] == ["Enter a valid TipTap document (JSON)."]

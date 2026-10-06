@@ -36,6 +36,25 @@ def test_to_python_parses_a_mapping() -> None:
     assert from_dict.doc == {"type": "doc"}
 
 
+# Bodies ``json.loads`` raises on with something other than JSONDecodeError. The
+# decoder's depth limit is the recursion limit on Python 3.10 and 3.11, about ten
+# thousand on 3.12 and 3.13, and the C stack on 3.14 (some 74,000 levels on an
+# 8 MB stack), so a million levels is past every one of them for a 2 MB string.
+# The integer is past the 4300-digit conversion limit Python 3.10.7 introduced.
+_UNDECODABLE = [
+    pytest.param(
+        '{"doc": {"type": "doc", "attrs": ' + "[" * 1_000_000 + "]" * 1_000_000 + '}, "html": ""}',
+        RecursionError,
+        id="too-deep",
+    ),
+    pytest.param(
+        '{"doc": {"type": "doc", "attrs": {"n": ' + "1" * 5000 + '}}, "html": ""}',
+        ValueError,
+        id="too-many-digits",
+    ),
+]
+
+
 def test_to_python_parses_a_json_string() -> None:
     """A JSON string is legitimate input -- a fixture, a deserializer -- and is parsed.
 
@@ -50,6 +69,17 @@ def test_to_python_parses_a_json_string() -> None:
 def test_to_python_refuses_a_string_that_is_not_json() -> None:
     with pytest.raises(ValidationError):
         TipTapJSONField().to_python("not json at all")
+
+
+@pytest.mark.parametrize(("body", "raised"), _UNDECODABLE)
+def test_to_python_refuses_a_string_json_cannot_decode(body: str, raised: type[Exception]) -> None:
+    # A fixture or a deserializer hands the string in; only a syntax error was
+    # caught, so these escaped as RecursionError and ValueError.
+    with pytest.raises(raised) as excinfo:
+        json.loads(body)
+    assert not isinstance(excinfo.value, json.JSONDecodeError)
+    with pytest.raises(ValidationError, match="valid JSON"):
+        TipTapJSONField().to_python(body)
 
 
 def test_to_python_refuses_json_that_is_not_a_document() -> None:

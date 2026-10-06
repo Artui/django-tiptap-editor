@@ -45,6 +45,21 @@ def sanitize_doc(
     return _sanitize(doc, link_protocols, image_protocols, 0)
 
 
+def _is_disallowed_link(mark: object, link_protocols: tuple[str, ...]) -> bool:
+    """Return whether ``mark`` is a link whose ``href`` is outside ``link_protocols``.
+
+    ``attrs`` is read only when it is a mapping. A list or string there raised
+    AttributeError, a 500 through the form field, where the editor reads it as
+    a link with no ``href`` -- which carries no URL to refuse, so it is kept, and
+    the renderer emits it without one.
+    """
+    if not isinstance(mark, dict) or mark.get("type") != "link":
+        return False
+    attrs = mark.get("attrs")
+    href = attrs.get("href") if isinstance(attrs, dict) else None
+    return not is_allowed_url(href, link_protocols)
+
+
 def _sanitize(
     doc: Any,
     link_protocols: tuple[str, ...],
@@ -67,15 +82,7 @@ def _sanitize(
 
     marks = node.get("marks")
     if isinstance(marks, list):
-        node["marks"] = [
-            mark
-            for mark in marks
-            if not (
-                isinstance(mark, dict)
-                and mark.get("type") == "link"
-                and not is_allowed_url((mark.get("attrs") or {}).get("href"), link_protocols)
-            )
-        ]
+        node["marks"] = [mark for mark in marks if not _is_disallowed_link(mark, link_protocols)]
 
     content = node.get("content")
     if isinstance(content, list):

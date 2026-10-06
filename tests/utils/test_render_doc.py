@@ -154,6 +154,33 @@ def test_headings_levels_and_clamp() -> None:
     assert render_doc(bad) == "<h1>h</h1>"
 
 
+@pytest.mark.parametrize(
+    ("level", "tag"),
+    [
+        # Unhashable: a set membership test raised TypeError on both.
+        ([2], "h1"),
+        ({"level": 2}, "h1"),
+        # Equal to 1 in Python, so a membership test rendered <hTrue>; the
+        # editor compares numbers and does not take it.
+        (True, "h1"),
+        # The number 2 to the editor, which renders h2; Python rendered <h2.0>.
+        (2.0, "h2"),
+        # Not a whole number, so not a level, though int() would make it one.
+        (2.5, "h1"),
+        ("2", "h1"),
+        (0, "h1"),
+        (7, "h1"),
+        (6, "h6"),
+    ],
+)
+def test_a_heading_level_renders_the_way_the_editor_matches_it(level: object, tag: str) -> None:
+    doc = {
+        "type": "doc",
+        "content": [{"type": "heading", "attrs": {"level": level}, "content": [_text("h")]}],
+    }
+    assert render_doc(doc) == f"<{tag}>h</{tag}>"
+
+
 def test_lists() -> None:
     ul = {
         "type": "doc",
@@ -169,6 +196,29 @@ def test_lists() -> None:
         "content": [{"type": "orderedList", "attrs": {"start": 1}, "content": []}],
     }
     assert render_doc(ol1) == "<ol></ol>"
+
+
+@pytest.mark.parametrize(
+    ("start", "expected"),
+    [
+        (2.0, '<ol start="2"></ol>'),
+        (0, '<ol start="0"></ol>'),
+        (False, "<ol></ol>"),
+        (True, "<ol></ol>"),
+        (2.5, "<ol></ol>"),
+        ("2", "<ol></ol>"),
+        ([2], "<ol></ol>"),
+    ],
+)
+def test_an_ordered_list_start_is_read_as_a_whole_json_number(start: object, expected: str) -> None:
+    # The editor numbers a list stored with 2.0 from 2, where an int-only check
+    # dropped it and numbered from 1; and false, being an int in Python, wrote
+    # start="False" where a 0 would have been read as a number. The last three
+    # are a known difference, pinned so that changing it is a decision: the
+    # editor writes start="2.5" or start="2", and the browser's integer parsing
+    # numbers each list from 2, where this writes no start.
+    doc = {"type": "doc", "content": [{"type": "orderedList", "attrs": {"start": start}}]}
+    assert render_doc(doc) == expected
 
 
 def _p_inner(text: str) -> dict:
@@ -313,6 +363,49 @@ def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> 
         ],
     }
     assert render_doc(doc) == "<table><tbody><tr><td><p>c</p></td></tr></tbody></table>"
+
+
+@pytest.mark.parametrize("kind", [["bold"], {"type": "bold"}])
+def test_a_mark_type_that_is_not_a_string_leaves_the_text_unwrapped(kind: object) -> None:
+    # Looked up in a dict, a list or object raised TypeError while being hashed.
+    # The editor's JavaScript would read ["bold"] as bold and refuse the whole
+    # document over the object; the server guesses neither, and keeps the text.
+    assert render_doc(_p(_text("x", [{"type": kind}]))) == "<p>x</p>"
+
+
+@pytest.mark.parametrize("target", [["_blank"], {"_blank": True}])
+def test_a_link_target_that_is_not_a_string_is_dropped(target: object) -> None:
+    doc = _p(_text("x", [{"type": "link", "attrs": {"href": "https://a.b", "target": target}}]))
+    assert render_doc(doc) == '<p><a href="https://a.b">x</a></p>'
+
+
+@pytest.mark.parametrize("attrs", [["level", 2], "level", 2])
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [
+        ("paragraph", "<p>x</p>"),
+        ("heading", "<h1>x</h1>"),
+        ("image", "<img>"),
+        ("tableCell", "<td>x</td>"),
+    ],
+)
+def test_node_attrs_that_are_not_a_mapping_read_as_none(
+    attrs: object, kind: str, expected: str
+) -> None:
+    # ProseMirror reads each attribute off attrs by name, so a list, string or
+    # number there gives every attribute its default; .get on it raised.
+    node = {"type": kind, "attrs": attrs, "content": [_text("x")]}
+    assert render_doc({"type": "doc", "content": [node]}) == expected
+
+
+@pytest.mark.parametrize("attrs", [["href", "https://a.b"], "https://a.b"])
+@pytest.mark.parametrize(
+    ("kind", "expected"), [("link", "<p><a>x</a></p>"), ("textStyle", "<p>x</p>")]
+)
+def test_mark_attrs_that_are_not_a_mapping_read_as_none(
+    attrs: object, kind: str, expected: str
+) -> None:
+    assert render_doc(_p(_text("x", [{"type": kind, "attrs": attrs}]))) == expected
 
 
 def test_children_not_a_list() -> None:

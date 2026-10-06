@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A stored document carrying a value of the wrong type renders instead of
+  raising.** `render_doc` raised `TypeError` on a list or object where a
+  heading's `level`, a link's `target` or a mark's `type` belongs, because each
+  was looked up in a set or a dict, and `AttributeError` on `attrs` that is not a
+  mapping, on any node or mark; `sanitize_doc` raised the same on a link's. A
+  crafted POST through `TipTapJSONFormField` was therefore a 500 rather than a
+  cleaned value, and so was saving such a document through `TipTapJSONField` or
+  rendering it with the `tiptap_html` filter. Such a value is now skipped rather
+  than raised on. `attrs` that is not a mapping gives every attribute its default,
+  as it does in the editor. A mark type or link target that is not a string is
+  ignored and its text kept, where the editor's JavaScript would turn
+  `["_blank"]` into `_blank`: the server does not guess. A heading's level is
+  read as a number, as the editor reads it, so `2.0` renders `h2` rather than
+  `<h2.0>` and `true` renders `h1` rather than `<hTrue>`. An ordered list's start
+  is read as a whole JSON number, so `2.0` numbers the list from 2, as the editor
+  does, rather than from 1. Anything else writes no start, though the editor's
+  browser reads `"2"`, `2.5` and `[2]` each as 2.
+- **A body `TipTapJSONFormField` cannot parse is a field error in every case.**
+  Its parse caught a syntax error, but `json.loads` also raises `RecursionError`
+  on nesting deeper than its decoder recurses (about a thousand levels on Python
+  3.10, so a 2 KB POST) and `ValueError` on an integer longer than 4300 digits.
+  Both were a 500. `TipTapJSONField` had the same gap where it parses a string
+  value from a fixture or a deserializer, and raises `ValidationError` there now.
+
 ## [0.11.0] — 2026-10-06
 
 ### Upgrade note — the editor moves to Tiptap 3
