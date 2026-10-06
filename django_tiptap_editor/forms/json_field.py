@@ -56,7 +56,12 @@ class TipTapJSONFormField(forms.Field):
             return value
         try:
             data = json.loads(value)
-        except (TypeError, json.JSONDecodeError) as exc:
+        # A syntax error is not all ``json.loads`` raises on a body the client
+        # wrote: nesting deeper than the decoder recurses is a RecursionError
+        # (about a thousand levels on Python 3.10, so a 2 KB POST), and an
+        # integer longer than the interpreter converts is a ValueError, which
+        # JSONDecodeError subclasses. Either escaped as a 500.
+        except (TypeError, ValueError, RecursionError) as exc:
             raise ValidationError(_INVALID) from exc
         try:
             parsed = TipTapValue.from_stored(data)

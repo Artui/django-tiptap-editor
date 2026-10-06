@@ -198,6 +198,26 @@ def test_lists() -> None:
     assert render_doc(ol1) == "<ol></ol>"
 
 
+@pytest.mark.parametrize(
+    ("start", "expected"),
+    [
+        (2.0, '<ol start="2"></ol>'),
+        (0, '<ol start="0"></ol>'),
+        (False, "<ol></ol>"),
+        (True, "<ol></ol>"),
+        (2.5, "<ol></ol>"),
+        ("2", "<ol></ol>"),
+        ([2], "<ol></ol>"),
+    ],
+)
+def test_an_ordered_list_start_is_read_as_a_number(start: object, expected: str) -> None:
+    # The editor numbers a list stored with 2.0 from 2, where an int-only check
+    # dropped it and numbered from 1; and false, being an int in Python, wrote
+    # start="False" where a 0 would have been read as a number.
+    doc = {"type": "doc", "content": [{"type": "orderedList", "attrs": {"start": start}}]}
+    assert render_doc(doc) == expected
+
+
 def _p_inner(text: str) -> dict:
     return {"type": "paragraph", "content": [_text(text)]}
 
@@ -344,8 +364,9 @@ def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> 
 
 @pytest.mark.parametrize("kind", [["bold"], {"type": "bold"}])
 def test_a_mark_type_that_is_not_a_string_leaves_the_text_unwrapped(kind: object) -> None:
-    # Looked up in a dict, a list or object raised TypeError while being hashed;
-    # it is a mark nothing renders, so the text stays and the wrapper does not.
+    # Looked up in a dict, a list or object raised TypeError while being hashed.
+    # The editor's JavaScript would read ["bold"] as bold and refuse the whole
+    # document over the object; the server guesses neither, and keeps the text.
     assert render_doc(_p(_text("x", [{"type": kind}]))) == "<p>x</p>"
 
 

@@ -16,11 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mapping, on any node or mark; `sanitize_doc` raised the same on a link's. A
   crafted POST through `TipTapJSONFormField` was therefore a 500 rather than a
   cleaned value, and so was saving such a document through `TipTapJSONField` or
-  rendering it with the `tiptap_html` filter. Each is now read the way the editor
-  reads it: `attrs` that is not a mapping gives every attribute its default, and a
-  value the editor would not render renders nothing. A heading's level is matched
-  as a number, as the editor matches it, so `2.0` renders `h2` rather than
-  `<h2.0>`, and `true` renders `h1` rather than `<hTrue>`.
+  rendering it with the `tiptap_html` filter. Such a value is now skipped rather
+  than raised on. `attrs` that is not a mapping gives every attribute its default,
+  as it does in the editor. A mark type or link target that is not a string is
+  ignored and its text kept, where the editor's JavaScript would turn
+  `["_blank"]` into `_blank`: the server does not guess. A heading's level and an
+  ordered list's start are read as numbers, as the editor reads them, so `2.0`
+  renders `h2` rather than `<h2.0>` and numbers a list from 2 rather than 1, and
+  `true` renders `h1` rather than `<hTrue>`.
+- **A body `TipTapJSONFormField` cannot parse is a field error in every case.**
+  Its parse caught a syntax error, but `json.loads` also raises `RecursionError`
+  on nesting deeper than its decoder recurses (about a thousand levels on Python
+  3.10, so a 2 KB POST) and `ValueError` on an integer longer than 4300 digits.
+  Both were a 500. `TipTapJSONField` had the same gap where it parses a string
+  value from a fixture or a deserializer, and raises `ValidationError` there now.
 
 ## [0.11.0] — 2026-10-06
 

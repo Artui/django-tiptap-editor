@@ -64,20 +64,30 @@ def _attrs(item: dict[str, Any]) -> dict[str, Any]:
     return attrs if isinstance(attrs, dict) else {}
 
 
+def _whole_number(value: object) -> int | None:
+    """Return ``value`` as an int when the editor reads it as a whole number.
+
+    JSON's ``2.0`` is the number 2 to the editor, so it is 2 here too. ``true``
+    is not a number there, but ``bool`` is an ``int`` in Python and would pass
+    as 1 (or ``false`` as 0), so it is refused by name. Anything else is
+    ``None``.
+    """
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    return None
+
+
 def _heading_level(value: object) -> int:
     """Return the level a heading renders at: 1 to 6, else 1.
 
     Tiptap renders a stored level only when it is one of its levels, compared as
-    numbers, and otherwise its first. JSON's ``2.0`` is the number 2 to the
-    editor, so it renders as ``h2`` here too. ``true`` is not a level there, but
-    it equals 1 in Python and a membership test let it through as ``<hTrue>``,
-    while a list or object raised TypeError while being hashed.
+    numbers, and otherwise its first. A membership test let ``true`` through as
+    ``<hTrue>``, while a list or object raised TypeError while being hashed.
     """
-    if isinstance(value, float) and value.is_integer():
-        value = int(value)
-    if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 6:
-        return value
-    return 1
+    level = _whole_number(value)
+    return level if level is not None and 1 <= level <= 6 else 1
 
 
 def _css_length(value: object) -> str:
@@ -238,8 +248,11 @@ def _render_node(node: dict[str, Any]) -> str:
     if kind == "bulletList":
         return f"<ul>{_render_children(node)}</ul>"
     if kind == "orderedList":
-        start = attrs.get("start")
-        start_attr = _attr("start", start) if isinstance(start, int) and start != 1 else ""
+        # Tiptap writes ``start`` for any value but 1, so a stored ``2.0`` numbers
+        # the list from 2 there and has to here. The ``start="true"`` it writes
+        # for a boolean is one the browser ignores, so writing none renders alike.
+        start = _whole_number(attrs.get("start"))
+        start_attr = _attr("start", start) if start != 1 else ""
         return f"<ol{start_attr}>{_render_children(node)}</ol>"
     if kind == "listItem":
         return f"<li>{_render_children(node)}</li>"
