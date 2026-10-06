@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Docs
 
+- **A link on the Storage format page went nowhere on the published site.** It
+  pointed at "Converting & rendering in the browser" with GitHub's slug for that
+  heading, which keeps a hyphen on each side of the dropped `&`; MkDocs collapses
+  them, so the anchor did not exist. MkDocs reports that at INFO, which a
+  `--strict` build lets through. The link now uses the slug the site generates,
+  and `mkdocs.yml` raises missing anchors to a warning, so the docs build fails
+  on the next one.
 - **The custom-extension example in Extending rendered a `div` while every
   settings block on the page declared an `aside`.** A reader who followed it
   exactly had the callout's wrapper unwrapped by the server-side sanitiser on

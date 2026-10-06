@@ -50,7 +50,7 @@ article.save()
 The value must be a `{doc, html}` envelope or a bare ProseMirror doc. Anything else —
 a string, a list, a number — raises `ValidationError`. In particular **assigning HTML
 does not convert it**: `article.body = "<p>hi</p>"` is an error, not a conversion. See
-[Converting & rendering in the browser](#converting--rendering-in-the-browser) for the
+[Converting & rendering in the browser](#converting-rendering-in-the-browser) for the
 HTML-to-JSON path.
 
 ## How it works

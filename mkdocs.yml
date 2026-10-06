@@ -37,6 +37,13 @@ theme:
     - content.action.edit
     - toc.follow
 
+# MkDocs reports a link to a missing in-page anchor at INFO by default, which
+# `--strict` lets through. Raised so the build fails on one: a heading with an
+# `&` slugs differently here than on GitHub, and a link written the GitHub way
+# went nowhere on the published site without anything going red.
+validation:
+  anchors: warn
+
 plugins:
   - search
   - mkdocstrings:
