@@ -34,6 +34,12 @@
 #
 # Deleting any of the three to quieten a noisy week means giving up what it
 # measures. Replace it rather than remove it.
+#
+# Every job that opens an issue also closes it. An issue left open after its
+# cause is gone reads as a standing failure, so the next real one lands on a
+# thread its reader already learned to skip. Each job names its issue once, in
+# ISSUE_TITLE, because the opening and the closing step find it by exact title
+# and two copies of a string drift.
 name: upstream drift
 
 on:
@@ -61,6 +67,8 @@ jobs:
   resolve-latest:
     name: resolve unpinned + test
     runs-on: ubuntu-latest
+    env:
+      ISSUE_TITLE: "upstream drift: the unpinned resolve is failing"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -96,7 +104,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const title = "upstream drift: the unpinned resolve is failing";
+            const title = process.env.ISSUE_TITLE;
             const body = [
               "The weekly unpinned resolve failed. A dependency released a version",
               "that `pyproject.toml` admits and the suite does not survive.",
@@ -126,9 +134,42 @@ jobs:
               });
             }
 
+      # Nothing is opened on a pass; this only closes what a failure opened.
+      - name: Close the issue once the resolve passes
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === process.env.ISSUE_TITLE);
+            if (!match) {
+              return;
+            }
+            const body = [
+              "The weekly unpinned resolve passed: the newest versions `pyproject.toml`",
+              "admits install and the suite is green. Closing; a later failure opens a",
+              "new issue.",
+              "",
+              `Run: ${run}`,
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, body,
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, state: "closed", state_reason: "completed",
+            });
+
   js-line-latest:
     name: newest in each pinned JS line + corpus
     runs-on: ubuntu-latest
+    env:
+      ISSUE_TITLE: "upstream drift: the newest release in a pinned JS line is failing"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The same version tests.yml builds the committed bundles on. This job is
@@ -233,7 +274,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const title = "upstream drift: the newest release in a pinned JS line is failing";
+            const title = process.env.ISSUE_TITLE;
             const body = [
               "The weekly build against the newest release inside each pinned line",
               "failed. Something published within a line this repo already trusts",
@@ -270,9 +311,42 @@ jobs:
               });
             }
 
+      # Nothing is opened on a pass; this only closes what a failure opened.
+      - name: Close the issue once every line passes
+        if: success()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === process.env.ISSUE_TITLE);
+            if (!match) {
+              return;
+            }
+            const body = [
+              "The weekly build against the newest release inside each pinned line",
+              "passed: it typechecks, round-trips the fidelity corpus and bundles.",
+              "Closing; a later failure opens a new issue.",
+              "",
+              `Run: ${run}`,
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, body,
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, state: "closed", state_reason: "completed",
+            });
+
   js-next-line:
     name: the next Tiptap line + corpus, priced
     runs-on: ubuntu-latest
+    env:
+      ISSUE_TITLE: "upstream: what the next Tiptap major would cost"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -372,7 +446,7 @@ jobs:
         with:
           script: |
             const fs = require("fs");
-            const title = "upstream: what the next Tiptap major would cost";
+            const title = process.env.ISSUE_TITLE;
             const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [`Run: ${run}`, "", report].join("\n");
@@ -417,6 +491,8 @@ jobs:
   js-pin-drift:
     name: pinned JS versions vs the registry
     runs-on: ubuntu-latest
+    env:
+      ISSUE_TITLE: "upstream drift: the pinned JavaScript versions are behind"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -460,7 +536,7 @@ jobs:
         with:
           script: |
             const fs = require("fs");
-            const title = "upstream drift: the pinned JavaScript versions are behind";
+            const title = process.env.ISSUE_TITLE;
             const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [`Run: ${run}`, "", report].join("\n");
@@ -488,3 +564,35 @@ jobs:
                 issue_number: match.number, body,
               });
             }
+
+      # The check writes no report when nothing drifted, so the comment says
+      # what a clean run means; its log lists every version it looked at.
+      - name: Close the issue once nothing has drifted
+        if: steps.check.outputs.drifted == 'false'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "upstream-drift",
+            });
+            const match = existing.data.find((issue) => issue.title === process.env.ISSUE_TITLE);
+            if (!match) {
+              return;
+            }
+            const body = [
+              "The weekly pin check found every pin the newest usable release in its",
+              "line, no newer line beyond it, and every restatement of the TipTap pin",
+              "agreeing. Closing; the next drift opens a new issue.",
+              "",
+              `Run: ${run}`,
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, body,
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: match.number, state: "closed", state_reason: "completed",
+            });

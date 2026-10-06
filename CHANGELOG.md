@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Every scheduled drift job now closes the issue it opened once the cause is
+  gone.** The unpinned resolve, the newest-in-line build and the pin check each
+  opened or updated an issue when they failed or found drift, and nothing closed
+  it after a clean run, so an issue stayed open with no way to tell whether it
+  was current. Each now comments on a clean run and closes its issue, as the
+  next-major report already did. Each job names its issue once, since the step
+  that opens it and the step that closes it find it by exact title, and
+  `tests/test_upstream_drift_workflow.py` checks on every pull request that
+  every job opening an issue can close it and that no two share one.
+
 ### Fixed
 
 - **A stored document carrying a value of the wrong type renders instead of
