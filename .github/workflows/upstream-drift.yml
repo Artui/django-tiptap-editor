@@ -315,7 +315,7 @@ jobs:
         run: git checkout -- js/package.json
 
       - name: Open or update an issue on failure
-        if: failure()
+        if: failure() && github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
@@ -358,7 +358,7 @@ jobs:
 
       # Nothing is opened on a pass; this only closes what a failure opened.
       - name: Close the issue once every line passes
-        if: success()
+        if: success() && github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
@@ -485,6 +485,7 @@ jobs:
       # follows a major being crossed. That closes the issue instead of
       # updating it, and opens nothing when there is no issue to close.
       - name: Open or update the pricing issue
+        if: github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           REPORT_PATH: ${{ runner.temp }}/js-next-line.md
@@ -574,7 +575,7 @@ jobs:
       # on yet is how a channel gets muted. The fingerprint the check embeds in
       # the body is what makes "changed" answerable.
       - name: Open or update an issue on drift
-        if: steps.check.outputs.drifted == 'true'
+        if: steps.check.outputs.drifted == 'true' && github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           REPORT_PATH: ${{ runner.temp }}/js-pin-drift.md
@@ -613,7 +614,7 @@ jobs:
       # The check writes no report when nothing drifted, so the comment says
       # what a clean run means; its log lists every version it looked at.
       - name: Close the issue once nothing has drifted
-        if: steps.check.outputs.drifted == 'false'
+        if: steps.check.outputs.drifted == 'false' && github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
