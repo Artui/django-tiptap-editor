@@ -1019,6 +1019,14 @@ whatever the stored document asked for: <code>rel="opener"</code> re-enables the
 handle that <code>target="_blank"</code> otherwise implies away.</p>
 <p>Content nested deeper than <code>MAX_DOCUMENT_DEPTH</code> (100 elements or nodes) is refused
 with a <code>ValidationError</code> rather than recursed into.</p>
+<p>A JSON document is bounded in its values as well as its nodes. Anything nested deeper
+than <code>MAX_JSON_DEPTH</code> (400 levels, counting every object and array, a node's <code>attrs</code>
+included) is refused by <code>TipTapJSONFormField</code>, and by <code>TipTapJSONField</code> on validation
+and on save. A document at the node limit reaches about half of that. The bound is for
+<code>json.dumps</code>, which Django's <code>JSONField</code> runs on the value and which recurses once per
+level, so it applies where a value is written. A row already stored deeper still
+renders, but saving it again raises <code>ValidationError</code> until its document is replaced;
+<code>save(update_fields=...)</code> that leaves the document out still works.</p>
 <h2 id="rendering">Rendering<a class="headerlink" href="#rendering" title="Permanent link">&para;</a></h2>
 <p>Render with the <code>tiptap_html</code> filter, for either storage format:</p>
 <div class="language-django highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">{%</span> <span class="k">load</span> <span class="nv">tiptap</span> <span class="cp">%}</span>

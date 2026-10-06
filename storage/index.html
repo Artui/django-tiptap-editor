@@ -456,6 +456,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How it works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -879,6 +896,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How it works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1012,6 +1046,13 @@ JavaScript and no Node are required.</p>
 <p>Because the mirror is re-derived server-side, any caller-supplied <code>html</code> is discarded — a benign
 <code>doc</code> can never ship hostile markup through the mirror. <code>{{ obj.body }}</code> works with no JavaScript
 even for a doc written purely from Python.</p>
+<h3 id="fixtures">Fixtures<a class="headerlink" href="#fixtures" title="Permanent link">&para;</a></h3>
+<p><code>dumpdata</code> writes the stored <code>{doc, html}</code> mapping, the column's own shape, and <code>loaddata</code>
+reads it back through the same save path, so a loaded <code>doc</code> is sanitized and its mirror
+re-derived like any other write. Use JSON (the <code>dumpdata</code> default), JSONL or YAML. An XML
+fixture is written but does not load: Django's XML deserializer decodes a <code>JSONField</code> value a
+second time after the field's <code>to_python</code>, and this field has already parsed it into a
+<code>TipTapValue</code>.</p>
 <h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1049,7 +1090,10 @@ or import), render it in Python with <code>render_doc</code>:</p>
 </span></code></pre></div>
 <p>It covers the package's node/mark set, applies the link/image protocol allowlist, escapes text,
 and validates inline CSS — so the result is safe to render directly. The output is <strong>faithful to,
-but not byte-identical with</strong>, the editor's <code>getHTML()</code> (the browser normalizes some CSS).
+but not byte-identical with</strong>, the editor's <code>getHTML()</code> (the browser normalizes some CSS). A value
+of the wrong type, such as a list where a heading's <code>level</code> belongs or a string where a node's
+<code>attrs</code> do, is skipped rather than raised on: the attribute takes its default or renders
+nothing.
 <code>TipTapJSONField</code> uses it automatically to re-derive the mirror from the sanitized doc on save.</p>
 <p>A template filter is also available:</p>
 <div class="language-django highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cp">{%</span> <span class="k">load</span> <span class="nv">tiptap</span> <span class="cp">%}</span>
