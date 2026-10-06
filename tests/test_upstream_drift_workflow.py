@@ -50,8 +50,10 @@ def test_every_job_that_opens_an_issue_can_close_it() -> None:
 # close step running on failure, cancellation or drift would close the issue in
 # the same run that opened it. js-next-line closes from its one always-running
 # step, on a marker in the report, so its step carries no condition.
+# resolve-latest opens and closes only from main, so a dispatch from a branch
+# is a trial: it neither files nor clears the issue about main.
 _CLOSES_WHEN = {
-    "resolve-latest": "success()",
+    "resolve-latest": "success() && github.ref == 'refs/heads/main'",
     "js-line-latest": "success()",
     "js-next-line": None,
     "js-pin-drift": "steps.check.outputs.drifted == 'false'",
