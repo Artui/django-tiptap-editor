@@ -20,10 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   than raised on. `attrs` that is not a mapping gives every attribute its default,
   as it does in the editor. A mark type or link target that is not a string is
   ignored and its text kept, where the editor's JavaScript would turn
-  `["_blank"]` into `_blank`: the server does not guess. A heading's level and an
-  ordered list's start are read as numbers, as the editor reads them, so `2.0`
-  renders `h2` rather than `<h2.0>` and numbers a list from 2 rather than 1, and
-  `true` renders `h1` rather than `<hTrue>`.
+  `["_blank"]` into `_blank`: the server does not guess. A heading's level is
+  read as a number, as the editor reads it, so `2.0` renders `h2` rather than
+  `<h2.0>` and `true` renders `h1` rather than `<hTrue>`. An ordered list's start
+  is read as a whole JSON number, so `2.0` numbers the list from 2, as the editor
+  does, rather than from 1. Anything else writes no start, though the editor's
+  browser reads `"2"`, `2.5` and `[2]` each as 2.
 - **A body `TipTapJSONFormField` cannot parse is a field error in every case.**
   Its parse caught a syntax error, but `json.loads` also raises `RecursionError`
   on nesting deeper than its decoder recurses (about a thousand levels on Python

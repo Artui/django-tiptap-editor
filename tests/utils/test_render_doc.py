@@ -210,10 +210,13 @@ def test_lists() -> None:
         ([2], "<ol></ol>"),
     ],
 )
-def test_an_ordered_list_start_is_read_as_a_number(start: object, expected: str) -> None:
+def test_an_ordered_list_start_is_read_as_a_whole_json_number(start: object, expected: str) -> None:
     # The editor numbers a list stored with 2.0 from 2, where an int-only check
     # dropped it and numbered from 1; and false, being an int in Python, wrote
-    # start="False" where a 0 would have been read as a number.
+    # start="False" where a 0 would have been read as a number. The last three
+    # are a known difference, pinned so that changing it is a decision: the
+    # editor writes start="2.5" or start="2", and the browser's integer parsing
+    # numbers each list from 2, where this writes no start.
     doc = {"type": "doc", "content": [{"type": "orderedList", "attrs": {"start": start}}]}
     assert render_doc(doc) == expected
 
