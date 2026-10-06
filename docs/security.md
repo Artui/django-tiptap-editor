@@ -69,8 +69,9 @@ than `MAX_JSON_DEPTH` (400 levels, counting every object and array, a node's `at
 included) is refused by `TipTapJSONFormField`, and by `TipTapJSONField` on validation
 and on save. A document at the node limit reaches about half of that. The bound is for
 `json.dumps`, which Django's `JSONField` runs on the value and which recurses once per
-level, so it applies where a value is written; a row already stored deeper still
-renders.
+level, so it applies where a value is written. A row already stored deeper still
+renders, but saving it again raises `ValidationError` until its document is replaced;
+`save(update_fields=...)` that leaves the document out still works.
 
 ## Rendering
 

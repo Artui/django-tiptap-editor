@@ -38,6 +38,14 @@ def test_a_value_one_level_past_the_limit_is_refused(nest: Callable[[int], objec
         validate_json_depth(nest(MAX_JSON_DEPTH + 1))
 
 
+def test_the_bound_is_the_number_the_docs_state() -> None:
+    # Every other test here is written relative to the constant, so raising it
+    # toward the depth where json.dumps overflows on Python 3.10 (about 940
+    # levels under a test runner) would pass them all. The security page and the
+    # changelog both say 400.
+    assert MAX_JSON_DEPTH == 400
+
+
 def test_a_scalar_is_not_a_level() -> None:
     # Only objects and arrays nest. A number inside the innermost array leaves
     # the value at the limit, not one past it.

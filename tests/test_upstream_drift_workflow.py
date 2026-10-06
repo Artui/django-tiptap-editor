@@ -46,6 +46,30 @@ def test_every_job_that_opens_an_issue_can_close_it() -> None:
         assert 'state: "closed"' in block, f"{name} opens an issue and never closes it"
 
 
+# When each job may close its issue. A pass, or a check that found nothing; a
+# close step running on failure, cancellation or drift would close the issue in
+# the same run that opened it. js-next-line closes from its one always-running
+# step, on a marker in the report, so its step carries no condition.
+_CLOSES_WHEN = {
+    "resolve-latest": "success()",
+    "js-line-latest": "success()",
+    "js-next-line": None,
+    "js-pin-drift": "steps.check.outputs.drifted == 'false'",
+}
+
+
+def _steps(block: str) -> list[str]:
+    return re.split(r"^      - ", block, flags=re.MULTILINE)[1:]
+
+
+def test_every_step_that_closes_an_issue_runs_only_when_it_should() -> None:
+    for name, block in _opening_jobs().items():
+        closing = [step for step in _steps(block) if 'state: "closed"' in step]
+        assert len(closing) == 1, name
+        condition = re.search(r"^        if: (.+)$", closing[0], re.MULTILINE)
+        assert (condition.group(1) if condition else None) == _CLOSES_WHEN[name], name
+
+
 def test_every_job_names_its_issue_once() -> None:
     for name, block in _opening_jobs().items():
         # Job level (four spaces), so every step in the job reads the same value.
@@ -53,6 +77,8 @@ def test_every_job_names_its_issue_once() -> None:
         assert "process.env.ISSUE_TITLE" in block, name
         assert 'const title = "' not in block, f"{name} restates its title in a script"
         assert 'issue.title === "' not in block, f"{name} restates its title in a script"
+        # A step-level env would shadow the job's title for that step alone.
+        assert not re.search(r"^ {8,}ISSUE_TITLE:", block, re.MULTILINE), name
 
 
 def test_no_two_jobs_share_an_issue() -> None:
