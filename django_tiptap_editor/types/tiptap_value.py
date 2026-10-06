@@ -73,7 +73,10 @@ class TipTapValue:
 
     def to_stored(self) -> dict[str, Any]:
         """Return the plain ``{doc, html}`` mapping persisted in the JSON column."""
-        return {"doc": self.doc, "html": str(self.html)}
+        # ``str()`` of a ``SafeString`` returns the same ``SafeString``; the base
+        # method copies it out as a plain ``str``. A YAML dumper refuses a ``str``
+        # subclass, so a fixture written with ``dumpdata --format yaml`` needs it.
+        return {"doc": self.doc, "html": str.__str__(self.html)}
 
     def __str__(self) -> str:
         return self.html

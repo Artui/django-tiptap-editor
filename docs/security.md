@@ -64,6 +64,15 @@ handle that `target="_blank"` otherwise implies away.
 Content nested deeper than `MAX_DOCUMENT_DEPTH` (100 elements or nodes) is refused
 with a `ValidationError` rather than recursed into.
 
+A JSON document is bounded in its values as well as its nodes. Anything nested deeper
+than `MAX_JSON_DEPTH` (400 levels, counting every object and array, a node's `attrs`
+included) is refused by `TipTapJSONFormField`, and by `TipTapJSONField` on validation
+and on save. A document at the node limit reaches about half of that. The bound is for
+`json.dumps`, which Django's `JSONField` runs on the value and which recurses once per
+level, so it applies where a value is written. A row already stored deeper still
+renders, but saving it again raises `ValidationError` until its document is replaced;
+`save(update_fields=...)` that leaves the document out still works.
+
 ## Rendering
 
 Render with the `tiptap_html` filter, for either storage format:

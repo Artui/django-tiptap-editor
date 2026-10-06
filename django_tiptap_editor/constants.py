@@ -204,6 +204,16 @@ FORBIDDEN_TAGS = frozenset(
 # Real content sits one to two orders of magnitude below the limit.
 MAX_DOCUMENT_DEPTH = 100
 
+# Maximum nesting of any value in a stored JSON document, counting every object
+# and array rather than only nodes. A node costs two levels (its object and the
+# ``content`` array holding it), so a document at MAX_DOCUMENT_DEPTH reaches
+# about 200 with its attrs and marks; this is twice that. The bound exists for
+# ``json.dumps``, which Django's JSONField runs in ``validate`` and again on
+# save, and which recurses per level: an array nested about 950 levels inside a
+# node's ``attrs`` -- a 2 KB body that parses -- raised RecursionError there on
+# Python 3.10.
+MAX_JSON_DEPTH = 4 * MAX_DOCUMENT_DEPTH
+
 # Empty base config: JS fills defaults for omitted keys, so Python keeps no
 # duplicate default toolbar/extension lists that could drift from the glue.
 DEFAULT_CONFIG: dict[str, object] = {}

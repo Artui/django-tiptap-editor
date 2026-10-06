@@ -13,6 +13,7 @@ from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
+from django_tiptap_editor.utils.validate_json_depth import validate_json_depth
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 _INVALID = "Enter a valid TipTap document (JSON)."
@@ -67,6 +68,10 @@ class TipTapJSONFormField(forms.Field):
             parsed = TipTapValue.from_stored(data)
         except ValidationError as exc:
             raise ValidationError(_INVALID) from exc
+        # Before anything re-encodes it: a ModelForm's model field runs json.dumps
+        # in validate, which recurses per level and has no answer for a value
+        # nested a few hundred levels inside ``attrs`` but a RecursionError.
+        validate_json_depth(parsed.doc)
         doc = sanitize_doc(parsed.doc)
         # Re-derive the mirror from the sanitized doc, as the model field does
         # on save, so the cleaned value matches what will be stored rather than

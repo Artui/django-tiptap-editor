@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
+from django.core import serializers
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
+from django.db import connection
 from django.forms import modelform_factory
 from django.test import override_settings
 
+from django_tiptap_editor.constants import MAX_JSON_DEPTH
 from django_tiptap_editor.fields.tiptap_json_field import (
     _RENDERABLE_MARK_TYPES,
     _RENDERABLE_NODE_TYPES,
@@ -150,6 +155,96 @@ def test_db_roundtrip_null() -> None:
     assert Article.objects.get(pk=article.pk).document is None
 
 
+def _documents() -> dict[int, TipTapValue | None]:
+    return {article.pk: article.document for article in Article.objects.all()}
+
+
+# ``dumpdata`` and ``loaddata`` go through these serializers. A loaded instance
+# holds a ``TipTapValue``, which none of them can encode, so serializing raised a
+# ``TypeError`` and ``dumpdata`` lost the whole dump to one field.
+@pytest.mark.django_db
+@pytest.mark.parametrize("fmt", ["json", "jsonl", "yaml"])
+def test_a_fixture_round_trips_the_document(fmt: str) -> None:
+    Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    Article.objects.create(title="b", body="", document=None)
+    before = _documents()
+    fixture = serializers.serialize(fmt, Article.objects.order_by("pk"))
+    Article.objects.all().delete()
+    for loaded in serializers.deserialize(fmt, fixture):
+        loaded.save()
+    assert _documents() == before
+
+
+@pytest.mark.django_db
+def test_a_fixture_carries_the_stored_mapping() -> None:
+    # The column's own shape, so a fixture reads and hand-edits like the table.
+    article = Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    [row] = json.loads(serializers.serialize("json", Article.objects.filter(pk=article.pk)))
+    assert row["fields"]["document"] == {"doc": DOC, "html": "<p>hi</p>"}
+
+
+@pytest.mark.django_db
+def test_dumpdata_and_loaddata_round_trip_the_document(tmp_path: Path) -> None:
+    Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    before = _documents()
+    fixture = tmp_path / "articles.json"
+    call_command("dumpdata", "testapp.article", output=str(fixture), verbosity=0)
+    Article.objects.all().delete()
+    call_command("loaddata", str(fixture), verbosity=0)
+    assert _documents() == before
+
+
+@pytest.mark.django_db
+def test_loaddata_sanitizes_the_doc_and_rederives_the_mirror(tmp_path: Path) -> None:
+    # A fixture is somebody else's write, so it takes the same save path as any
+    # other: a dumped row is already clean and would prove nothing here.
+    link = {"type": "link", "attrs": {"href": "javascript:alert(1)"}}
+    text = {"type": "text", "text": "x", "marks": [link]}
+    doc = {"type": "doc", "content": [{"type": "paragraph", "content": [text]}]}
+    fixture = tmp_path / "dirty.json"
+    fixture.write_text(
+        json.dumps(
+            [
+                {
+                    "model": "testapp.article",
+                    "pk": 1,
+                    "fields": {
+                        "title": "a",
+                        "body": "",
+                        "summary": "",
+                        "document": {"doc": doc, "html": "<script>x</script><p>evil</p>"},
+                    },
+                }
+            ]
+        )
+    )
+    call_command("loaddata", str(fixture), verbosity=0)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT document FROM testapp_article WHERE id = 1")
+        [stored] = cursor.fetchone()
+    stored = json.loads(stored)
+    assert stored["html"] == "<p>x</p>"
+    assert "javascript" not in json.dumps(stored["doc"])
+
+
+def test_value_to_string_hands_an_unsaved_mapping_on_unchanged() -> None:
+    article = Article(title="a", body="", document={"doc": DOC})
+    assert Article._meta.get_field("document").value_to_string(article) == {"doc": DOC}
+
+
+@pytest.mark.django_db
+def test_an_xml_fixture_is_written_but_does_not_load() -> None:
+    # Django's XML deserializer runs ``json.loads`` over what ``to_python``
+    # returns, assuming a ``JSONField`` hands the string back unparsed. This field
+    # parses it into a ``TipTapValue``, as Django documents ``to_python`` should,
+    # so the load fails loudly instead. Pinned so a change on either side shows.
+    Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
+    fixture = serializers.serialize("xml", Article.objects.all())
+    assert "&lt;p&gt;hi&lt;/p&gt;" in fixture
+    with pytest.raises(TypeError, match="not TipTapValue"):
+        list(serializers.deserialize("xml", fixture))
+
+
 def test_get_prep_value_derives_mirror_when_html_missing() -> None:
     # Programmatic write: doc set, no html → mirror rendered server-side.
     prepared = TipTapJSONField().get_prep_value(TipTapValue.from_stored({"doc": DOC}))
@@ -244,6 +339,47 @@ def test_full_clean_rejects_a_non_serializable_document() -> None:
     with pytest.raises(ValidationError) as exc:
         article.full_clean()
     assert "document" in exc.value.message_dict
+
+
+def _attrs_nested(depth: int) -> dict[str, object]:
+    """A stored value whose paragraph's ``attrs`` is ``depth`` nested arrays."""
+    attrs: list[object] = []
+    for _ in range(depth - 1):
+        attrs = [attrs]
+    return {"doc": {"type": "doc", "content": [{"type": "paragraph", "attrs": attrs}]}, "html": ""}
+
+
+_TOO_DEEP = f"TipTap document nests values deeper than the maximum of {MAX_JSON_DEPTH} levels."
+
+
+@pytest.mark.django_db
+def test_model_form_refuses_a_value_nested_deep_inside_attrs() -> None:
+    # The admin's path. The form field answers before the model field's
+    # validate re-encodes the value with json.dumps, which recurses per level:
+    # on Python 3.10 a body some 950 levels deep parsed and then raised
+    # RecursionError there, a 500 from a 2 KB POST.
+    body = json.dumps(_attrs_nested(MAX_JSON_DEPTH + 100))
+    form = ArticleForm(data={"title": "t", "body": "b", "document": body})
+    assert not form.is_valid()
+    assert form.errors["document"] == [_TOO_DEEP]
+
+
+@pytest.mark.django_db
+def test_full_clean_refuses_a_value_nested_past_the_bound() -> None:
+    # A value an API assigns reaches validate without the form field's check.
+    article = Article(title="t", body="b", document=_attrs_nested(MAX_JSON_DEPTH + 1))
+    with pytest.raises(ValidationError) as exc:
+        article.full_clean()
+    assert exc.value.message_dict["document"] == [_TOO_DEEP]
+
+
+def test_get_prep_value_refuses_a_value_nested_past_the_bound() -> None:
+    # save() runs no validate, and get_prep_value is its json.dumps.
+    with pytest.raises(ValidationError, match="nests values deeper"):
+        TipTapJSONField().get_prep_value(_attrs_nested(MAX_JSON_DEPTH + 1))
+    # The document, its content array and the paragraph are the other three
+    # levels, so this one sits exactly at the bound, which is inclusive.
+    TipTapJSONField().get_prep_value(_attrs_nested(MAX_JSON_DEPTH - 3))
 
 
 @pytest.mark.django_db

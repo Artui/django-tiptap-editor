@@ -71,6 +71,15 @@ Because the mirror is re-derived server-side, any caller-supplied `html` is disc
 `doc` can never ship hostile markup through the mirror. `{{ obj.body }}` works with no JavaScript
 even for a doc written purely from Python.
 
+### Fixtures
+
+`dumpdata` writes the stored `{doc, html}` mapping, the column's own shape, and `loaddata`
+reads it back through the same save path, so a loaded `doc` is sanitized and its mirror
+re-derived like any other write. Use JSON (the `dumpdata` default), JSONL or YAML. An XML
+fixture is written but does not load: Django's XML deserializer decodes a `JSONField` value a
+second time after the field's `to_python`, and this field has already parsed it into a
+`TipTapValue`.
+
 ## Settings
 
 | Setting | Default | Effect |

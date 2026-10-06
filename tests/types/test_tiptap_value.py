@@ -56,6 +56,13 @@ def test_to_stored_roundtrips() -> None:
     assert value.to_stored() == {"doc": DOC, "html": "<p>x</p>"}
 
 
+def test_to_stored_html_is_a_plain_string() -> None:
+    # ``str()`` of a ``SafeString`` is the same ``SafeString``, and a YAML dumper
+    # refuses a ``str`` subclass, so a fixture in YAML could not be written.
+    html = TipTapValue.from_stored({"doc": DOC, "html": "<p>x</p>"}).to_stored()["html"]
+    assert type(html) is str
+
+
 def test_str_and_html_are_the_safe_mirror() -> None:
     value = TipTapValue(doc=DOC, html=SafeString("<p>x</p>"))
     assert str(value) == "<p>x</p>"

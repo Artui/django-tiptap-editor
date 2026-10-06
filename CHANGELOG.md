@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] — 2026-10-06
+
+### Changed
+
+- **Every scheduled drift job now closes the issue it opened once the cause is
+  gone.** The unpinned resolve, the newest-in-line build and the pin check each
+  opened or updated an issue when they failed or found drift, and nothing closed
+  it after a clean run, so an issue stayed open with no way to tell whether it
+  was current. Each now comments on a clean run and closes its issue, as the
+  next-major report already did. Each job names its issue once, since the step
+  that opens it and the step that closes it find it by exact title, and
+  `tests/test_upstream_drift_workflow.py` checks on every pull request that
+  every job opening an issue can close it and that no two share one.
+
 ### Fixed
 
 - **A stored document carrying a value of the wrong type renders instead of
@@ -32,6 +46,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3.10, so a 2 KB POST) and `ValueError` on an integer longer than 4300 digits.
   Both were a 500. `TipTapJSONField` had the same gap where it parses a string
   value from a fixture or a deserializer, and raises `ValidationError` there now.
+- **A JSON document nested deep inside a node's `attrs` is a field error rather
+  than a 500 through a `ModelForm` or the admin.** Such a body parses, and
+  `sanitize_doc` bounds only how deeply nodes nest, so the form field accepted
+  it. Django's `JSONField` then re-encodes the value with `json.dumps` in
+  `validate` and again on save, and the encoder recurses once per level: on
+  Python 3.10 an array some 945 levels deep, a 2 KB POST, passed validation and
+  raised `RecursionError` in `save()`. Any value nested deeper than the new
+  `MAX_JSON_DEPTH` (400 levels, counting every object and array) is now refused
+  with a `ValidationError` by `TipTapJSONFormField`, by `TipTapJSONField.validate`
+  and by `TipTapJSONField.get_prep_value`, the last because `save()` runs no
+  validation. A document at the node limit reaches about 200 levels. Reading and
+  rendering are unchanged, so a row already stored deeper still renders, but
+  saving it again raises `ValidationError` until its document is replaced;
+  `save(update_fields=...)` that leaves the document out still works.
+- **Tables in the editor are readable under the Django admin's dark theme.** The
+  editor keeps a light content area in both themes, and the admin's stylesheet
+  paints every table row, near-black under its dark theme, so a table showed
+  dark text on a near-black row. Its cell rules also gave header cells a
+  different size and weight from the text around them. The editor's own rules
+  now make rows transparent, give cells the editor's font size and line height,
+  and make header cells bold. A cell's own background colour still applies, and
+  so does a host's alignment for header cells: the admin's are left and top
+  aligned.
+- **`dumpdata` serializes a model with a `TipTapJSONField`.** Since the field
+  was added, it handed the serializer the `TipTapValue` on the instance, which
+  no serializer can encode, so `dumpdata` raised `CommandError` on the first row
+  with a document and the whole dump failed, every other app's tables included.
+  A fixture now carries the stored `{doc, html}` mapping, the column's own
+  shape, and `loaddata` reads it back to the same value in JSON, JSONL and YAML.
+  `TipTapValue.to_stored()` now returns the mirror as a plain `str` rather than
+  a `SafeString`, which a YAML dumper refuses. An XML fixture is written but
+  still does not load: Django's XML deserializer decodes a `JSONField` value a
+  second time after `to_python`, which this field has already parsed into a
+  `TipTapValue`.
+- **`TipTapJSONField` sanitizes on save on every supported Django.** Django
+  4.2.0 and 4.2.1 never call a `JSONField`'s `get_prep_value` when saving. On
+  those two releases a mapping written through the ORM, an API or a fixture was
+  stored exactly as given, a `javascript:` link in the `doc` and an event
+  handler in the mirror included, and saving a `TipTapValue`, which is what the
+  form field and the admin save, raised `TypeError`. Reading a row back
+  re-sanitizes the mirror but not the `doc`. The Django floor is now 4.2.2,
+  where Django restored the call.
 
 ## [0.11.0] — 2026-10-06
 
@@ -800,7 +856,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.9.0...v0.10.0
