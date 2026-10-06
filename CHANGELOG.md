@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and by `TipTapJSONField.get_prep_value`, the last because `save()` runs no
   validation. A document at the node limit reaches about 200 levels. Reading and
   rendering are unchanged, so a row already stored deeper still renders.
+- **Tables in the editor are readable under the Django admin's dark theme.** The
+  editor keeps a light content area in both themes, and the admin's stylesheet
+  paints every table row, near-black under its dark theme, so a table showed
+  dark text on a near-black row. Its cell rules also gave header cells a
+  different size and weight from the text around them. The editor's own rules
+  now make rows transparent, give cells the editor's font size and line height,
+  and make header cells bold, so a table looks the same in any host page. A
+  cell's own background colour still applies.
 
 ## [0.11.0] — 2026-10-06
 

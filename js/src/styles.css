@@ -346,10 +346,27 @@
   border-collapse: collapse;
 }
 
+/* Host stylesheets style bare table elements, and this content area keeps its
+   own light background in every theme, so their rules have to be undone here
+   rather than left to inherit. The Django admin's base.css is the case that
+   shipped: it paints every row (odd and even, near-black under its dark
+   theme, behind this editor's dark text) and sets every cell to a smaller
+   font and line height, with semi-bold headers. A cell's own background is
+   an inline style and still wins. */
+.django-tiptap .ProseMirror tr {
+  background: transparent;
+}
+
 .django-tiptap .ProseMirror th,
 .django-tiptap .ProseMirror td {
   border: 1px solid var(--tiptap-border);
   padding: 4px 8px;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.django-tiptap .ProseMirror th {
+  font-weight: bold;
 }
 
 .django-tiptap .ProseMirror a {
