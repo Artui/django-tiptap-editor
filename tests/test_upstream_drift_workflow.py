@@ -48,28 +48,53 @@ def test_every_job_that_opens_an_issue_can_close_it() -> None:
 
 # When each job may close its issue. A pass, or a check that found nothing; a
 # close step running on failure, cancellation or drift would close the issue in
-# the same run that opened it. js-next-line closes from its one always-running
-# step, on a marker in the report, so its step carries no condition.
-# resolve-latest opens and closes only from main, so a dispatch from a branch
-# is a trial: it neither files nor clears the issue about main.
+# the same run that opened it. js-next-line closes from its one issue step, on a
+# marker in the report, so that step carries no status of its own.
 _CLOSES_WHEN = {
-    "resolve-latest": "success() && github.ref == 'refs/heads/main'",
+    "resolve-latest": "success()",
     "js-line-latest": "success()",
     "js-next-line": None,
     "js-pin-drift": "steps.check.outputs.drifted == 'false'",
 }
+
+# Each issue reports on main, so only a run on main may file or clear one. A
+# dispatch from a branch is then a trial that touches no issue; without this, a
+# branch that broke a job would file it against main, and a branch that fixed
+# one would close it before the fix had landed.
+_ON_MAIN = "github.ref == 'refs/heads/main'"
 
 
 def _steps(block: str) -> list[str]:
     return re.split(r"^      - ", block, flags=re.MULTILINE)[1:]
 
 
+def _condition(step: str) -> str | None:
+    match = re.search(r"^        if: (.+)$", step, re.MULTILINE)
+    return match.group(1) if match else None
+
+
 def test_every_step_that_closes_an_issue_runs_only_when_it_should() -> None:
     for name, block in _opening_jobs().items():
         closing = [step for step in _steps(block) if 'state: "closed"' in step]
         assert len(closing) == 1, name
-        condition = re.search(r"^        if: (.+)$", closing[0], re.MULTILINE)
-        assert (condition.group(1) if condition else None) == _CLOSES_WHEN[name], name
+        status = _CLOSES_WHEN[name]
+        expected = f"{status} && {_ON_MAIN}" if status else _ON_MAIN
+        assert _condition(closing[0]) == expected, name
+
+
+def test_every_step_that_touches_an_issue_runs_only_on_main() -> None:
+    touching = [
+        (name, step)
+        for name, block in _opening_jobs().items()
+        for step in _steps(block)
+        if "issues.create(" in step or 'state: "closed"' in step
+    ]
+    # One opening and one closing step per job, js-next-line's being the same
+    # step; a count that fell would mean the split stopped finding them.
+    assert len(touching) == 7
+    for name, step in touching:
+        condition = _condition(step) or ""
+        assert condition == _ON_MAIN or condition.endswith(f" && {_ON_MAIN}"), name
 
 
 def test_every_job_names_its_issue_once() -> None:
