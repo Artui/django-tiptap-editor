@@ -62,6 +62,9 @@ dev = [
     "pytest-cov>=5.0",
     "pytest-asyncio>=0.24",
     "django-stubs>=5.0",
+    # Django's YAML serializer imports it, and the fixture round-trip tests run
+    # that format. It also arrives through mkdocs, which is not why it is here.
+    "pyyaml>=6.0",
 ]
 docs = [
     "mkdocs>=1.6",

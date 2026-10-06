@@ -7,6 +7,7 @@ import pytest
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.db import connection
 from django.forms import modelform_factory
 from django.test import override_settings
 
@@ -162,7 +163,7 @@ def _documents() -> dict[int, TipTapValue | None]:
 # holds a ``TipTapValue``, which none of them can encode, so serializing raised a
 # ``TypeError`` and ``dumpdata`` lost the whole dump to one field.
 @pytest.mark.django_db
-@pytest.mark.parametrize("fmt", ["json", "jsonl"])
+@pytest.mark.parametrize("fmt", ["json", "jsonl", "yaml"])
 def test_a_fixture_round_trips_the_document(fmt: str) -> None:
     Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
     Article.objects.create(title="b", body="", document=None)
@@ -191,6 +192,39 @@ def test_dumpdata_and_loaddata_round_trip_the_document(tmp_path: Path) -> None:
     Article.objects.all().delete()
     call_command("loaddata", str(fixture), verbosity=0)
     assert _documents() == before
+
+
+@pytest.mark.django_db
+def test_loaddata_sanitizes_the_doc_and_rederives_the_mirror(tmp_path: Path) -> None:
+    # A fixture is somebody else's write, so it takes the same save path as any
+    # other: a dumped row is already clean and would prove nothing here.
+    link = {"type": "link", "attrs": {"href": "javascript:alert(1)"}}
+    text = {"type": "text", "text": "x", "marks": [link]}
+    doc = {"type": "doc", "content": [{"type": "paragraph", "content": [text]}]}
+    fixture = tmp_path / "dirty.json"
+    fixture.write_text(
+        json.dumps(
+            [
+                {
+                    "model": "testapp.article",
+                    "pk": 1,
+                    "fields": {
+                        "title": "a",
+                        "body": "",
+                        "summary": "",
+                        "document": {"doc": doc, "html": "<script>x</script><p>evil</p>"},
+                    },
+                }
+            ]
+        )
+    )
+    call_command("loaddata", str(fixture), verbosity=0)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT document FROM testapp_article WHERE id = 1")
+        [stored] = cursor.fetchone()
+    stored = json.loads(stored)
+    assert stored["html"] == "<p>x</p>"
+    assert "javascript" not in json.dumps(stored["doc"])
 
 
 def test_value_to_string_hands_an_unsaved_mapping_on_unchanged() -> None:
