@@ -24,7 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   list wins. The server's allowlist does not narrow with it: stored HTML is still
   sanitised against every built-in extension. `docs/configuration.md` lists the
   names, the core and the dependency table, and `tests/test_configuration_documentation.py`
-  holds that page equal to `constants`.
+  holds that page equal to `constants`. In the browser an excluded extension is not
+  mounted at all, so its input rules, shortcuts and paste handling do not exist;
+  built-in toolbar buttons for it are not rendered (an explicit `toolbar` naming one
+  logs a warning), image files dropped or pasted into a field without `image` are
+  ignored, and a custom button can declare the feature it needs with `requires`.
+  JSON-stored content that the restricted schema cannot build opens from its HTML
+  mirror rather than empty. Naming a table row, cell or header alone gives the whole
+  table.
 
 ## [0.11.1] — 2026-10-06
 

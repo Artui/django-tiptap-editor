@@ -68,6 +68,15 @@ describe("resolveFeatures", () => {
     );
   });
 
+  it.each(["tableRow", "tableCell", "tableHeader"])(
+    "gives the whole table when only %s is named",
+    (part) => {
+      expect(sorted(resolveFeatures({ features: [part] })!)).toEqual(
+        sorted(resolveFeatures({ features: ["table"] })!),
+      );
+    },
+  );
+
   it("is idempotent, so a list the server already resolved is a no-op", () => {
     const once = resolveFeatures({ features: ["fontSize", "orderedList", "bold"] })!;
     const twice = resolveFeatures({ features: [...once] })!;

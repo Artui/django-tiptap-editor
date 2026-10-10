@@ -20,6 +20,13 @@ def test_an_empty_list_is_the_core_alone() -> None:
     assert resolve_features({"features": []}) == FEATURE_CORE
 
 
+@pytest.mark.parametrize("part", ["tableRow", "tableCell", "tableHeader"])
+def test_a_table_part_alone_gives_the_whole_table(part: str) -> None:
+    # A row or cell cannot be mounted without its table, while the sanitiser would
+    # keep the markup, so naming one must not leave the two disagreeing.
+    assert resolve_features({"features": [part]}) == resolve_features({"features": ["table"]})
+
+
 def test_a_table_pulls_its_rows_cells_and_headers() -> None:
     assert resolve_features({"features": ["table"]}) == FEATURE_CORE | {
         "table",

@@ -185,6 +185,12 @@ FEATURE_DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "bulletList": ("listItem",),
     "orderedList": ("listItem",),
     "table": ("tableRow", "tableCell", "tableHeader"),
+    # The parts lead back to the table because a row or cell is not a schema the
+    # editor can mount without it, while the sanitiser would keep their markup:
+    # naming any one of them must give the whole set.
+    "tableRow": ("table",),
+    "tableCell": ("table",),
+    "tableHeader": ("table",),
     "fontFamily": ("textStyle",),
     "color": ("textStyle",),
     "backgroundColor": ("textStyle",),

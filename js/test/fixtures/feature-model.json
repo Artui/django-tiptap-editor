@@ -67,6 +67,15 @@
       "tableCell",
       "tableHeader",
       "tableRow"
+    ],
+    "tableCell": [
+      "table"
+    ],
+    "tableHeader": [
+      "table"
+    ],
+    "tableRow": [
+      "table"
     ]
   }
 }

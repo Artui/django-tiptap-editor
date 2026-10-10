@@ -175,6 +175,12 @@ Then reference the key in `config.toolbar`. A button spec is either a command bu
 (`render(editor) -> { el, refresh? }`) that owns its DOM — that's how the built-in
 font/colour/table menus are built.
 
+A spec may also carry `requires`, the name of the built-in feature it cannot work
+without (for example `"image"`). A field restricted with
+[`features`](configuration.md#restricting-features) that leaves that feature out does not
+render the button. Leave it off for a button that needs no built-in feature. Registering
+a built-in key again replaces the spec, so the replacement carries its own `requires`.
+
 ## Load order
 
 Registration must run before auto-mount. Load your registration script **after** the

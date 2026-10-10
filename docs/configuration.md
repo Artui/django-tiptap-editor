@@ -83,6 +83,20 @@ leaves paragraphs, text and line breaks. A name that is not a built-in extension
 A project-wide `features` in `TIPTAP_DEFAULT_CONFIG` applies to every field, a field's own
 list replaces it, and `"features": None` on one field gives that field every built-in again.
 
+What a restricted field does in the browser:
+
+- A built-in toolbar button whose feature is off is not rendered. An explicit `toolbar`
+  that names one still works for the rest: the button is left out and the console warns
+  once, naming the button and the missing feature. Groups left empty disappear, so no
+  stray separator renders.
+- A custom button declares what it needs with `requires` (see
+  [Extending](extending.md#toolbar-buttons)); one without it is always shown.
+- Image files dropped or pasted into a field without `image` are left alone: nothing is
+  inserted and nothing is uploaded.
+- JSON-stored content saved before a field was restricted still opens. If the field's
+  schema cannot build the stored document, the editor loads the HTML mirror instead, which
+  keeps the text and drops the unsupported markup, rather than opening empty.
+
 The feature names, grouped:
 
 <!-- features:groups -->
@@ -104,7 +118,8 @@ Shift-Enter inside a list item and a pasted `<br>` both need it: without it, lin
 author kept apart would merge.
 
 **Dependencies are pulled in.** A feature that cannot work without another brings it
-along, so naming `table` alone gives a table with rows and cells:
+along, so naming `table` alone gives a table with rows and cells, and naming a row, cell
+or header alone gives the whole table:
 
 <!-- features:dependencies -->
 | Listing | Also turns on |
@@ -117,6 +132,9 @@ along, so naming `table` alone gives a table with rows and cells:
 | `highlight` | `backgroundColor` `textStyle` |
 | `orderedList` | `listItem` |
 | `table` | `tableCell` `tableHeader` `tableRow` |
+| `tableCell` | `table` |
+| `tableHeader` | `table` |
+| `tableRow` | `table` |
 <!-- /features:dependencies -->
 
 The widget writes the resolved set, listed features plus core plus dependencies, into
