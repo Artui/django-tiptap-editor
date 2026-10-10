@@ -36,6 +36,16 @@ export const FEATURE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> =
   fontSize: ["textStyle"],
 };
 
+// Whether a control that needs `feature` (ButtonSpec.requires) can run on a
+// field whose resolved features are `features`. A control needing nothing runs
+// everywhere, and an unrestricted field (null) has every feature. Each clause
+// has a test in test/restrict-features.test.ts that fails without it: "leaves
+// consumer-registered buttons alone" (undefined), the "unchanged" cases (null)
+// and "renders none of the excluded buttons by default" (has).
+export function featureEnabled(features: Set<string> | null, feature: string | undefined): boolean {
+  return feature === undefined || features === null || features.has(feature);
+}
+
 // Every feature `config` turns on, or null when it restricts none. null is the
 // unrestricted editor: no `features` key (or null, which the server treats the
 // same way), so the whole baseline mounts exactly as it always has. A list is a

@@ -3,6 +3,8 @@
 // registry, a clickable toolbar + button registry, design-token theming,
 // region/shell renderers, i18n, source view, dropdown controls, and Path-A
 // auto-mount. Explicit-init (Path B) layers on later.
+import type { AnyExtension } from "@tiptap/core";
+
 import { buildExtensions } from "./build-extensions";
 import { buildShell } from "./build-shell";
 import { htmlToJSON, htmlToStored, renderHTML } from "./convert";
@@ -14,7 +16,7 @@ import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
 import { flushSourceView } from "./toolbar/source-view";
-import { Editor, Extension, Mark, Node, mergeAttributes } from "./tiptap-runtime";
+import { Editor, Extension, Mark, Node, getSchema, mergeAttributes } from "./tiptap-runtime";
 import { ui } from "./ui";
 import { checkTipTapVersion, SUPPORTED_TIPTAP_VERSION } from "./version-check";
 import "./styles.css";
@@ -68,18 +70,46 @@ function readConfig(textarea: HTMLTextAreaElement): TipTapConfig {
   }
 }
 
+// Whether a stored ProseMirror doc can be built in the schema these extensions
+// produce. This is the exact step Tiptap's own load takes (nodeFromJSON, which
+// throws on a node or mark type the schema lacks) and the one whose failure it
+// answers with an empty document. Content validity is deliberately not checked:
+// Tiptap loads such a doc as it is, and an unrestricted field keeps doing so.
+function fitsSchema(doc: object, extensions: AnyExtension[]): boolean {
+  try {
+    getSchema(extensions).nodeFromJSON(doc);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // JSON storage mode: the textarea holds a {doc, html} envelope. Use the doc when
 // it has content; otherwise fall back to the html mirror (so a record seeded with
 // only legacy HTML — e.g. a migration that copied another editor's column into the
 // mirror — is still editable, and converts to a real doc on first save). "" for
 // an empty/invalid field (a fresh form), so the editor starts blank.
-function readInitialContent(raw: string): object | string {
+//
+// The doc is used only if it fits this field's schema. One saved while the field
+// mounted more than it does now (a `features` list added or narrowed later)
+// names nodes or marks the schema lacks, and Tiptap loads such a doc as an empty
+// document, which the next keystroke would save over the real value. The html
+// mirror goes through the schema's parser instead, which unwraps what it cannot
+// model and keeps the text, exactly as an HTML-stored field does.
+function readInitialContent(raw: string, extensions: AnyExtension[]): object | string {
   if (!raw) {
     return "";
   }
   try {
     const env = JSON.parse(raw) as { doc?: { content?: unknown[] }; html?: string };
-    if (env.doc && Array.isArray(env.doc.content) && env.doc.content.length > 0) {
+    // "loads a JSON-stored document whose nodes the field no longer mounts" in
+    // test/restrict-features.test.ts fails without the fitsSchema clause.
+    if (
+      env.doc &&
+      Array.isArray(env.doc.content) &&
+      env.doc.content.length > 0 &&
+      fitsSchema(env.doc, extensions)
+    ) {
       return env.doc;
     }
     return typeof env.html === "string" ? env.html : "";
@@ -176,10 +206,11 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   // the widget emits; defaults to html for hand-mounted / Path-B elements.
   const json = element.getAttribute(STORAGE_ATTR) === "json";
 
+  const extensions = buildExtensions(config, ctx);
   const editor = new Editor({
     element: content,
-    extensions: buildExtensions(config, ctx),
-    content: json ? readInitialContent(element.value) : element.value || "",
+    extensions,
+    content: json ? readInitialContent(element.value, extensions) : element.value || "",
     onUpdate({ editor }) {
       const html = editor.getHTML();
       element.value = json
