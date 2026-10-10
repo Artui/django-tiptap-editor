@@ -335,6 +335,22 @@ def test_a_mirror_kept_for_an_empty_document_is_narrowed_too() -> None:
     assert value.html == "<p>x</p>"
 
 
+@pytest.mark.parametrize(
+    "node",
+    [{"type": "horizontalRule"}, {"type": "image", "attrs": {"src": "https://example.test/i.png"}}],
+    ids=["rule", "image"],
+)
+def test_a_document_narrowed_to_nothing_renders_its_own_mirror(node: dict[str, Any]) -> None:
+    # The posted html is the client's claim. Only a document that arrived empty
+    # keeps a mirror; one this field narrowed to nothing gets the rendering of
+    # what is left, which is nothing, not the claim.
+    posted = {"doc": _doc(node), "html": "<p>planted</p>"}
+    value = _restricted([]).clean(json.dumps(posted))
+    assert value is not None
+    assert value.doc == {"type": "doc", "content": []}
+    assert value.html == ""
+
+
 @override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
 def test_a_widget_that_is_not_tiptap_leaves_the_document_unrestricted() -> None:
     # A plain widget has no config to read features from, so even a project-wide

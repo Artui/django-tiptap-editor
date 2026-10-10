@@ -134,6 +134,13 @@ class _Sanitizer(HTMLParser):
         self.stack: list[_Frame] = []
         self.depth = 0
         self.skipping = 0
+        # Converted, paragraph and suspended frames are only ever made for a tag
+        # in ``paragraph_blocks``, so with none of those both paragraph walks
+        # below are no-ops, and they return before walking. Without this, text
+        # inside N unwrapped tags walks all N on an unrestricted field, which
+        # made ``"<div>x" * 20000`` take seconds where it took milliseconds; the
+        # output is the same either way, so no test can hold it but the clock.
+        self.converting = bool(schema.paragraph_blocks)
 
     def _open(self, start: str, *, void: bool = False) -> None:
         if self.depth >= MAX_DOCUMENT_DEPTH:
@@ -160,10 +167,12 @@ class _Sanitizer(HTMLParser):
         sent) is closed only for a converted block, and becomes a boundary itself
         so that its remaining text is a paragraph of its own
         ("block-in-paragraph"); for a kept block it is left as it always was,
-        which ``test_an_unrestricted_field_leaves_nested_paragraphs_as_they_were``
+        which ``test_a_kept_block_in_a_kept_paragraph_is_left_as_it_was_on_a_restricted_field``
         holds. Kept inline tags above are closed with it and reopened by the next
         text ("mark-across-boundary").
         """
+        if not self.converting:
+            return
         target: _Frame | None = None
         low = 0
         # Skipping a suspended frame changes no output a mutation run could find:
@@ -202,6 +211,8 @@ class _Sanitizer(HTMLParser):
         inside it, or where the text is, so a mark split by a converted block
         resumes after it. Anywhere else this changes nothing.
         """
+        if not self.converting:
+            return
         reopen: list[_Frame] = []
         for index in range(len(self.stack) - 1, -1, -1):
             frame = self.stack[index]

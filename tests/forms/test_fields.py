@@ -329,3 +329,12 @@ def test_an_unrestricted_field_leaves_nested_paragraphs_as_they_were() -> None:
     # The flattening is part of converting a block the field lacks. Applied to
     # every field it would rewrite markup that has always been stored as posted.
     assert TipTapFormField().clean("<p>a<p>b</p></p>") == "<p>a<p>b</p></p>"
+
+
+def test_a_kept_block_in_a_kept_paragraph_is_left_as_it_was_on_a_restricted_field() -> None:
+    # Only a block the field lacks is a boundary. A list the field keeps, inside
+    # a paragraph and a mark it keeps, stays where it was posted, as it does on
+    # an unrestricted field; closing the mark or the paragraph around it would
+    # be the flattening applied to markup nothing converted.
+    posted = "<p><strong>a<ul><li>b</li></ul>c</strong></p>"
+    assert _restricted(["bold", "bulletList"]).clean(posted) == posted

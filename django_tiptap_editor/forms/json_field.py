@@ -80,7 +80,8 @@ class TipTapJSONFormField(forms.Field):
         # idea which form wrote it, so a mirror narrowed on its own would be
         # rendered back to the full document there.
         config = self.widget.get_config({}) if isinstance(self.widget, TipTapWidget) else None
-        doc = narrow_doc(sanitize_doc(parsed.doc), config=config)
+        sanitized = sanitize_doc(parsed.doc)
+        doc = narrow_doc(sanitized, config=config)
         # Re-derive the mirror from the sanitized doc, as the model field does
         # on save, so the cleaned value matches what will be stored rather than
         # what the client claimed. A doc with no content is the one case where
@@ -88,9 +89,14 @@ class TipTapJSONFormField(forms.Field):
         # HTML and not yet re-edited), so that mirror is kept instead of being
         # replaced by an empty rendering — sanitized against this field's own
         # allowlist, never as submitted, because nothing downstream narrows it.
+        # Whether the doc had content is asked of it as submitted, not narrowed:
+        # a lone rule on a field without rules narrows to nothing, and deciding
+        # on that would store the caller's HTML as the mirror of a document that
+        # never held it ("a document narrowed to nothing renders its own
+        # mirror" in tests/forms/test_json_field.py).
         html = (
             render_doc(doc)
-            if doc.get("content")
+            if sanitized.get("content")
             else sanitize_html(parsed.html, schema=get_html_schema(config))
         )
         return TipTapValue(doc=doc, html=html)
