@@ -16,6 +16,12 @@ export interface TipTapConfig {
   manualMount?: boolean;
   enterKey?: EnterKeyMode;
   extensions?: string[];
+  // The built-in features this field mounts (names from BUILTIN_NAMES). Omit for
+  // every built-in, as before. A list mounts only those, the core and what they
+  // depend on (see features.ts), so an excluded node or mark is absent from the
+  // schema: no input rule, shortcut or paste can create it, and no toolbar button
+  // for it renders. Consumer extensions named in `extensions` are unaffected.
+  features?: string[] | null;
   toolbar?: string[][];
   linkProtocols?: string[];
   imageUploadUrl?: string;
