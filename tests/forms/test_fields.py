@@ -20,6 +20,20 @@ def test_default_widget_is_tiptap() -> None:
     assert isinstance(TipTapFormField().widget, TipTapWidget)
 
 
+def test_features_narrow_the_editor_not_the_server_allowlist() -> None:
+    # docs/configuration.md, docs/security.md and the CHANGELOG all say a field
+    # restricted with ``features`` still keeps a directly posted heading or table,
+    # because the sanitiser reads every built-in's vocabulary. If the server ever
+    # starts honouring ``features``, this fails and those three pages are wrong.
+    class EmailForm(forms.Form):
+        body = TipTapFormField(widget=TipTapWidget(config={"features": ["bold"]}))
+
+    posted = "<h2>Title</h2><table><tbody><tr><td>cell</td></tr></tbody></table>"
+    form = EmailForm(data={"body": posted})
+    assert form.is_valid()
+    assert form.cleaned_data["body"] == posted
+
+
 def test_a_direct_post_cannot_store_an_event_handler() -> None:
     # The reproduction: the widget is a plain textarea, so a client that never
     # loads the editor posts the field directly and the browser-side schema
