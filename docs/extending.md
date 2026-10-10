@@ -73,6 +73,11 @@ Each tag maps to the attributes and the inline-style properties your extension p
 it. Style properties go under `styles`, never as a `style` entry in `attrs` — that is
 what keeps a declared extension from turning `style` into a passthrough.
 
+A field restricted with [`features`](configuration.md#restricting-features) keeps a
+declared vocabulary only when the field's own `extensions` names the extension: the field
+is cleaned against what its editor mounts, and an editor mounts a custom extension only
+when its config names it.
+
 The plain list form still works and still passes config validation:
 
 ```python

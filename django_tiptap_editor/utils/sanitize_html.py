@@ -13,6 +13,14 @@ the same conservative CSS gate the JSON renderer uses.
 Unwrapping rather than deleting is deliberate: a tag the allowlist does not know
 loses its wrapper, never its text, so no sanitiser pass can quietly empty half a
 document. What the editor itself produces round-trips byte-identically.
+
+A field restricted with ``features`` adds one rule. A built-in block its editor
+cannot hold (``HtmlSchema.paragraph_blocks``: a heading, a list item, a cell, a
+quotation, a code block) is not unwrapped but turned into a paragraph boundary,
+as the editor does with such markup pasted into it: unwrapped, two headings
+would come back as one line of text. Paragraphs are opened lazily, where text
+arrives, so editor output that already nests a ``<p>`` in a list item or a cell
+comes back as flat paragraphs rather than one paragraph inside another.
 """
 
 from __future__ import annotations
@@ -22,7 +30,7 @@ from html.parser import HTMLParser
 from django.core.exceptions import ValidationError
 from django.utils.safestring import SafeString, mark_safe
 
-from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH
+from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH, PARAGRAPH_BLOCK_TAGS
 from django_tiptap_editor.types.html_schema import HtmlSchema
 from django_tiptap_editor.utils.escape_html import escape_html
 from django_tiptap_editor.utils.get_css_value import get_css_value
@@ -60,6 +68,56 @@ _DROP_CONTENT_TAGS = frozenset({"script", "style"})
 _LINK_URL_ATTRIBUTES = frozenset({"href"})
 _IMAGE_URL_ATTRIBUTES = frozenset({"src"})
 
+# The built-in vocabulary's block-level tags. Kept, one of these closes a
+# paragraph the sanitiser opened rather than landing inside it.
+_BLOCK_TAGS = PARAGRAPH_BLOCK_TAGS | {
+    "p",
+    "ul",
+    "ol",
+    "hr",
+    "table",
+    "colgroup",
+    "col",
+    "tbody",
+    "tr",
+}
+
+# Blocks whose content is inline text. Converted, one opens its paragraph at
+# once, so an empty heading is an empty paragraph, as an empty heading in a
+# narrowed JSON document is; kept, one interrupted by a converted block is
+# closed there, and what follows it inside becomes paragraphs of its own.
+_TEXTBLOCK_TAGS = frozenset({"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"})
+
+# HTML's whitespace, which is all a text node between two blocks holds. Narrower
+# than str.strip(), which would also take a non-breaking space for nothing.
+_HTML_WHITESPACE = " \t\n\r\f"
+
+# What a stack frame is. KEPT is emitted and open; UNWRAPPED was never emitted;
+# CONVERTED is a paragraph boundary, emitting nothing itself, inside which text
+# gets a paragraph of its own; PARAGRAPH is a <p> the sanitiser opened; and
+# SUSPENDED is a kept inline tag closed at a boundary and reopened by the next
+# text inside it. Only the first two exist on an unrestricted field.
+_KEPT, _UNWRAPPED, _CONVERTED, _PARAGRAPH, _SUSPENDED = range(5)
+
+
+class _Frame:
+    """One open element: its source tag, what became of it, and its start tag."""
+
+    __slots__ = ("kind", "source", "start")
+
+    def __init__(self, source: str, kind: int, start: str = "") -> None:
+        self.source = source
+        self.kind = kind
+        self.start = start
+
+    @property
+    def emitted(self) -> str:
+        return "p" if self.kind == _PARAGRAPH else self.source
+
+    @property
+    def is_inline(self) -> bool:
+        return self.kind == _KEPT and self.source not in _BLOCK_TAGS
+
 
 class _Sanitizer(HTMLParser):
     """Rebuild a document from an allowlist, one token at a time.
@@ -73,10 +131,92 @@ class _Sanitizer(HTMLParser):
         super().__init__(convert_charrefs=False)
         self.schema = schema
         self.out: list[str] = []
-        # (source tag, emitted tag or None when the tag was unwrapped).
-        self.stack: list[tuple[str, str | None]] = []
+        self.stack: list[_Frame] = []
         self.depth = 0
         self.skipping = 0
+
+    def _open(self, start: str, *, void: bool = False) -> None:
+        if self.depth >= MAX_DOCUMENT_DEPTH:
+            raise ValidationError(
+                f"TipTap content nests deeper than the maximum of {MAX_DOCUMENT_DEPTH} elements."
+            )
+        self.out.append(start)
+        if not void:
+            self.depth += 1
+
+    def _close(self, frame: _Frame) -> None:
+        self.out.append(f"</{frame.emitted}>")
+        self.depth -= 1
+
+    def _break_paragraph(self, *, converted: bool) -> None:
+        """Close the paragraph open here, because a block starts at this point.
+
+        Walks down past unwrapped and suspended frames and kept inline tags to
+        the first frame that is anything else. Each rule is held by a case of
+        ``test_a_block_the_field_lacks_becomes_a_paragraph`` in
+        tests/forms/test_fields.py. A paragraph the sanitiser opened is closed for
+        any block, which keeps ``<li>a<p>b</p></li>`` flat
+        ("kept-block-in-converted"). A kept text block (a ``<p>`` the client
+        sent) is closed only for a converted block, and becomes a boundary itself
+        so that its remaining text is a paragraph of its own
+        ("block-in-paragraph"); for a kept block it is left as it always was,
+        which ``test_an_unrestricted_field_leaves_nested_paragraphs_as_they_were``
+        holds. Kept inline tags above are closed with it and reopened by the next
+        text ("mark-across-boundary").
+        """
+        target: _Frame | None = None
+        low = 0
+        # Skipping a suspended frame changes no output a mutation run could find:
+        # the next text reopens suspended frames, and a block opened before then
+        # stops this walk above them. It is skipped because it stands for a
+        # closed inline tag, which is what the walk passes over.
+        for index in range(len(self.stack) - 1, -1, -1):
+            frame = self.stack[index]
+            if frame.kind in (_UNWRAPPED, _SUSPENDED) or frame.is_inline:
+                continue
+            textblock = frame.kind == _KEPT and frame.source in _TEXTBLOCK_TAGS
+            if frame.kind == _PARAGRAPH or (converted and textblock):
+                target = frame
+                low = index
+            else:
+                low = index + 1
+            break
+        if target is None and not converted:
+            return
+        for frame in reversed(self.stack[low:]):
+            if frame.kind in (_KEPT, _PARAGRAPH):
+                self._close(frame)
+                frame.kind = _SUSPENDED if frame is not target else _CONVERTED
+        if target is not None and target.source == "":
+            # A paragraph the sanitiser opened has no end tag coming to remove
+            # its frame, so it goes now. Left behind as a converted frame it
+            # would give the same output, but every boundary inside one list
+            # item or cell would grow the stack the walks above scan.
+            self.stack.remove(target)
+
+    def _ensure_paragraph(self) -> None:
+        """Give the text arriving here a paragraph, if it sits in a boundary.
+
+        Text directly inside a converted block (or a kept text block a boundary
+        closed) opens a ``<p>``; inline tags suspended at a boundary reopen
+        inside it, or where the text is, so a mark split by a converted block
+        resumes after it. Anywhere else this changes nothing.
+        """
+        reopen: list[_Frame] = []
+        for index in range(len(self.stack) - 1, -1, -1):
+            frame = self.stack[index]
+            if frame.kind == _UNWRAPPED:
+                continue
+            if frame.kind == _SUSPENDED:
+                reopen.append(frame)
+                continue
+            if frame.kind == _CONVERTED:
+                self.stack.insert(index + 1, _Frame("", _PARAGRAPH))
+                self._open("<p>")
+            break
+        for frame in reversed(reopen):
+            self._open(frame.start)
+            frame.kind = _KEPT
 
     def _attributes(self, tag: str, attrs: list[tuple[str, str | None]]) -> str:
         allowed = self.schema.attributes(tag)
@@ -142,18 +282,25 @@ class _Sanitizer(HTMLParser):
         if tag in _DROP_CONTENT_TAGS:
             self.skipping += 1
             return
+        if tag in self.schema.paragraph_blocks:
+            self._break_paragraph(converted=True)
+            self.stack.append(_Frame(tag, _CONVERTED))
+            if tag in _TEXTBLOCK_TAGS:
+                self.stack.append(_Frame("", _PARAGRAPH))
+                self._open("<p>")
+            return
         if not self.schema.allows(tag):
             if tag not in _VOID_TAGS:
-                self.stack.append((tag, None))
+                self.stack.append(_Frame(tag, _UNWRAPPED))
             return
-        if self.depth >= MAX_DOCUMENT_DEPTH:
-            raise ValidationError(
-                f"TipTap content nests deeper than the maximum of {MAX_DOCUMENT_DEPTH} elements."
-            )
-        self.out.append(f"<{tag}{self._attributes(tag, attrs)}>")
+        if tag in _BLOCK_TAGS:
+            self._break_paragraph(converted=False)
+        else:
+            self._ensure_paragraph()
+        start = f"<{tag}{self._attributes(tag, attrs)}>"
+        self._open(start, void=tag in _VOID_TAGS)
         if tag not in _VOID_TAGS:
-            self.stack.append((tag, tag))
-            self.depth += 1
+            self.stack.append(_Frame(tag, _KEPT, start))
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
@@ -162,35 +309,40 @@ class _Sanitizer(HTMLParser):
             return
         if tag in _VOID_TAGS:
             return
-        opened = [index for index, (source, _e) in enumerate(self.stack) if source == tag]
+        opened = [index for index, frame in enumerate(self.stack) if frame.source == tag]
         if not opened:
             # A stray end tag with nothing open to close.
             return
         # Close everything opened inside the innermost match too, so crossed
         # tags come back nested rather than leaving the output malformed.
-        for _source, emitted in reversed(self.stack[opened[-1] :]):
-            if emitted is not None:
-                self.out.append(f"</{emitted}>")
-                self.depth -= 1
+        for frame in reversed(self.stack[opened[-1] :]):
+            if frame.kind in (_KEPT, _PARAGRAPH):
+                self._close(frame)
         del self.stack[opened[-1] :]
 
     def handle_data(self, data: str) -> None:
         # The only guard the skip needs: a dropped element's body is CDATA to
         # the parser, so everything inside it arrives here as data and no start
         # tag, end tag or character reference is reported until it closes.
-        if not self.skipping:
-            self.out.append(escape_html(data))
+        if self.skipping:
+            return
+        # Whitespace between blocks opens no paragraph: it would be an empty one.
+        if data.strip(_HTML_WHITESPACE):
+            self._ensure_paragraph()
+        self.out.append(escape_html(data))
 
     def handle_entityref(self, name: str) -> None:
+        self._ensure_paragraph()
         self.out.append(f"&{name};")
 
     def handle_charref(self, name: str) -> None:
+        self._ensure_paragraph()
         self.out.append(f"&#{name};")
 
     def result(self) -> str:
-        for _source, emitted in reversed(self.stack):
-            if emitted is not None:
-                self.out.append(f"</{emitted}>")
+        for frame in reversed(self.stack):
+            if frame.kind in (_KEPT, _PARAGRAPH):
+                self._close(frame)
         self.stack.clear()
         return "".join(self.out)
 

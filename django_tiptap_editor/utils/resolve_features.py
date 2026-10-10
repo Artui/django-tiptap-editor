@@ -14,9 +14,10 @@ def resolve_features(config: dict[str, Any]) -> frozenset[str] | None:
     built-in extension and the markup of all of them. A list is a restriction, and
     the result is that list plus ``FEATURE_CORE`` plus whatever each entry cannot
     work without (``FEATURE_DEPENDENCIES``). The widget writes the result into
-    ``data-tiptap-config`` so the browser mounts exactly this set; it restricts the
-    editor only, and the server's sanitiser still allows the markup of every
-    built-in extension.
+    ``data-tiptap-config`` so the browser mounts exactly this set, and the server
+    keeps exactly this set too: ``get_html_schema`` builds a field's HTML
+    allowlist from it and ``narrow_doc`` its JSON document, which is what
+    ``TipTapFormField`` and ``TipTapJSONFormField`` clean against.
 
     The list is assumed valid (``validate_config`` checks the names); an unknown
     name here would simply be carried through.

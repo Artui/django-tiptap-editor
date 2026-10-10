@@ -7,12 +7,14 @@ from typing import Any
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.safestring import SafeString
 
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.types.tiptap_value import TipTapValue
+from django_tiptap_editor.utils.get_html_schema import get_html_schema
+from django_tiptap_editor.utils.narrow_doc import narrow_doc
 from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
+from django_tiptap_editor.utils.sanitize_html import sanitize_html
 from django_tiptap_editor.utils.validate_json_depth import validate_json_depth
 from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
@@ -30,9 +32,10 @@ class TipTapJSONFormField(forms.Field):
 
     Cleaning is a validation step, not a transcription: a payload that is not a
     ``{doc, html}`` envelope or a bare doc is a field error rather than an empty
-    document, the ``doc`` is protocol-allowlisted, and the mirror is re-derived
-    from it — so ``cleaned_data`` already holds what the model field would store,
-    and a form used without a model is as safe to render as one with one.
+    document, the ``doc`` is protocol-allowlisted and narrowed to the features of
+    the widget's config (``narrow_doc``), and the mirror is re-derived from it —
+    so ``cleaned_data`` already holds what the model field would store, and a
+    form used without a model is as safe to render as one with one.
     """
 
     widget = TipTapWidget
@@ -72,12 +75,22 @@ class TipTapJSONFormField(forms.Field):
         # in validate, which recurses per level and has no answer for a value
         # nested a few hundred levels inside ``attrs`` but a RecursionError.
         validate_json_depth(parsed.doc)
-        doc = sanitize_doc(parsed.doc)
+        # Narrowed to this field's features in the document itself: the model
+        # field re-derives the mirror from the document on every save, with no
+        # idea which form wrote it, so a mirror narrowed on its own would be
+        # rendered back to the full document there.
+        config = self.widget.get_config({}) if isinstance(self.widget, TipTapWidget) else None
+        doc = narrow_doc(sanitize_doc(parsed.doc), config=config)
         # Re-derive the mirror from the sanitized doc, as the model field does
         # on save, so the cleaned value matches what will be stored rather than
         # what the client claimed. A doc with no content is the one case where
         # the mirror is the only copy of the content (a row seeded with legacy
         # HTML and not yet re-edited), so that mirror is kept instead of being
-        # replaced by an empty rendering — sanitized, never as submitted.
-        html = render_doc(doc) if doc.get("content") else SafeString(parsed.html)
+        # replaced by an empty rendering — sanitized against this field's own
+        # allowlist, never as submitted, because nothing downstream narrows it.
+        html = (
+            render_doc(doc)
+            if doc.get("content")
+            else sanitize_html(parsed.html, schema=get_html_schema(config))
+        )
         return TipTapValue(doc=doc, html=html)

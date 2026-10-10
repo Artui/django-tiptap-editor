@@ -141,10 +141,23 @@ The widget writes the resolved set, listed features plus core plus dependencies,
 `data-tiptap-config`, and `django_tiptap_editor.utils.resolve_features` returns the same
 set on the server.
 
-`features` restricts the editor, not the server. Stored HTML is still sanitised against
-the vocabulary of every built-in extension (see [Security](security.md)), so a client that
-posts the field directly, skipping the editor, can still submit a heading to a field whose
-editor cannot make one.
+`features` restricts the server as well as the editor. `TipTapFormField` and
+`TipTapJSONFormField` clean a submitted value against the vocabularies of that resolved
+set, plus the custom extensions the field's own `extensions` names, so a client that posts
+the field directly, skipping the editor, cannot store what the editor could not have
+made:
+
+- a block the field lacks becomes a paragraph: a heading, quote, code block, list item or
+  table cell keeps its text and loses its tag, and the list or table around it is
+  unwrapped;
+- a mark the field lacks is unwrapped, keeping its text;
+- an attribute or style property that belongs to a missing feature is dropped, so a field
+  without `textAlign` keeps a paragraph and loses its alignment.
+
+A field configured without `features` is cleaned against every built-in extension, as
+before. The fields admin pages build through `TipTapModelAdminMixin` are cleaned the same
+way. What is *not* narrowed per field, and what narrowing does not do to rows already
+stored, is in [Security](security.md#what-is-not-narrowed-per-field).
 
 ## Settings
 

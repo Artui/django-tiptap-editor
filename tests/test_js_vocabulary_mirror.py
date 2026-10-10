@@ -20,6 +20,8 @@ from types import ModuleType
 
 from django_tiptap_editor.constants import (
     BUILTIN_EXTENSIONS,
+    DECORATING_FEATURES,
+    DOCUMENT_FEATURES,
     EXTENSION_HTML_VOCABULARY,
     FEATURE_CORE,
     FEATURE_DEPENDENCIES,
@@ -49,10 +51,19 @@ def test_the_dump_carries_every_built_in_tag_attribute_and_style() -> None:
     # nothing, so pin it to the table it is built from.
     dumped = json.loads(_dump_html_vocabulary().render())
     assert dumped["extensions"] == sorted(EXTENSION_HTML_VOCABULARY)
-    for vocabulary in EXTENSION_HTML_VOCABULARY.values():
+    for name, vocabulary in EXTENSION_HTML_VOCABULARY.items():
+        # The per-extension copy is the table itself, not a union, because the
+        # JS suite checks each feature's editor against its own entry.
+        assert set(dumped["byExtension"][name]) == set(vocabulary)
         for tag, entry in vocabulary.items():
             assert set(entry.get("attrs", ())) <= set(dumped["tags"][tag]["attributes"])
             assert set(entry.get("styles", ())) <= set(dumped["tags"][tag]["styles"])
+            assert dumped["byExtension"][name][tag] == {
+                "attributes": sorted(entry.get("attrs", ())),
+                "styles": sorted(entry.get("styles", ())),
+            }
+    assert dumped["decorating"] == sorted(DECORATING_FEATURES)
+    assert dumped["documentFeatures"] == DOCUMENT_FEATURES
 
 
 def test_the_committed_js_feature_model_fixture_is_a_fresh_dump() -> None:

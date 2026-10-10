@@ -24,8 +24,9 @@ clean, options-object surface and its own config schema.
   storage via `TipTapJSONField` keeps the canonical ProseMirror doc plus a safe,
   server-derived HTML mirror.
 - **Sanitised on the server**, not only in the browser: submitted markup is reduced to
-  an allowlist built from the extensions the editor actually mounts, so a direct POST
-  that skips the editor cannot store a script — and no extra dependency is needed.
+  an allowlist built from the extensions that field's editor actually mounts, so a
+  direct POST that skips the editor cannot store a script, or a heading on a field
+  without headings — and no extra dependency is needed.
 - **Node-free for consumers**: the editor ships as a committed, self-contained bundle.
   An optional glue-only ESM build lets you bring your own TipTap via CDN / import maps.
 - Extensible without a build step: a runtime registry for custom extensions, toolbar

@@ -27,6 +27,8 @@ import sys
 from pathlib import Path
 
 from django_tiptap_editor.constants import (
+    DECORATING_FEATURES,
+    DOCUMENT_FEATURES,
     EXTENSION_HTML_VOCABULARY,
     FEATURE_CORE,
     FEATURE_DEPENDENCIES,
@@ -38,11 +40,15 @@ FEATURES_FIXTURE = ROOT / "js" / "test" / "fixtures" / "feature-model.json"
 
 
 def build() -> dict[str, object]:
-    """Return the vocabulary as plain JSON: names, then the per-tag union.
+    """Return the vocabulary as plain JSON: names, the per-tag union, then the parts.
 
     The union matches what get_html_schema builds for the built-ins, without the
     project's TIPTAP_EXTRA_EXTENSIONS, which describe a consumer's extensions
-    rather than this editor.
+    rather than this editor. ``byExtension`` is the same table before the union,
+    and ``decorating`` and ``documentFeatures`` are the rest of what a restricted
+    field's allowlist and document are built from: the JS suite builds an editor
+    per feature and checks what it can emit and hold against them, so the editor
+    a field mounts and the allowlist that field is cleaned against cannot drift.
     """
     attributes: dict[str, set[str]] = {}
     styles: dict[str, set[str]] = {}
@@ -57,6 +63,18 @@ def build() -> dict[str, object]:
             tag: {"attributes": sorted(attributes[tag]), "styles": sorted(styles[tag])}
             for tag in sorted(attributes)
         },
+        "byExtension": {
+            name: {
+                tag: {
+                    "attributes": sorted(entry.get("attrs", ())),
+                    "styles": sorted(entry.get("styles", ())),
+                }
+                for tag, entry in sorted(vocabulary.items())
+            }
+            for name, vocabulary in sorted(EXTENSION_HTML_VOCABULARY.items())
+        },
+        "decorating": sorted(DECORATING_FEATURES),
+        "documentFeatures": dict(sorted(DOCUMENT_FEATURES.items())),
     }
 
 

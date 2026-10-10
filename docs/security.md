@@ -10,13 +10,19 @@ allowlist before it is stored, and again when it is displayed.
   [`sanitize_html`](api.md): anything outside the allowlist is unwrapped, unknown
   attributes are dropped, `script`/`style` bodies are discarded, link and image URLs
   are protocol-allowlisted, and inline styles keep only allowed properties with safe
-  values.
+  values. The allowlist is the field's own: it is built from the field's resolved
+  [`features`](configuration.md#restricting-features), so a field whose editor cannot
+  make a heading cannot store one either (see [Per field](#per-field)).
 - **Display.** The `tiptap_html` filter sanitises again at render time, which is what
   makes it safe on rows stored before this boundary existed.
 - **JSON storage.** `TipTapJSONField` protocol-allowlists the `doc` on every save and
   re-derives the `html` mirror from it (`render_doc`); `TipTapValue` sanitises its
   mirror on construction, so no caller can hand a template markup the editor could
-  not have produced.
+  not have produced. `TipTapJSONFormField` also narrows the submitted `doc` to the
+  field's features before it is stored.
+- **Admin.** `TipTapModelAdminMixin` gives every `TextField` a `TipTapFormField`, unless
+  the admin names its own form class for it, so an admin page is cleaned like any other
+  form.
 
 The browser-side controls below are still there, and still worth having — they are
 what makes the editor *behave* well. They are not the security boundary, because they
@@ -56,6 +62,46 @@ Everything else is unwrapped: the tag goes, the text inside it stays. A sanitise
 deleted what it did not recognise could quietly empty half a document, so it never
 deletes visible text — the one exception is `script` and `style`, whose bodies are
 code rather than prose and are dropped whole.
+
+### Per field
+
+The table above is what a field configured without `features` keeps. A field with
+[`features`](configuration.md#restricting-features) keeps only the vocabularies of its
+resolved set (listed features, the always-on core, and their dependencies), plus the
+custom extensions its own `extensions` names. What it lacks is not deleted, because the
+rule above still holds:
+
+- **A block becomes a paragraph.** `h1`-`h6`, `blockquote`, `pre`, `li`, `td` and `th`
+  each keep their text as a paragraph boundary, and the `ul`, `ol` or table structure
+  around them is unwrapped. A paragraph is never nested in another, and cleaning the
+  result again changes nothing.
+- **A mark is unwrapped**, as an unknown tag is. A mark that spans a converted block is
+  reopened in the paragraph that follows it.
+- **Attributes and style properties narrow with their feature.** `text-align` goes with
+  `textAlign`, `color` with `color`, and so on. The text-style features decorate tags
+  other features admit; on their own they admit no tag.
+
+A stored JSON document narrows the same way: a node type the field lacks becomes a
+paragraph if it held text, or is replaced by its children, and a mark or attribute the
+field lacks is dropped. The `html` mirror rendered from the narrowed document is the
+same markup the HTML path keeps for it.
+
+### What is not narrowed per field
+
+Narrowing needs the field's config, and only a form field has it. So:
+
+- **Writes that skip the form are not narrowed per field.** A model save through the ORM
+  or an API serializer, and `loaddata`, are sanitised as before (against every built-in
+  extension on the JSON path, and not at all on a plain `TextField`), whatever the
+  editor for that column would allow.
+- **The `tiptap_html` filter is not per field.** It has no field to read, so it renders
+  against every built-in extension's vocabulary, even when `TIPTAP_DEFAULT_CONFIG` sets
+  `features`.
+- **Changing a field's `features` does not rewrite stored rows.** A heading saved before
+  the field lost `heading` stays in the column until that row is saved again through the
+  form.
+- **`linkProtocols` is project-wide on the server.** A field's own `linkProtocols` limits
+  its editor; the server's allowlist reads the project default.
 
 A link that opens a new browsing context always carries `rel="noopener noreferrer"`,
 whatever the stored document asked for: `rel="opener"` re-enables the `window.opener`
@@ -141,10 +187,6 @@ never runs — **rendering arbitrary JSON is not automatically safe.** So:
 - **Custom extensions widen the surface.** Anything you declare in
   `TIPTAP_EXTRA_EXTENSIONS` is accepted from then on — validate what your extension
   itself accepts.
-- **`features` narrows the editor, not the allowlist.** A field configured with
-  [`features`](configuration.md#restricting-features) cannot produce a heading in the
-  editor, but its stored markup is sanitised against every built-in extension's
-  vocabulary, so a direct POST can still store one.
 - **External asset mode** loads TipTap you provide; the browser-side guarantees above
   hold for the pinned, bundled version. See [Asset modes](asset-modes.md). The
   server-side allowlist is unaffected.

@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import pytest
 from django import forms
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
+from django.test import override_settings
 
-from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH, MAX_JSON_DEPTH
+from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH, MAX_JSON_DEPTH, STORAGE_FORMAT_JSON
+from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
+from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
 from django_tiptap_editor.types.tiptap_value import TipTapValue
+from django_tiptap_editor.utils.render_doc import render_doc
+from django_tiptap_editor.utils.resolve_features import resolve_features
+from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 DOC = {"type": "doc", "content": [{"type": "paragraph"}]}
 
@@ -219,3 +226,193 @@ def test_a_body_json_cannot_decode_is_a_field_error_rather_than_a_500(
     form = DocumentForm(data={"document": body})
     assert not form.is_valid()
     assert form.errors["document"] == ["Enter a valid TipTap document (JSON)."]
+
+
+def _text(text: str, *marks: dict[str, Any]) -> dict[str, Any]:
+    return {"type": "text", "text": text, **({"marks": list(marks)} if marks else {})}
+
+
+def _node(kind: str, *content: dict[str, Any], **attrs: Any) -> dict[str, Any]:
+    node: dict[str, Any] = {"type": kind}
+    if attrs:
+        node["attrs"] = attrs
+    if content:
+        node["content"] = list(content)
+    return node
+
+
+def _doc(*content: dict[str, Any]) -> dict[str, Any]:
+    return _node("doc", *content)
+
+
+def _para(*content: dict[str, Any], **attrs: Any) -> dict[str, Any]:
+    return _node("paragraph", *content, **attrs)
+
+
+def _restricted(features: list[str] | None, **config: Any) -> TipTapJSONFormField:
+    widget = TipTapWidget(config={"features": features, **config}, storage=STORAGE_FORMAT_JSON)
+    return TipTapJSONFormField(required=False, widget=widget)
+
+
+def _clean(features: list[str] | None, doc: dict[str, Any], **config: Any) -> TipTapValue:
+    value = _restricted(features, **config).clean(json.dumps({"doc": doc, "html": ""}))
+    assert value is not None
+    return value
+
+
+def test_a_restricted_field_narrows_the_document_it_stores() -> None:
+    # The document, not only the mirror: the model field re-derives the mirror
+    # from the document on every save, so a narrowed mirror alone would be undone.
+    doc = _doc(
+        _node("heading", _text("Title"), level=2),
+        _node("bulletList", _node("listItem", _para(_text("a"))), _node("listItem", _para())),
+        _node("table", _node("tableRow", _node("tableCell", _para(_text("cell"))))),
+        _node("blockquote", _para(_text("q"))),
+        _node("codeBlock", _text("x = 1")),
+        _node("horizontalRule"),
+    )
+    value = _clean(["bold"], doc)
+    assert value.doc == _doc(
+        _para(_text("Title")),
+        _para(_text("a")),
+        _para(),
+        _para(_text("cell")),
+        _para(_text("q")),
+        _para(_text("x = 1")),
+    )
+    assert value.html == "<p>Title</p><p>a</p><p></p><p>cell</p><p>q</p><p>x = 1</p>"
+
+
+def test_marks_and_attributes_narrow_with_their_feature() -> None:
+    style = {"type": "textStyle", "attrs": {"color": "red", "fontSize": "18px"}}
+    link = {"type": "link", "attrs": {"href": "https://example.test/"}}
+    doc = _doc(_para(_text("a", style, link, {"type": "bold"}), textAlign="center"))
+    assert _clean(["fontSize", "bold"], doc).doc == _doc(
+        _para(_text("a", {"type": "textStyle", "attrs": {"fontSize": "18px"}}, {"type": "bold"}))
+    )
+    assert _clean(["textAlign", "link"], doc).doc == _doc(
+        _para(_text("a", link), textAlign="center")
+    )
+
+
+def test_a_mark_left_with_no_attributes_is_dropped() -> None:
+    # A textStyle mark that only coloured its text has nothing left to say on a
+    # field without colour; keeping it would store a span with no style.
+    doc = _doc(_para(_text("a", {"type": "textStyle", "attrs": {"color": "red"}})))
+    assert _clean(["fontSize"], doc).doc == _doc(_para(_text("a")))
+
+
+@override_settings(TIPTAP_EXTRA_EXTENSIONS={"callout": {"aside": {}}, "badge": {"mark": {}}})
+def test_a_custom_type_survives_only_on_a_field_that_names_it() -> None:
+    doc = _doc(_node("callout", _para(_text("a", {"type": "badge"}))))
+    assert _clean(["bold"], doc, extensions=["callout", "badge"]).doc == doc
+    assert _clean(["bold"], doc, extensions=["badge"]).doc == _doc(
+        _para(_text("a", {"type": "badge"}))
+    )
+    assert _clean(["bold"], doc).doc == _doc(_para(_text("a")))
+
+
+def test_inline_content_freed_from_a_dropped_node_is_put_in_a_paragraph() -> None:
+    # An unknown block holding text directly would otherwise leave text at the
+    # top of the document, which no ProseMirror schema accepts.
+    doc = _doc(_node("aside", _text("a"), _node("hardBreak"), _text("b")), _para(_text("c")))
+    assert _clean([], doc).doc == _doc(
+        _para(_text("a"), _node("hardBreak"), _text("b")), _para(_text("c"))
+    )
+
+
+def test_an_unrestricted_field_stores_the_document_as_before() -> None:
+    doc = _doc(_node("heading", _text("Title"), level=2, textAlign="center"))
+    assert _clean(None, doc).doc == doc
+
+
+def test_a_mirror_kept_for_an_empty_document_is_narrowed_too() -> None:
+    # The one case the mirror is kept rather than re-derived: a row seeded with
+    # legacy HTML. Sanitised only globally, it would carry a heading past the
+    # field's own features.
+    value = _restricted(["bold"]).clean(json.dumps({"doc": {}, "html": "<h2>x</h2>"}))
+    assert value is not None
+    assert value.html == "<p>x</p>"
+
+
+@override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
+def test_a_widget_that_is_not_tiptap_leaves_the_document_unrestricted() -> None:
+    # A plain widget has no config to read features from, so even a project-wide
+    # list does not reach it, as for TipTapFormField.
+    doc = _doc(_node("heading", _text("Title"), level=2))
+    field = TipTapJSONFormField(widget=forms.Textarea)
+    value = field.clean(json.dumps({"doc": doc, "html": ""}))
+    assert value is not None
+    assert value.doc == doc
+
+
+def test_a_restricted_document_survives_the_model_field_unchanged() -> None:
+    # get_prep_value renders the mirror again with global settings; from a
+    # narrowed document that rendering is the narrowed one.
+    value = _clean(["bold"], _doc(_node("heading", _text("T"), level=1)))
+    stored = TipTapJSONField().get_prep_value(value)
+    assert stored == {"doc": _doc(_para(_text("T"))), "html": "<p>T</p>"}
+
+
+_DOC_BATTERY = [
+    _doc(_node("heading", _text("A"), level=2), _node("heading", _text("B"), level=3)),
+    _doc(
+        _node(
+            "bulletList",
+            _node(
+                "listItem",
+                _para(_text("a")),
+                _node("orderedList", _node("listItem", _para(_text("b")))),
+            ),
+            _node("listItem", _para(_text("c"))),
+        )
+    ),
+    _doc(
+        _node(
+            "table",
+            _node(
+                "tableRow",
+                _node("tableHeader", _para(_text("h"))),
+                _node("tableCell", _para(_text("c1")), _para(_text("c2"))),
+            ),
+        )
+    ),
+    _doc(_node("bulletList", _node("listItem", _node("blockquote", _para(_text("q")))))),
+    _doc(
+        _node("heading", _text("a", {"type": "bold"}), _text(" b"), level=2),
+        _para(_text("c", {"type": "italic"}, {"type": "textStyle", "attrs": {"color": "red"}})),
+    ),
+    _doc(_node("codeBlock", _text("x")), _para(_text("y"), textAlign="right")),
+]
+
+
+def _types(node: Any) -> set[str]:
+    """Every node and mark type in ``node``, the marks of its text included."""
+    if not isinstance(node, dict):
+        return set()
+    found = {node["type"]} | {mark["type"] for mark in node.get("marks", ())}
+    for child in node.get("content", ()):
+        found |= _types(child)
+    return found
+
+
+_DOC_CONFIGS = [[], ["bold"], ["bulletList", "orderedList"], ["heading", "color"], ["textAlign"]]
+
+
+@pytest.mark.parametrize("features", _DOC_CONFIGS, ids=lambda f: "+".join(f) or "core")
+@pytest.mark.parametrize("doc", _DOC_BATTERY)
+def test_the_document_and_the_html_paths_narrow_alike(
+    features: list[str], doc: dict[str, Any]
+) -> None:
+    # What a JSON field stores renders to exactly what an HTML field with the same
+    # features keeps of the same content, so the two storage formats cannot
+    # disagree about what a field allows. Narrowing is also a fixed point.
+    narrowed = _clean(features, doc)
+    resolved = resolve_features({"features": features})
+    assert resolved is not None
+    # Every type in the battery is named after the feature that owns it, but for
+    # the document node itself, whose feature is ``document``.
+    assert _types(narrowed.doc) <= resolved | {"doc"}
+    html_field = TipTapFormField(required=False, widget=TipTapWidget(config={"features": features}))
+    assert narrowed.html == html_field.clean(str(render_doc(doc)))
+    assert _clean(features, narrowed.doc).doc == narrowed.doc
