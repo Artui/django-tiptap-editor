@@ -9,6 +9,7 @@ from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.get_import_map import get_import_map
 from django_tiptap_editor.utils.get_storage_format import get_storage_format
 from django_tiptap_editor.utils.render_doc import render_doc
+from django_tiptap_editor.utils.resolve_features import resolve_features
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
 from django_tiptap_editor.utils.sanitize_html import sanitize_html
 from django_tiptap_editor.utils.validate_config import validate_config
@@ -21,6 +22,7 @@ __all__ = [
     "get_import_map",
     "get_storage_format",
     "render_doc",
+    "resolve_features",
     "sanitize_doc",
     "sanitize_html",
     "validate_config",

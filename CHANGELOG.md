@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A field can restrict what its editor can do with the `features` config key.**
+  Hiding a button with `toolbar` left its feature reachable: an email field without
+  heading buttons still made headings from `## `, Ctrl+Alt+2 and a pasted `<h2>`, and
+  the same held for tables, images and colours. `features` lists the built-in
+  extensions a field may use. The widget writes the resolved set into
+  `data-tiptap-config`: the listed names, an always-on core (document, paragraph,
+  text, line breaks, undo and the two cursors), and what each name needs, so
+  `table` brings its rows and cells and `highlight` brings `textStyle`.
+  `resolve_features` in `django_tiptap_editor.utils` returns the same set. A name
+  that is not a built-in raises `ImproperlyConfigured`, `[]` leaves paragraphs and
+  text, and a config without the key behaves as before. `AdminTipTapWidget` and a
+  project-wide `TIPTAP_DEFAULT_CONFIG` resolve it the same way, and a field's own
+  list wins. The server's allowlist does not narrow with it: stored HTML is still
+  sanitised against every built-in extension. `docs/configuration.md` lists the
+  names, the core and the dependency table, and `tests/test_configuration_documentation.py`
+  holds that page equal to `constants`.
+
 ## [0.11.1] — 2026-10-06
 
 ### Changed

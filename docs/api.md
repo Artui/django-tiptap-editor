@@ -15,6 +15,9 @@ Renders a `<textarea>` carrying `data-tiptap-config`. Config resolution (last wi
 (`get_config(self, attrs)`). `class Media` emits the committed bundle. `storage` is
 `"html"` (default) or `"json"`; when `None` it resolves from
 `settings.TIPTAP_STORAGE_FORMAT`. See [Storage format](storage.md).
+A `features` list in the merged config is written out resolved, with the core and
+every dependency included and sorted, whichever `get_config` produced it. See
+[Restricting features](configuration.md#restricting-features).
 
 ### `AdminTipTapWidget(TipTapWidget)`
 
@@ -69,6 +72,15 @@ directly to clean a column in a data migration. See [Security](security.md).
 sanitiser enforces: the union of the HTML vocabularies of every extension the editor mounts, plus
 whatever `TIPTAP_EXTRA_EXTENSIONS` declares. Pass one to `sanitize_html(..., schema=...)` to
 sanitise against a different allowlist.
+
+### `resolve_features`
+
+`django_tiptap_editor.utils.resolve_features.resolve_features(config)` returns the
+`frozenset` of built-in extensions a config's `features` list turns on: the list, plus
+`FEATURE_CORE`, plus each entry's dependencies (`FEATURE_DEPENDENCIES`). It returns `None`
+when the config has no `features` key, or it is `None`, which is the unrestricted editor.
+It assumes a config `validate_config` has accepted. See
+[Restricting features](configuration.md#restricting-features).
 
 ### `render_doc`
 

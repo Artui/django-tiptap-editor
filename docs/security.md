@@ -141,6 +141,10 @@ never runs — **rendering arbitrary JSON is not automatically safe.** So:
 - **Custom extensions widen the surface.** Anything you declare in
   `TIPTAP_EXTRA_EXTENSIONS` is accepted from then on — validate what your extension
   itself accepts.
+- **`features` narrows the editor, not the allowlist.** A field configured with
+  [`features`](configuration.md#restricting-features) cannot produce a heading in the
+  editor, but its stored markup is sanitised against every built-in extension's
+  vocabulary, so a direct POST can still store one.
 - **External asset mode** loads TipTap you provide; the browser-side guarantees above
   hold for the pinned, bundled version. See [Asset modes](asset-modes.md). The
   server-side allowlist is unaffected.
