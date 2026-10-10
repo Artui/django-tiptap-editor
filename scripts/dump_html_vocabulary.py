@@ -26,10 +26,15 @@ import json
 import sys
 from pathlib import Path
 
-from django_tiptap_editor.constants import EXTENSION_HTML_VOCABULARY
+from django_tiptap_editor.constants import (
+    EXTENSION_HTML_VOCABULARY,
+    FEATURE_CORE,
+    FEATURE_DEPENDENCIES,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = ROOT / "js" / "test" / "fixtures" / "html-vocabulary.json"
+FEATURES_FIXTURE = ROOT / "js" / "test" / "fixtures" / "feature-model.json"
 
 
 def build() -> dict[str, object]:
@@ -55,15 +60,40 @@ def build() -> dict[str, object]:
     }
 
 
+def build_features() -> dict[str, object]:
+    """Return the feature model: the always-on core and the dependency closure.
+
+    The JS build restates both (a field configured without Django has no server
+    to resolve them), and js/test/feature-model.test.ts holds that restatement
+    equal to this, so a feature gained or a dependency added here fails there.
+    """
+    return {
+        "generatedBy": "scripts/dump_html_vocabulary.py",
+        "core": sorted(FEATURE_CORE),
+        "features": sorted(set(EXTENSION_HTML_VOCABULARY) - FEATURE_CORE),
+        "dependencies": {name: sorted(deps) for name, deps in sorted(FEATURE_DEPENDENCIES.items())},
+    }
+
+
 def render() -> str:
     """Return the fixture's exact bytes, so a byte comparison is the check."""
     return json.dumps(build(), indent=2) + "\n"
 
 
+def render_features() -> str:
+    """Return the feature-model fixture's exact bytes."""
+    return json.dumps(build_features(), indent=2) + "\n"
+
+
 def main(argv: list[str]) -> int:
     if argv == ["--check"]:
-        return 0 if FIXTURE.read_text(encoding="utf-8") == render() else 1
+        fresh = (
+            FIXTURE.read_text(encoding="utf-8") == render()
+            and FEATURES_FIXTURE.read_text(encoding="utf-8") == render_features()
+        )
+        return 0 if fresh else 1
     FIXTURE.write_text(render(), encoding="utf-8")
+    FEATURES_FIXTURE.write_text(render_features(), encoding="utf-8")
     return 0
 
 

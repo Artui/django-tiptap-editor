@@ -42,6 +42,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "manualMount",
         "enterKey",
         "toolbar",
+        "features",
         "extensions",
         "paragraphStyle",
         "imageListUrl",
@@ -164,6 +165,31 @@ EXTENSION_HTML_VOCABULARY: dict[str, dict[str, dict[str, tuple[str, ...]]]] = {
     "superscript": {"sup": {}},
     "characterCount": {},
     "sourceView": {},
+}
+
+# What a field with a ``features`` list always gets: the structure every document
+# needs (document, text, paragraph), undo, the two cursors, and ``hardBreak``,
+# which is core because Shift-Enter inside a list item and a pasted ``<br>`` both
+# need it and dropping it would merge lines. Everything else in the vocabulary is
+# a feature an author can leave out of one field.
+FEATURE_CORE = frozenset(
+    {"document", "text", "paragraph", "hardBreak", "history", "dropcursor", "gapcursor"}
+)
+
+# Features that cannot work without another. Listing a key pulls in its values, so
+# a field naming ``table`` cannot mount a table whose rows the sanitiser strips.
+# Resolved by ``resolve_features`` on the server and restated, then held equal by
+# a test, in the JS build for the entry point that bypasses Django. ``highlight``
+# is the same background-colour mark as ``backgroundColor`` under its toolbar name.
+FEATURE_DEPENDENCIES: dict[str, tuple[str, ...]] = {
+    "bulletList": ("listItem",),
+    "orderedList": ("listItem",),
+    "table": ("tableRow", "tableCell", "tableHeader"),
+    "fontFamily": ("textStyle",),
+    "color": ("textStyle",),
+    "backgroundColor": ("textStyle",),
+    "highlight": ("backgroundColor", "textStyle"),
+    "fontSize": ("textStyle",),
 }
 
 # Keys a single extension vocabulary entry may carry (also validated for the

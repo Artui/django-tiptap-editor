@@ -1,0 +1,72 @@
+{
+  "generatedBy": "scripts/dump_html_vocabulary.py",
+  "core": [
+    "document",
+    "dropcursor",
+    "gapcursor",
+    "hardBreak",
+    "history",
+    "paragraph",
+    "text"
+  ],
+  "features": [
+    "backgroundColor",
+    "blockquote",
+    "bold",
+    "bulletList",
+    "characterCount",
+    "code",
+    "codeBlock",
+    "color",
+    "fontFamily",
+    "fontSize",
+    "heading",
+    "highlight",
+    "horizontalRule",
+    "image",
+    "italic",
+    "link",
+    "listItem",
+    "orderedList",
+    "sourceView",
+    "strike",
+    "subscript",
+    "superscript",
+    "table",
+    "tableCell",
+    "tableHeader",
+    "tableRow",
+    "textAlign",
+    "textStyle",
+    "underline"
+  ],
+  "dependencies": {
+    "backgroundColor": [
+      "textStyle"
+    ],
+    "bulletList": [
+      "listItem"
+    ],
+    "color": [
+      "textStyle"
+    ],
+    "fontFamily": [
+      "textStyle"
+    ],
+    "fontSize": [
+      "textStyle"
+    ],
+    "highlight": [
+      "backgroundColor",
+      "textStyle"
+    ],
+    "orderedList": [
+      "listItem"
+    ],
+    "table": [
+      "tableCell",
+      "tableHeader",
+      "tableRow"
+    ]
+  }
+}
