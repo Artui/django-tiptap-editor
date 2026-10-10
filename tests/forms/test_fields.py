@@ -442,3 +442,7 @@ def test_only_the_paragraphs_the_sanitiser_opens_are_kept_apart() -> None:
     posted = "<p>a<blockquote><h2>b</h2></blockquote>c</p>"
     assert field.clean(posted) == "<p>a<blockquote><p>b</p></blockquote>c</p>"
     assert _restricted([]).clean("<p>a<p>b</p>c</p>") == "<p>a<p>b</p>c</p>"
+    # The page's own example: a client <p> in a kept quote in a <p> is left be.
+    example = "<p>a<blockquote><p>b</p></blockquote>c</p>"
+    assert field.clean(example) == example
+    assert TipTapFormField().clean(example) == example
