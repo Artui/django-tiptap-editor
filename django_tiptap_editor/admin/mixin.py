@@ -10,6 +10,7 @@ from django.db import models
 
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
+from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
 
 
@@ -24,7 +25,10 @@ class TipTapModelAdminMixin:
 
     Covers plain ``TextField``s (HTML storage) *and* ``TipTapJSONField``s (JSON
     storage) — the JSON field gets the admin widget in JSON storage mode so its
-    ``{doc, html}`` envelope still round-trips. ``tiptap_fields`` is ``"__all__"``
+    ``{doc, html}`` envelope still round-trips. A ``TextField`` also gets
+    ``TipTapFormField`` as its form class, so what the admin saves is sanitised
+    (unless the project gives that field a form class of its own, through
+    ``formfield_overrides`` or ``Meta.field_classes``). ``tiptap_fields`` is ``"__all__"``
     (every eligible field) or an explicit list of field names. Mix in before
     ``admin.ModelAdmin``.
 
@@ -90,6 +94,20 @@ class TipTapModelAdminMixin:
     def _tiptap_applies(self, db_field: models.Field) -> bool:
         return self.tiptap_fields == "__all__" or db_field.name in self.tiptap_fields
 
+    def _overrides_form_class(self, db_field: models.Field) -> bool:
+        """Whether ``formfield_overrides`` gives this field its own form class.
+
+        Django applies the entry of the first class in the field's MRO that has
+        one, and merges the kwargs passed here *over* it, so a ``form_class``
+        set here would beat the project's. Checked the same way, so the
+        project's wins.
+        """
+        overrides = getattr(self, "formfield_overrides", {})
+        for klass in type(db_field).mro():
+            if klass in overrides:
+                return "form_class" in overrides[klass]
+        return False
+
     def formfield_for_dbfield(self, db_field: models.Field, request: Any, **kwargs: Any) -> Any:
         if self._tiptap_applies(db_field):
             if isinstance(db_field, TipTapJSONField):
@@ -99,6 +117,11 @@ class TipTapModelAdminMixin:
                 kwargs["widget"] = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON)
             elif isinstance(db_field, models.TextField):
                 kwargs["widget"] = AdminTipTapWidget
+                # The widget alone left the form field a plain CharField, so the
+                # admin stored a direct POST unsanitised. ``setdefault`` keeps a
+                # ``form_class`` already passed in (``Meta.field_classes``).
+                if not self._overrides_form_class(db_field):
+                    kwargs.setdefault("form_class", TipTapFormField)
         # super() resolves to admin.ModelAdmin via the consumer's MRO.
         return super().formfield_for_dbfield(  # ty: ignore[unresolved-attribute]
             db_field, request, **kwargs

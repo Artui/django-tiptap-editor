@@ -4,11 +4,15 @@ import json
 from typing import Any
 
 import pytest
+from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.test import override_settings
 
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
+from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
 from tests.testapp.models import Article
 
@@ -105,6 +109,114 @@ def test_admin_form_round_trips_a_json_document() -> None:
     assert form.is_valid(), form.errors
     article = form.save()
     assert Article.objects.get(pk=article.pk).document.doc == DOC
+
+
+HOSTILE = '<p>x</p><script>alert(1)</script><img src="javascript:alert(1)" onerror="x()">'
+
+
+def _admin_form(model_admin: admin.ModelAdmin, **data: str) -> forms.ModelForm:
+    return model_admin.get_form(None)(data={"title": "t", "body": "b", "summary": "", **data})
+
+
+def test_an_admin_textfield_is_sanitised_on_save() -> None:
+    # The widget alone was swapped, so the form field stayed a plain CharField
+    # and the admin stored a direct POST exactly as sent.
+    form = _admin_form(_register(), body=HOSTILE)
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["body"] == "<p>x</p><img>"
+
+
+def test_the_admin_textfield_keeps_the_options_a_project_sets() -> None:
+    # TipTapFormField is a CharField, so the options a project already passes to
+    # an admin text field reach it unchanged, and still count the stored value.
+    # Each option is checked by cleaning a value through it, not by reading the
+    # attribute back: the sanitiser runs after CharField's own conversion, and
+    # an option it undid would still read back as set.
+    overrides = {models.TextField: {"max_length": 5, "strip": False, "empty_value": None}}
+    fields = _register(formfield_overrides=overrides).get_form(None).base_fields
+    form_field = fields["body"]
+    assert isinstance(form_field, TipTapFormField)
+    assert isinstance(form_field.widget, AdminTipTapWidget)
+    # max_length counts what is stored, so markup the sanitiser removes is free.
+    assert form_field.clean("<div>short</div>") == "short"
+    with pytest.raises(ValidationError):
+        form_field.clean("<div>toolong</div>")
+    # strip=False keeps the whitespace a stripping CharField would remove.
+    assert form_field.clean(" ab ") == " ab "
+    # empty_value=None is what a nullable column relies on to store NULL; the
+    # summary column is optional, so an empty submission reaches it.
+    optional = fields["summary"]
+    assert isinstance(optional, TipTapFormField)
+    assert optional.clean("") is None
+    assert optional.clean(None) is None
+
+
+def test_a_projects_own_form_class_wins() -> None:
+    class Plain(forms.CharField):
+        """A project's own field class for its text columns."""
+
+    overrides = {models.TextField: {"form_class": Plain}}
+    assert type(_register(formfield_overrides=overrides).get_form(None).base_fields["body"]) is (
+        Plain
+    )
+
+    class ArticleForm(forms.ModelForm):
+        class Meta:
+            model = Article
+            fields = "__all__"
+            field_classes = {"body": Plain}
+
+    form_fields = _register(form=ArticleForm).get_form(None).base_fields
+    assert type(form_fields["body"]) is Plain
+    assert isinstance(form_fields["summary"], TipTapFormField)
+
+
+def test_a_form_class_django_would_not_apply_does_not_stop_the_editors() -> None:
+    # Django applies the overrides of the first class in a field's MRO that has
+    # an entry, and TextField always has one (the admin's own textarea), so a
+    # form class given for Field never reaches a TextField and must not stop
+    # this mixin's from reaching it either.
+    overrides = {models.Field: {"form_class": forms.CharField}}
+    form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
+    assert isinstance(form_field, TipTapFormField)
+
+
+@override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
+def test_a_project_wide_feature_list_narrows_the_admin() -> None:
+    form = _admin_form(_register(), body="<h2>a</h2><ul><li><p>b</p></li></ul>")
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["body"] == "<p>a</p><p>b</p>"
+
+
+def test_a_declared_admin_field_narrows_to_its_own_features() -> None:
+    # The per-field route the mixin leaves open: a field declared on the admin's
+    # form is not built by formfield_for_dbfield, so its widget is the one given.
+    class ArticleForm(forms.ModelForm):
+        body = TipTapFormField(widget=AdminTipTapWidget(config={"features": ["bold"]}))
+
+        class Meta:
+            model = Article
+            fields = "__all__"
+
+    form = _admin_form(_register(form=ArticleForm), body="<h2>a</h2><p><strong>b</strong></p>")
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["body"] == "<p>a</p><p><strong>b</strong></p>"
+
+
+@pytest.mark.django_db
+@override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
+def test_an_admin_json_field_narrows_its_document() -> None:
+    text = [{"type": "text", "text": "hi"}]
+    heading = {
+        "type": "doc",
+        "content": [{"type": "heading", "attrs": {"level": 2}, "content": text}],
+    }
+    form = _admin_form(_register(), document=json.dumps({"doc": heading, "html": ""}))
+    assert form.is_valid(), form.errors
+    article = form.save()
+    stored = Article.objects.get(pk=article.pk).document
+    assert stored.doc == DOC
+    assert stored.html == "<p>hi</p>"
 
 
 def test_check_passes_for_the_default_and_for_valid_names() -> None:

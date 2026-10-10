@@ -15,7 +15,20 @@ export function isAllowedImageSrc(src: string): boolean {
   }
 }
 
+// Whether this editor's schema has an image node. A field whose `features` leave
+// images out mounts none, and setImage is then not a command at all, so every
+// route that would insert one (the URL prompt, the picker, an upload's result, a
+// dropped or pasted file) asks here first and does nothing rather than throwing.
+// Asked of the live schema, not the config, so an editor built by hand answers
+// for what it actually mounted.
+export function hasImageNode(editor: Editor): boolean {
+  return editor.schema.nodes.image !== undefined;
+}
+
 export function insertImage(editor: Editor, src: string): void {
+  if (!hasImageNode(editor)) {
+    return;
+  }
   if (!isAllowedImageSrc(src)) {
     console.error(`[DjangoTipTap] refusing image with disallowed src: ${src}`);
     return;
@@ -55,7 +68,11 @@ export async function uploadImage(url: string, file: File): Promise<string> {
 
 export async function uploadAndInsert(editor: Editor, file: File): Promise<void> {
   const url = configFor(editor).imageUploadUrl;
-  if (!url) {
+  // No upload whose result could not be inserted: the file would reach the
+  // server and be stored for a document that can never reference it. "an upload
+  // for a field without images never reaches the server" in
+  // test/restrict-features.test.ts fails without the second clause.
+  if (!url || !hasImageNode(editor)) {
     return;
   }
   try {
@@ -89,7 +106,10 @@ export function uploadViaFileDialog(editor: Editor): void {
 export function wireImageDropPaste(editor: Editor): void {
   const dom = editor.view.dom as HTMLElement;
   const onFiles = (files: FileList | undefined | null, event: Event): void => {
-    if (!configFor(editor).imageUploadUrl || !files || files.length === 0) {
+    // Without an image node the event is not claimed (no preventDefault) and
+    // nothing is uploaded; "a dropped or pasted image file is neither uploaded
+    // nor inserted" in test/restrict-features.test.ts fails without that clause.
+    if (!configFor(editor).imageUploadUrl || !hasImageNode(editor) || !files || files.length === 0) {
       return;
     }
     const images = Array.from(files).filter((f) => f.type.startsWith("image/"));

@@ -96,3 +96,57 @@ def test_boolean_keys_omitted_pass() -> None:
 def test_boolean_key_non_boolean_raises(key: str, value: object) -> None:
     with pytest.raises(ImproperlyConfigured, match=f"TipTap {key} must be a boolean"):
         validate_config({key: value})
+
+
+# ``features``: a list of built-in extension names restricting what one field's
+# editor can do. Custom extensions are not features; they stay in ``extensions``.
+
+
+@pytest.mark.parametrize("features", [[], ["bold"], ["heading", "table", "link"], ["bold", "bold"]])
+def test_a_list_of_built_in_feature_names_passes(features: list[str]) -> None:
+    cfg = {"features": features}
+    assert validate_config(cfg) is cfg
+
+
+def test_a_core_name_in_features_is_accepted() -> None:
+    # Core is always on, so naming it is redundant rather than wrong.
+    cfg = {"features": ["paragraph", "hardBreak", "history"]}
+    assert validate_config(cfg) is cfg
+
+
+def test_features_none_passes_as_omitted() -> None:
+    assert validate_config({"features": None}) == {"features": None}
+
+
+@pytest.mark.parametrize("value", ["heading", ("heading",), {"heading": True}])
+def test_features_not_a_list_raises(value: object) -> None:
+    # A bare string would otherwise pass the per-member check character by
+    # character; this is the test holding the ``isinstance(value, list)`` conjunct.
+    with pytest.raises(ImproperlyConfigured, match="TipTap features must be a list of strings"):
+        validate_config({"features": value})
+
+
+@pytest.mark.parametrize("member", [12, None, ["heading"]])
+def test_features_with_a_non_string_member_raises(member: object) -> None:
+    # ``["heading"]`` is unhashable: without the string check first, the name
+    # lookup would raise TypeError rather than ImproperlyConfigured. This is the
+    # test holding the per-member ``isinstance(item, str)`` conjunct.
+    with pytest.raises(ImproperlyConfigured, match="TipTap features must be a list of strings"):
+        validate_config({"features": ["bold", member]})
+
+
+def test_an_unknown_feature_name_raises_naming_it_and_the_allowed_set() -> None:
+    with pytest.raises(ImproperlyConfigured) as excinfo:
+        validate_config({"features": ["bold", "headings", "tables"]})
+    message = str(excinfo.value)
+    assert "Unknown TipTap feature(s): ['headings', 'tables']" in message
+    assert "'heading'" in message
+    assert "'table'" in message
+    # Assert which check answered: not the list-of-strings one.
+    assert "must be a list of strings" not in message
+
+
+@override_settings(TIPTAP_EXTRA_EXTENSIONS=["callout"])
+def test_a_custom_extension_is_not_a_feature() -> None:
+    with pytest.raises(ImproperlyConfigured, match=r"Unknown TipTap feature\(s\): \['callout'\]"):
+        validate_config({"features": ["callout"], "extensions": ["callout"]})

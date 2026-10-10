@@ -13,7 +13,9 @@ class AdminTipTapWidget(TipTapWidget):
     """``TipTapWidget`` tuned for the Django admin (taller by default).
 
     Config resolution: ``get_default_config()`` → ``admin_defaults`` →
-    per-instance ``config=``.
+    per-instance ``config=``. A ``features`` list from any of the three layers is
+    resolved where ``TipTapWidget.get_context`` writes the config, so this override
+    of ``get_config`` does not have to repeat it.
     """
 
     admin_defaults: dict[str, Any] = {"height": "500px"}

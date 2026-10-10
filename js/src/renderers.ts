@@ -15,6 +15,7 @@
 // Renderers are module-global and must be registered BEFORE auto-mount, exactly
 // like extensions and buttons (see the load-order note in the docs).
 import type { TipTapConfig } from "./default-config";
+import { featureEnabled, resolveFeatures } from "./features";
 import type { Translator } from "./i18n";
 import type { Editor } from "./tiptap-runtime";
 import { getButton } from "./toolbar/button-registry";
@@ -76,7 +77,20 @@ export function getShellRenderer(): ShellRenderer | null {
   return shellRenderer;
 }
 
-// Builds the RegionContext shared by region and shell renderers.
+// Builds the RegionContext shared by region and shell renderers. Its getButton
+// answers only for controls this field can run: a built-in whose feature the
+// field's `features` leave out has no command behind it, so a custom region
+// reusing it by key gets undefined (as for an unknown key) rather than a button
+// that throws when clicked.
 export function rendererContext(editor: Editor, config: TipTapConfig, t: Translator): RegionContext {
-  return { editor, config, t, getButton };
+  const features = resolveFeatures(config);
+  return {
+    editor,
+    config,
+    t,
+    getButton: (key: string) => {
+      const spec = getButton(key);
+      return spec && featureEnabled(features, spec.requires) ? spec : undefined;
+    },
+  };
 }

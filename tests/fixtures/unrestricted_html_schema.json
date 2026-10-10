@@ -1,0 +1,354 @@
+{
+  "builtin": {
+    "tags": {
+      "a": [
+        "class",
+        "href",
+        "rel",
+        "target",
+        "title"
+      ],
+      "blockquote": [],
+      "br": [],
+      "code": [
+        "class"
+      ],
+      "col": [],
+      "colgroup": [],
+      "em": [],
+      "h1": [],
+      "h2": [],
+      "h3": [],
+      "h4": [],
+      "h5": [],
+      "h6": [],
+      "hr": [],
+      "img": [
+        "alt",
+        "height",
+        "src",
+        "title",
+        "width"
+      ],
+      "li": [],
+      "ol": [
+        "start",
+        "type"
+      ],
+      "p": [],
+      "pre": [],
+      "s": [],
+      "span": [],
+      "strong": [],
+      "sub": [],
+      "sup": [],
+      "table": [],
+      "tbody": [],
+      "td": [
+        "colspan",
+        "colwidth",
+        "rowspan"
+      ],
+      "th": [
+        "colspan",
+        "colwidth",
+        "rowspan"
+      ],
+      "tr": [],
+      "u": [],
+      "ul": []
+    },
+    "styles": {
+      "a": [],
+      "blockquote": [],
+      "br": [],
+      "code": [],
+      "col": [
+        "min-width",
+        "width"
+      ],
+      "colgroup": [],
+      "em": [],
+      "h1": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h2": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h3": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h4": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h5": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h6": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "hr": [],
+      "img": [
+        "border",
+        "border-radius",
+        "display",
+        "float",
+        "height",
+        "margin",
+        "margin-bottom",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "padding",
+        "padding-bottom",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "vertical-align",
+        "width"
+      ],
+      "li": [],
+      "ol": [],
+      "p": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "pre": [],
+      "s": [],
+      "span": [
+        "background-color",
+        "color",
+        "font-family",
+        "font-size"
+      ],
+      "strong": [],
+      "sub": [],
+      "sup": [],
+      "table": [
+        "min-width",
+        "width"
+      ],
+      "tbody": [],
+      "td": [
+        "background-color",
+        "text-align"
+      ],
+      "th": [
+        "background-color",
+        "text-align"
+      ],
+      "tr": [],
+      "u": [],
+      "ul": []
+    },
+    "link_protocols": [
+      "http",
+      "https",
+      "mailto",
+      "tel"
+    ],
+    "image_protocols": [
+      "http",
+      "https",
+      "data"
+    ]
+  },
+  "with_callout": {
+    "tags": {
+      "a": [
+        "class",
+        "href",
+        "rel",
+        "target",
+        "title"
+      ],
+      "aside": [
+        "class"
+      ],
+      "blockquote": [],
+      "br": [],
+      "code": [
+        "class"
+      ],
+      "col": [],
+      "colgroup": [],
+      "em": [],
+      "h1": [],
+      "h2": [],
+      "h3": [],
+      "h4": [],
+      "h5": [],
+      "h6": [],
+      "hr": [],
+      "img": [
+        "alt",
+        "height",
+        "src",
+        "title",
+        "width"
+      ],
+      "li": [],
+      "ol": [
+        "start",
+        "type"
+      ],
+      "p": [],
+      "pre": [],
+      "s": [],
+      "span": [],
+      "strong": [],
+      "sub": [],
+      "sup": [],
+      "table": [],
+      "tbody": [],
+      "td": [
+        "colspan",
+        "colwidth",
+        "rowspan"
+      ],
+      "th": [
+        "colspan",
+        "colwidth",
+        "rowspan"
+      ],
+      "tr": [],
+      "u": [],
+      "ul": []
+    },
+    "styles": {
+      "a": [],
+      "aside": [],
+      "blockquote": [],
+      "br": [],
+      "code": [],
+      "col": [
+        "min-width",
+        "width"
+      ],
+      "colgroup": [],
+      "em": [],
+      "h1": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h2": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h3": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h4": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h5": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "h6": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "hr": [],
+      "img": [
+        "border",
+        "border-radius",
+        "display",
+        "float",
+        "height",
+        "margin",
+        "margin-bottom",
+        "margin-left",
+        "margin-right",
+        "margin-top",
+        "padding",
+        "padding-bottom",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "vertical-align",
+        "width"
+      ],
+      "li": [],
+      "ol": [],
+      "p": [
+        "margin",
+        "margin-block-end",
+        "padding-left",
+        "text-align"
+      ],
+      "pre": [],
+      "s": [],
+      "span": [
+        "background-color",
+        "color",
+        "font-family",
+        "font-size"
+      ],
+      "strong": [],
+      "sub": [],
+      "sup": [],
+      "table": [
+        "min-width",
+        "width"
+      ],
+      "tbody": [],
+      "td": [
+        "background-color",
+        "text-align"
+      ],
+      "th": [
+        "background-color",
+        "text-align"
+      ],
+      "tr": [],
+      "u": [],
+      "ul": []
+    },
+    "link_protocols": [
+      "http",
+      "https",
+      "mailto",
+      "tel"
+    ],
+    "image_protocols": [
+      "http",
+      "https",
+      "data"
+    ]
+  }
+}

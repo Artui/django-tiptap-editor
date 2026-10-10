@@ -42,6 +42,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "manualMount",
         "enterKey",
         "toolbar",
+        "features",
         "extensions",
         "paragraphStyle",
         "imageListUrl",
@@ -164,6 +165,103 @@ EXTENSION_HTML_VOCABULARY: dict[str, dict[str, dict[str, tuple[str, ...]]]] = {
     "superscript": {"sup": {}},
     "characterCount": {},
     "sourceView": {},
+}
+
+# The block tags in the vocabulary above that hold text a reader sees as its own
+# block. On a field whose ``features`` leave one out, the sanitiser turns it into
+# a paragraph boundary rather than unwrapping it, because unwrapping would run
+# two headings, two list items or two cells into one line of text -- the same
+# thing the editor does when such markup is pasted into it. The containers
+# around them (lists, tables, rows, column groups) are simply unwrapped: what
+# they hold decides where the paragraphs fall.
+PARAGRAPH_BLOCK_TAGS = frozenset(
+    {"h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "li", "td", "th"}
+)
+
+# Which feature each ProseMirror node type, mark type and feature-owned
+# attribute of a stored JSON document belongs to: the vocabulary above, in the
+# document's own names. A key is a node or mark type (``heading``), or
+# ``type.attribute`` for an attribute another feature adds to a type
+# (``textStyle.color`` is the ``color`` feature's, not textStyle's). Any other
+# attribute goes with its type: a cell's ``align`` and ``backgroundColor`` are
+# the table's, because the HTML side keeps them under the cell's own vocabulary.
+# A restricted field narrows its document with this (``narrow_doc``); the JS
+# suite holds it equal to the editor's schema through the vocabulary fixture.
+DOCUMENT_FEATURES: dict[str, str] = {
+    "doc": "document",
+    "text": "text",
+    "paragraph": "paragraph",
+    "hardBreak": "hardBreak",
+    "heading": "heading",
+    "blockquote": "blockquote",
+    "codeBlock": "codeBlock",
+    "horizontalRule": "horizontalRule",
+    "bulletList": "bulletList",
+    "orderedList": "orderedList",
+    "listItem": "listItem",
+    "image": "image",
+    "table": "table",
+    "tableRow": "tableRow",
+    "tableCell": "tableCell",
+    "tableHeader": "tableHeader",
+    "bold": "bold",
+    "italic": "italic",
+    "underline": "underline",
+    "strike": "strike",
+    "code": "code",
+    "subscript": "subscript",
+    "superscript": "superscript",
+    "link": "link",
+    "textStyle": "textStyle",
+    "textStyle.color": "color",
+    "textStyle.backgroundColor": "backgroundColor",
+    "textStyle.fontFamily": "fontFamily",
+    "textStyle.fontSize": "fontSize",
+    "paragraph.textAlign": "textAlign",
+    "heading.textAlign": "textAlign",
+}
+
+# Features that only add attributes or style properties to a type another
+# feature owns, derived from the table above. Their HTML vocabulary names tags
+# (textAlign's names h1-h6, because it aligns headings where headings exist), so
+# a restricted schema takes their attributes and styles but never a tag from
+# them: a field with alignment and no headings must not keep an <h2>.
+DECORATING_FEATURES = frozenset(
+    feature for key, feature in DOCUMENT_FEATURES.items() if "." in key
+) - frozenset(feature for key, feature in DOCUMENT_FEATURES.items() if "." not in key)
+
+# What a field with a ``features`` list always gets: the structure every document
+# needs (document, text, paragraph), undo, the two cursors, and ``hardBreak``,
+# which is core because Shift-Enter inside a list item and a pasted ``<br>`` both
+# need it and dropping it would merge lines. Everything else in the vocabulary is
+# a feature an author can leave out of one field.
+FEATURE_CORE = frozenset(
+    {"document", "text", "paragraph", "hardBreak", "history", "dropcursor", "gapcursor"}
+)
+
+# Features that cannot work without another. Listing a key pulls in its values, so
+# a field naming ``table`` cannot mount a table without its rows and cells.
+# Resolved by ``resolve_features`` on the server, where the result decides both
+# what the widget mounts and what the field's HTML and JSON form fields keep, and
+# restated, then held equal by a test, in the JS build for the entry point that
+# bypasses Django. ``highlight`` is the same background-colour mark as
+# ``backgroundColor`` under its toolbar name.
+FEATURE_DEPENDENCIES: dict[str, tuple[str, ...]] = {
+    "bulletList": ("listItem",),
+    "orderedList": ("listItem",),
+    "table": ("tableRow", "tableCell", "tableHeader"),
+    # The parts lead back to the table because a row or cell is not a schema the
+    # editor can mount without it, and a sanitiser keeping a cell with no table
+    # around it would store markup no editor of the field can open: naming any
+    # one of them must give the whole set.
+    "tableRow": ("table",),
+    "tableCell": ("table",),
+    "tableHeader": ("table",),
+    "fontFamily": ("textStyle",),
+    "color": ("textStyle",),
+    "backgroundColor": ("textStyle",),
+    "highlight": ("backgroundColor", "textStyle"),
+    "fontSize": ("textStyle",),
 }
 
 # Keys a single extension vocabulary entry may carry (also validated for the

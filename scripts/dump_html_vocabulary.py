@@ -26,18 +26,29 @@ import json
 import sys
 from pathlib import Path
 
-from django_tiptap_editor.constants import EXTENSION_HTML_VOCABULARY
+from django_tiptap_editor.constants import (
+    DECORATING_FEATURES,
+    DOCUMENT_FEATURES,
+    EXTENSION_HTML_VOCABULARY,
+    FEATURE_CORE,
+    FEATURE_DEPENDENCIES,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = ROOT / "js" / "test" / "fixtures" / "html-vocabulary.json"
+FEATURES_FIXTURE = ROOT / "js" / "test" / "fixtures" / "feature-model.json"
 
 
 def build() -> dict[str, object]:
-    """Return the vocabulary as plain JSON: names, then the per-tag union.
+    """Return the vocabulary as plain JSON: names, the per-tag union, then the parts.
 
     The union matches what get_html_schema builds for the built-ins, without the
     project's TIPTAP_EXTRA_EXTENSIONS, which describe a consumer's extensions
-    rather than this editor.
+    rather than this editor. ``byExtension`` is the same table before the union,
+    and ``decorating`` and ``documentFeatures`` are the rest of what a restricted
+    field's allowlist and document are built from: the JS suite builds an editor
+    per feature and checks what it can emit and hold against them, so the editor
+    a field mounts and the allowlist that field is cleaned against cannot drift.
     """
     attributes: dict[str, set[str]] = {}
     styles: dict[str, set[str]] = {}
@@ -52,6 +63,33 @@ def build() -> dict[str, object]:
             tag: {"attributes": sorted(attributes[tag]), "styles": sorted(styles[tag])}
             for tag in sorted(attributes)
         },
+        "byExtension": {
+            name: {
+                tag: {
+                    "attributes": sorted(entry.get("attrs", ())),
+                    "styles": sorted(entry.get("styles", ())),
+                }
+                for tag, entry in sorted(vocabulary.items())
+            }
+            for name, vocabulary in sorted(EXTENSION_HTML_VOCABULARY.items())
+        },
+        "decorating": sorted(DECORATING_FEATURES),
+        "documentFeatures": dict(sorted(DOCUMENT_FEATURES.items())),
+    }
+
+
+def build_features() -> dict[str, object]:
+    """Return the feature model: the always-on core and the dependency closure.
+
+    The JS build restates both (a field configured without Django has no server
+    to resolve them), and js/test/feature-model.test.ts holds that restatement
+    equal to this, so a feature gained or a dependency added here fails there.
+    """
+    return {
+        "generatedBy": "scripts/dump_html_vocabulary.py",
+        "core": sorted(FEATURE_CORE),
+        "features": sorted(set(EXTENSION_HTML_VOCABULARY) - FEATURE_CORE),
+        "dependencies": {name: sorted(deps) for name, deps in sorted(FEATURE_DEPENDENCIES.items())},
     }
 
 
@@ -60,10 +98,20 @@ def render() -> str:
     return json.dumps(build(), indent=2) + "\n"
 
 
+def render_features() -> str:
+    """Return the feature-model fixture's exact bytes."""
+    return json.dumps(build_features(), indent=2) + "\n"
+
+
 def main(argv: list[str]) -> int:
     if argv == ["--check"]:
-        return 0 if FIXTURE.read_text(encoding="utf-8") == render() else 1
+        fresh = (
+            FIXTURE.read_text(encoding="utf-8") == render()
+            and FEATURES_FIXTURE.read_text(encoding="utf-8") == render_features()
+        )
+        return 0 if fresh else 1
     FIXTURE.write_text(render(), encoding="utf-8")
+    FEATURES_FIXTURE.write_text(render_features(), encoding="utf-8")
     return 0
 
 

@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A field can restrict what its editor can do with the `features` config key.**
+  Hiding a button with `toolbar` left its feature reachable: an email field without
+  heading buttons still made headings from `## `, Ctrl+Alt+2 and a pasted `<h2>`, and
+  the same held for tables, images and colours. `features` lists the built-in
+  extensions a field may use. The widget writes the resolved set into
+  `data-tiptap-config`: the listed names, an always-on core (document, paragraph,
+  text, line breaks, undo and the two cursors), and what each name needs, so
+  `table` brings its rows and cells and `highlight` brings `textStyle`.
+  `resolve_features` in `django_tiptap_editor.utils` returns the same set. A name
+  that is not a built-in raises `ImproperlyConfigured`, `[]` leaves paragraphs and
+  text, and a config without the key behaves as before. `AdminTipTapWidget` and a
+  project-wide `TIPTAP_DEFAULT_CONFIG` resolve it the same way, and a field's own
+  list wins. The server narrows with it, as the next entry describes. `docs/configuration.md` lists the
+  names, the core and the dependency table, and `tests/test_configuration_documentation.py`
+  holds that page equal to `constants`. In the browser an excluded extension is not
+  mounted at all, so its input rules, shortcuts and paste handling do not exist;
+  built-in toolbar buttons for it are not rendered (an explicit `toolbar` naming one
+  logs a warning), image files dropped or pasted into a field without `image` are
+  ignored, and a custom button can declare the feature it needs with `requires`.
+  JSON-stored content that the restricted schema cannot build opens from its HTML
+  mirror rather than empty, and so does an unrestricted field whose stored document
+  names a node type nothing mounts (a removed custom extension, for example), where
+  the editor used to open empty and the next keystroke saved that over the stored
+  value. Naming a table row, cell or header alone gives the whole table.
+- **A field's server-side sanitisation follows that field's own `features`.**
+  Restricting the editor alone left the boundary where it was: a client posting the
+  field directly, skipping the editor, could still store a heading, a table or a
+  colour on a field whose editor could make none of them. `TipTapFormField` now
+  cleans against `get_html_schema(config)` for its widget's merged config, which
+  admits only the vocabularies of the resolved features plus the custom extensions
+  that config names; a config without `features` gets exactly the allowlist it had,
+  which `tests/fixtures/unrestricted_html_schema.json` holds. What the field lacks
+  is converted rather than deleted: a heading, quote, code block, list item or
+  table cell becomes a paragraph, with the list or table around it unwrapped, a
+  paragraph the sanitiser opens is never nested inside another it opened, and
+  cleaning twice changes nothing. An image goes whole, `alt` text included. An
+  attribute or style property goes with its feature, so `text-align` needs
+  `textAlign`, and the text-style features decorate tags without admitting any.
+  `TipTapJSONFormField` narrows the submitted `doc` the same way with the new
+  `narrow_doc` (in `django_tiptap_editor.utils`), driven by the
+  `DOCUMENT_FEATURES` table in `constants`, and its mirror is, for most content,
+  the markup the HTML path keeps for the same content; where a tag is shared
+  between features (inline code on a field with only code blocks, a code block on
+  one with only inline code, a style span whose feature is missing) the HTML path
+  keeps an emptied tag the field admits and the document path drops the mark, as
+  `docs/security.md` tabulates. A submitted value with an empty `doc` now has
+  its HTML cleaned against the field's schema too, rather than the global one.
+  `HtmlSchema` gains `paragraph_blocks`, empty by default, so a schema built by
+  hand behaves as before. ORM and API writes, `loaddata` and the `tiptap_html`
+  filter are not narrowed per field, a field's `linkProtocols` still limits only
+  its editor, and changing `features` does not rewrite stored rows;
+  `docs/security.md` lists each. The JS suite builds an editor for each built-in
+  feature alone and checks what it can emit and hold against the allowlist and
+  document table the server would clean that field against.
+
+### Fixed
+
+- **`TipTapModelAdminMixin` did not sanitise the fields it put an editor on.** It
+  swapped the widget onto every `TextField` and left the form field a plain
+  `CharField`, so an admin page stored whatever was posted, `<script>` included.
+  It now makes the form field a `TipTapFormField` as well, unless the admin names
+  its own `form_class` for `TextField` in `formfield_overrides` or the field in
+  `Meta.field_classes`, and options given there (`max_length`, `strip`,
+  `empty_value`) still reach the field. An empty submission is returned as the
+  field's `empty_value`, `None` included, rather than sanitised into `""`, which is
+  what `TipTapFormField` now does wherever it is used.
+
 ## [0.11.1] — 2026-10-06
 
 ### Changed

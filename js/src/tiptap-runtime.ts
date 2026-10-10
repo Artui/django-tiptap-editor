@@ -16,6 +16,10 @@ export { Editor, Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
 // JSON storage helpers and the HTML->JSON migration path.
 export { generateHTML, generateJSON } from "@tiptap/core";
 
+// The schema an extension set produces, without mounting an editor. Lets the
+// JSON-storage load check a stored doc against the field's own schema first.
+export { getSchema } from "@tiptap/core";
+
 // Structural baseline.
 export { default as StarterKit } from "@tiptap/starter-kit";
 
