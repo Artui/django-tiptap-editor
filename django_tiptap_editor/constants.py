@@ -177,7 +177,7 @@ FEATURE_CORE = frozenset(
 )
 
 # Features that cannot work without another. Listing a key pulls in its values, so
-# a field naming ``table`` cannot mount a table whose rows the sanitiser strips.
+# a field naming ``table`` cannot mount a table without its rows and cells.
 # Resolved by ``resolve_features`` on the server and restated, then held equal by
 # a test, in the JS build for the entry point that bypasses Django. ``highlight``
 # is the same background-colour mark as ``backgroundColor`` under its toolbar name.

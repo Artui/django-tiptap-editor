@@ -30,8 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   logs a warning), image files dropped or pasted into a field without `image` are
   ignored, and a custom button can declare the feature it needs with `requires`.
   JSON-stored content that the restricted schema cannot build opens from its HTML
-  mirror rather than empty. Naming a table row, cell or header alone gives the whole
-  table.
+  mirror rather than empty, and so does an unrestricted field whose stored document
+  names a node type nothing mounts (a removed custom extension, for example), where
+  the editor used to open empty and the next keystroke saved that over the stored
+  value. Naming a table row, cell or header alone gives the whole table.
 
 ## [0.11.1] — 2026-10-06
 

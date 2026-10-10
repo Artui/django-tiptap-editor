@@ -13,10 +13,10 @@ def resolve_features(config: dict[str, Any]) -> frozenset[str] | None:
     ``None`` is the unrestricted editor: no ``features`` key, which is every
     built-in extension and the markup of all of them. A list is a restriction, and
     the result is that list plus ``FEATURE_CORE`` plus whatever each entry cannot
-    work without (``FEATURE_DEPENDENCIES``). Both the widget, which writes the
-    result into ``data-tiptap-config`` so the browser mounts exactly this set, and
-    the sanitiser, which keeps exactly the markup of this set, read it from here.
-    The two cannot disagree about what a field can contain.
+    work without (``FEATURE_DEPENDENCIES``). The widget writes the result into
+    ``data-tiptap-config`` so the browser mounts exactly this set; it restricts the
+    editor only, and the server's sanitiser still allows the markup of every
+    built-in extension.
 
     The list is assumed valid (``validate_config`` checks the names); an unknown
     name here would simply be carried through.

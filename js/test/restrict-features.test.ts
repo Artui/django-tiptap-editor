@@ -226,6 +226,21 @@ describe("a restricted field has no route to an excluded feature", () => {
   });
 });
 
+describe("the default toolbar of an empty feature list", () => {
+  // Every built-in button names the feature whose command it calls. One that
+  // lost its declaration would render and then throw `toggleBold is not a
+  // function` on click, and a default toolbar that warned would be reporting
+  // buttons nobody listed. Only the buttons that need no feature remain.
+  it("renders only the buttons that need no feature, and says nothing", () => {
+    registerBuiltInButtons();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const editor = makeEditor({ features: [] }, "<p>abc</p>");
+    const toolbar = renderToolbar(editor, { features: [] });
+    expect(toolbarKeys(toolbar.el)).toEqual(["undo", "redo", "paragraph", "clearFormatting"]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
+
 describe("content saved before the field was restricted", () => {
   // A JSON-stored value written while the field still had headings and colours.
   // Restricting the field must not lose it: the excluded markup goes, the text
@@ -258,6 +273,31 @@ describe("content saved before the field was restricted", () => {
     const editor = DjangoTipTap.init(textarea, { features: ["bold"] });
     expect(editor.getHTML()).toBe("<p>Title</p><p><strong>b</strong>red</p>");
     DjangoTipTap.destroy("restricted-json");
+  });
+
+  it("opens from the HTML mirror when an unrestricted field cannot build the stored doc", async () => {
+    // A node type nothing mounts (a removed custom extension, or one not listed in
+    // `extensions`). Tiptap answers it with an empty document, and the next
+    // keystroke would save that over the stored value.
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { default: DjangoTipTap } = await import("../src/index");
+    const textarea = document.createElement("textarea");
+    textarea.id = "unmounted-node-json";
+    textarea.setAttribute("data-tiptap-storage", "json");
+    textarea.value = JSON.stringify({
+      doc: {
+        type: "doc",
+        content: [
+          { type: "callout", content: [{ type: "text", text: "Kept?" }] },
+          { type: "paragraph", content: [{ type: "text", text: "p" }] },
+        ],
+      },
+      html: "<div>Kept?</div><p>p</p>",
+    });
+    document.body.appendChild(textarea);
+    const editor = DjangoTipTap.init(textarea, {});
+    expect(editor.getHTML()).toBe("<p>Kept?</p><p>p</p>");
+    DjangoTipTap.destroy("unmounted-node-json");
   });
 
   it("loads the same document unchanged on an unrestricted field", async () => {

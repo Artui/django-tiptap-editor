@@ -159,6 +159,11 @@ Activate it like any custom extension — list `"shortcuts"` in `config.extensio
 to `TIPTAP_EXTRA_EXTENSIONS` (and, for a project-wide default, in `TIPTAP_DEFAULT_CONFIG`).
 A shortcut-only extension emits no markup, so declare it as `{"shortcuts": {}}`.
 
+A custom extension that builds on a built-in node (a content expression naming
+`listItem`, say) needs that built-in to be mounted. On a field restricted with
+[`features`](configuration.md#restricting-features), list the built-ins it depends on
+there, or the editor fails to build.
+
 ## Toolbar buttons
 
 ```js
