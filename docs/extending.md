@@ -76,7 +76,10 @@ what keeps a declared extension from turning `style` into a passthrough.
 A field restricted with [`features`](configuration.md#restricting-features) keeps a
 declared vocabulary only when the field's own `extensions` names the extension: the field
 is cleaned against what its editor mounts, and an editor mounts a custom extension only
-when its config names it.
+when its config names it. A named extension's vocabulary is admitted as it is declared,
+whatever the field's `features` leave out: an extension declaring `h2` keeps `<h2>` on a
+field without `heading` that names it. Declare only the tags the extension itself
+renders.
 
 The plain list form still works and still passes config validation:
 

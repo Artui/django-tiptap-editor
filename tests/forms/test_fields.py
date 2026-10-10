@@ -100,10 +100,88 @@ def test_features_narrow_what_a_direct_post_can_store() -> None:
         ),
         # A paragraph still open when the input ends is closed.
         pytest.param("<ul><li>a", "<p>a</p>", id="unclosed"),
+        # Closing an unknown tag inside a boundary leaves the boundary open, so
+        # the heading after it still closes the quote's paragraph first.
+        pytest.param(
+            "<blockquote><div>a</div><h2>b</h2>c</blockquote>",
+            "<p>a</p><p>b</p><p>c</p>",
+            id="unknown-tag-closed-in-boundary",
+        ),
     ],
 )
 def test_a_block_the_field_lacks_becomes_a_paragraph(posted: str, expected: str) -> None:
     assert _restricted(["bold"]).clean(posted) == expected
+
+
+@pytest.mark.parametrize(
+    ("features", "posted", "expected"),
+    [
+        # Each case holds one member of a tag table in sanitize_html or
+        # constants, which a mutation run found no other test holding.
+        # Cells are boundaries of their own (PARAGRAPH_BLOCK_TAGS).
+        pytest.param([], "<td>a</td><td>b</td>", "<p>a</p><p>b</p>", id="cells"),
+        pytest.param([], "<th>a</th><th>b</th>", "<p>a</p><p>b</p>", id="header-cells"),
+        # A kept block closes the paragraph a converted quote opened before it
+        # (_BLOCK_TAGS), and the text after it opens another.
+        pytest.param(
+            ["bulletList"],
+            "<blockquote>a<ul><li>b</li></ul>c</blockquote>",
+            "<p>a</p><ul><li>b</li></ul><p>c</p>",
+            id="kept-ul",
+        ),
+        pytest.param(
+            ["orderedList"],
+            "<blockquote>a<ol><li>b</li></ol>c</blockquote>",
+            "<p>a</p><ol><li>b</li></ol><p>c</p>",
+            id="kept-ol",
+        ),
+        pytest.param(
+            ["horizontalRule"],
+            "<blockquote>a<hr>b</blockquote>",
+            "<p>a</p><hr><p>b</p>",
+            id="kept-hr",
+        ),
+        pytest.param(
+            ["table"],
+            "<blockquote>a<table><tbody><tr><td>b</td></tr></tbody></table>c</blockquote>",
+            "<p>a</p><table><tbody><tr><td>b</td></tr></tbody></table><p>c</p>",
+            id="kept-table",
+        ),
+        pytest.param(
+            ["table"],
+            "<blockquote>a<tbody>b</tbody>c</blockquote>",
+            "<p>a</p><tbody>b</tbody><p>c</p>",
+            id="kept-tbody",
+        ),
+        pytest.param(
+            ["table"],
+            "<blockquote>a<tr>b</tr>c</blockquote>",
+            "<p>a</p><tr>b</tr><p>c</p>",
+            id="kept-tr",
+        ),
+        pytest.param(
+            ["table"],
+            "<blockquote>a<colgroup></colgroup>b</blockquote>",
+            "<p>a</p><colgroup></colgroup><p>b</p>",
+            id="kept-colgroup",
+        ),
+        pytest.param(
+            ["table"], "<blockquote>a<col>b</blockquote>", "<p>a</p><col><p>b</p>", id="kept-col"
+        ),
+        # An empty text block is an empty paragraph, as narrowing an empty
+        # heading or code block in a JSON document gives (_TEXTBLOCK_TAGS).
+        *(
+            pytest.param([], f"<{tag}></{tag}>", "<p></p>", id=f"empty-{tag}")
+            for tag in ("h1", "h2", "h3", "h4", "h5", "h6", "pre")
+        ),
+        # A non-breaking space is text, not the whitespace between two blocks.
+        pytest.param([], "<li>\xa0</li>", "<p>\xa0</p>", id="nbsp"),
+    ],
+)
+def test_each_block_tag_takes_its_part_in_conversion(
+    features: list[str], posted: str, expected: str
+) -> None:
+    assert _restricted(features).clean(posted) == expected
 
 
 def test_a_kept_block_is_kept_inside_a_converted_one() -> None:
@@ -165,6 +243,15 @@ def test_a_restricted_field_keeps_only_the_custom_extensions_it_names() -> None:
     assert _restricted(["bold"], extensions=["callout"]).clean(posted) == "<aside>a</aside>b"
     # Unrestricted, every declared extension is in the allowlist, as before.
     assert _restricted(None, extensions=["callout"]).clean(posted) == posted
+
+
+@override_settings(TIPTAP_EXTRA_EXTENSIONS={"headings": {"h2": {}}})
+def test_a_named_extension_admits_its_tags_even_one_a_feature_also_owns() -> None:
+    # docs/extending.md says so: an extension's vocabulary is admitted as it is
+    # declared, so a field without heading that names one keeps <h2>.
+    posted = "<h2>a</h2>"
+    assert _restricted([], extensions=["headings"]).clean(posted) == posted
+    assert _restricted([]).clean(posted) == "<p>a</p>"
 
 
 @override_settings(TIPTAP_EXTRA_EXTENSIONS=["legacy"])
@@ -338,3 +425,20 @@ def test_a_kept_block_in_a_kept_paragraph_is_left_as_it_was_on_a_restricted_fiel
     # be the flattening applied to markup nothing converted.
     posted = "<p><strong>a<ul><li>b</li></ul>c</strong></p>"
     assert _restricted(["bold", "bulletList"]).clean(posted) == posted
+
+
+def test_a_mark_opened_just_before_a_converted_block_is_left_empty() -> None:
+    # docs/security.md documents the empty pair: the mark is closed at the
+    # boundary as it is when it holds text, and reopened after it.
+    posted = "<strong><h2>b</h2>c</strong>"
+    assert _restricted(["bold"]).clean(posted) == "<strong></strong><p>b</p><strong>c</strong>"
+
+
+def test_only_the_paragraphs_the_sanitiser_opens_are_kept_apart() -> None:
+    # docs/security.md narrows its claim to these: a paragraph the sanitiser
+    # opens never sits inside another it opened, while nesting the posted
+    # markup already had is cleaned as an unrestricted field would clean it.
+    field = _restricted(["blockquote"])
+    posted = "<p>a<blockquote><h2>b</h2></blockquote>c</p>"
+    assert field.clean(posted) == "<p>a<blockquote><p>b</p></blockquote>c</p>"
+    assert _restricted([]).clean("<p>a<p>b</p>c</p>") == "<p>a<p>b</p>c</p>"

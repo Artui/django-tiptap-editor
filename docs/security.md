@@ -73,18 +73,38 @@ rule above still holds:
 
 - **A block becomes a paragraph.** `h1`-`h6`, `blockquote`, `pre`, `li`, `td` and `th`
   each keep their text as a paragraph boundary, and the `ul`, `ol` or table structure
-  around them is unwrapped. A paragraph is never nested in another, and cleaning the
-  result again changes nothing.
+  around them is unwrapped. A paragraph the sanitiser opens is never nested inside
+  another it opened, and cleaning the result again changes nothing. Nesting the
+  submitted markup already had, such as a `<p>` inside a kept `<blockquote>` inside a
+  `<p>`, is cleaned as it would be on an unrestricted field rather than repaired.
 - **A mark is unwrapped**, as an unknown tag is. A mark that spans a converted block is
-  reopened in the paragraph that follows it.
+  reopened in the paragraph that follows it. One that opens immediately before the block
+  is closed there empty, so `<strong><h2>b</h2>c</strong>` on `["bold"]` keeps
+  `<strong></strong><p>b</p><strong>c</strong>`; the empty pair holds no text.
 - **Attributes and style properties narrow with their feature.** `text-align` goes with
   `textAlign`, `color` with `color`, and so on. The text-style features decorate tags
   other features admit; on their own they admit no tag.
 
 A stored JSON document narrows the same way: a node type the field lacks becomes a
 paragraph if it held text, or is replaced by its children, and a mark or attribute the
-field lacks is dropped. The `html` mirror rendered from the narrowed document is the
-same markup the HTML path keeps for it.
+field lacks is dropped. The `html` mirror rendered from the narrowed document is, for
+most content, the markup the HTML path keeps for the same document rendered as HTML. It
+differs where a tag is shared between features, because the HTML path judges the tag
+and the document path judges the node or mark:
+
+| Field `features` | Content | HTML path keeps | Document path keeps |
+| --- | --- | --- | --- |
+| `["codeBlock"]` | inline code | `<p><code>b</code></p>` | `<p>b</p>` |
+| `["code"]` | a code block | `<p><code>x</code></p>` | `<p>x</p>` |
+| `["textStyle"]` | coloured text | `<p><span>a</span></p>` | `<p>a</p>` |
+| `["color"]` | text with only a font size | `<p><span>a</span></p>` | `<p>a</p>` |
+
+In each the HTML path keeps a tag the field admits for another feature, emptied of what
+the field lacks, and the document path drops the mark that carried it. Neither path keeps
+anything the field's allowlist does not.
+
+An image on a field without `image` goes whole on both paths, its `alt` text with it:
+the text lives in an attribute, not in content, so there is nothing to unwrap.
 
 ### What is not narrowed per field
 

@@ -69,8 +69,8 @@ does not convert it.
 what the configured editor can emit and marks the result safe. Unknown tags are unwrapped (their
 text survives), unknown attributes dropped, `script`/`style` bodies discarded, link/image URLs
 protocol-allowlisted, inline styles filtered. A tag in the schema's `paragraph_blocks` is
-converted rather than unwrapped: its text becomes a paragraph, and the result never nests one
-paragraph in another. Raises `ValidationError` past `MAX_DOCUMENT_DEPTH`.
+converted rather than unwrapped: its text becomes a paragraph, and a paragraph the sanitiser
+opens is never nested inside another it opened. Raises `ValidationError` past `MAX_DOCUMENT_DEPTH`.
 `TipTapFormField` applies it on clean and the `tiptap_html` filter applies it on display; call it
 directly to clean a column in a data migration. See [Security](security.md).
 

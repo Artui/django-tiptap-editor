@@ -33,11 +33,17 @@ class TipTapFormField(forms.CharField):
     widget = TipTapWidget
 
     def to_python(self, value: Any) -> Any:
+        value = super().to_python(value)
+        # An empty submission is CharField's ``empty_value``, which may be None
+        # for a nullable column; the sanitiser would turn that into "" and the
+        # column would store an empty string instead of NULL.
+        if value in self.empty_values:
+            return value
         # ``get_config`` rather than the resolved config the widget writes: it is
         # the override point subclasses use, and ``get_html_schema`` resolves
         # the features itself.
         config = self.widget.get_config({}) if isinstance(self.widget, TipTapWidget) else None
-        cleaned = sanitize_html(super().to_python(value), schema=get_html_schema(config))
+        cleaned = sanitize_html(value, schema=get_html_schema(config))
         # Hand back a plain str rather than the sanitiser's SafeString. The value
         # is assigned to a text column and comes back from the database unmarked,
         # so keeping the marking here would make the same content render one way

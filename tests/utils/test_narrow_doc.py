@@ -47,8 +47,19 @@ def test_a_value_that_is_not_a_document_is_returned_unchanged() -> None:
     assert narrow_doc("<p>a</p>", config={"features": []}) == "<p>a</p>"
 
 
-def test_an_empty_heading_becomes_an_empty_paragraph() -> None:
-    assert narrow_doc(_doc({"type": "heading"}), config={"features": []}) == _doc(_para())
+@pytest.mark.parametrize("kind", ["heading", "codeBlock"])
+def test_an_empty_text_block_becomes_an_empty_paragraph(kind: str) -> None:
+    # As the HTML path turns <h2></h2> and <pre></pre> into <p></p>.
+    assert narrow_doc(_doc({"type": kind}), config={"features": []}) == _doc(_para())
+
+
+def test_an_image_freed_from_a_list_item_gets_a_paragraph() -> None:
+    # An image is inline content, so freed at block level it is wrapped in a
+    # paragraph, as the HTML path keeps <li><img></li> on a field without lists.
+    image = {"type": "image", "attrs": {"src": "https://example.test/i.png"}}
+    item = {"type": "listItem", "content": [image]}
+    doc = _doc({"type": "bulletList", "content": [item]})
+    assert narrow_doc(doc, config={"features": ["image"]}) == _doc(_para(image))
 
 
 def test_an_inline_node_the_field_lacks_goes_inside_its_paragraph() -> None:

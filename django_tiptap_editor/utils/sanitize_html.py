@@ -21,6 +21,18 @@ as the editor does with such markup pasted into it: unwrapped, two headings
 would come back as one line of text. Paragraphs are opened lazily, where text
 arrives, so editor output that already nests a ``<p>`` in a list item or a cell
 comes back as flat paragraphs rather than one paragraph inside another.
+
+Every step of that is linear in the input. Unknown tags do not count toward
+``MAX_DOCUMENT_DEPTH`` (they emit nothing), so a client can open as many as it
+likes, and a walk over the open elements that passed each of them would make
+every later text node pay for all of them. So the walks that place paragraphs
+read a second list beside the stack, ``chain``, holding only the elements that
+are not unwrapped, and a converted block's paragraph is a flag on that block
+rather than an element of its own, so nothing is ever inserted into or removed
+from the middle of either list. What a walk passes over on the chain is kept
+inline tags, which count toward the depth limit, and inline tags a boundary
+suspended, which the next text reopens (and so count toward it again), so no
+walk is longer than that limit.
 """
 
 from __future__ import annotations
@@ -94,25 +106,24 @@ _HTML_WHITESPACE = " \t\n\r\f"
 
 # What a stack frame is. KEPT is emitted and open; UNWRAPPED was never emitted;
 # CONVERTED is a paragraph boundary, emitting nothing itself, inside which text
-# gets a paragraph of its own; PARAGRAPH is a <p> the sanitiser opened; and
+# gets a paragraph of its own (``paragraph`` says whether one is open); and
 # SUSPENDED is a kept inline tag closed at a boundary and reopened by the next
 # text inside it. Only the first two exist on an unrestricted field.
-_KEPT, _UNWRAPPED, _CONVERTED, _PARAGRAPH, _SUSPENDED = range(5)
+_KEPT, _UNWRAPPED, _CONVERTED, _SUSPENDED = range(4)
 
 
 class _Frame:
     """One open element: its source tag, what became of it, and its start tag."""
 
-    __slots__ = ("kind", "source", "start")
+    __slots__ = ("kind", "paragraph", "source", "start")
 
     def __init__(self, source: str, kind: int, start: str = "") -> None:
         self.source = source
         self.kind = kind
         self.start = start
-
-    @property
-    def emitted(self) -> str:
-        return "p" if self.kind == _PARAGRAPH else self.source
+        # A converted block's open <p>, which sits directly inside it: closing
+        # the block closes the paragraph, and the paragraph closes first.
+        self.paragraph = False
 
     @property
     def is_inline(self) -> bool:
@@ -132,6 +143,11 @@ class _Sanitizer(HTMLParser):
         self.schema = schema
         self.out: list[str] = []
         self.stack: list[_Frame] = []
+        # The frames of ``stack`` that are not UNWRAPPED, in the same order; see
+        # the module docstring. A frame never changes between unwrapped and
+        # anything else, so it is in this list for exactly as long as it is on
+        # the stack, and the two are only ever appended to or cut at the top.
+        self.chain: list[_Frame] = []
         self.depth = 0
         self.skipping = 0
         # Converted, paragraph and suspended frames are only ever made for a tag
@@ -152,8 +168,27 @@ class _Sanitizer(HTMLParser):
             self.depth += 1
 
     def _close(self, frame: _Frame) -> None:
-        self.out.append(f"</{frame.emitted}>")
-        self.depth -= 1
+        """Close what ``frame`` holds open: its own tag, or its paragraph."""
+        if frame.kind == _KEPT:
+            self.out.append(f"</{frame.source}>")
+            self.depth -= 1
+        elif frame.paragraph:
+            self.out.append("</p>")
+            self.depth -= 1
+            frame.paragraph = False
+
+    def _push(self, frame: _Frame) -> None:
+        self.stack.append(frame)
+        if frame.kind != _UNWRAPPED:
+            self.chain.append(frame)
+
+    def _close_from(self, index: int) -> None:
+        """Close and drop ``stack[index:]``, innermost first."""
+        for frame in reversed(self.stack[index:]):
+            self._close(frame)
+            if frame.kind != _UNWRAPPED:
+                self.chain.pop()
+        del self.stack[index:]
 
     def _break_paragraph(self, *, converted: bool) -> None:
         """Close the paragraph open here, because a block starts at this point.
@@ -173,35 +208,37 @@ class _Sanitizer(HTMLParser):
         """
         if not self.converting:
             return
-        target: _Frame | None = None
-        low = 0
+        chain = self.chain
         # Skipping a suspended frame changes no output a mutation run could find:
         # the next text reopens suspended frames, and a block opened before then
         # stops this walk above them. It is skipped because it stands for a
         # closed inline tag, which is what the walk passes over.
-        for index in range(len(self.stack) - 1, -1, -1):
-            frame = self.stack[index]
-            if frame.kind in (_UNWRAPPED, _SUSPENDED) or frame.is_inline:
-                continue
+        low = len(chain)
+        while low and (chain[low - 1].kind == _SUSPENDED or chain[low - 1].is_inline):
+            low -= 1
+        target: _Frame | None = None
+        if low:
+            frame = chain[low - 1]
+            # The kind test changes no output either: the only other frame with
+            # a text block's name is a converted one, and taking that as target
+            # closes nothing its own paragraph flag would not already have. It
+            # says what the rule is about, a <p> or heading the client sent.
             textblock = frame.kind == _KEPT and frame.source in _TEXTBLOCK_TAGS
-            if frame.kind == _PARAGRAPH or (converted and textblock):
+            if frame.paragraph or (converted and textblock):
                 target = frame
-                low = index
-            else:
-                low = index + 1
-            break
         if target is None and not converted:
             return
-        for frame in reversed(self.stack[low:]):
-            if frame.kind in (_KEPT, _PARAGRAPH):
-                self._close(frame)
-                frame.kind = _SUSPENDED if frame is not target else _CONVERTED
-        if target is not None and target.source == "":
-            # A paragraph the sanitiser opened has no end tag coming to remove
-            # its frame, so it goes now. Left behind as a converted frame it
-            # would give the same output, but every boundary inside one list
-            # item or cell would grow the stack the walks above scan.
-            self.stack.remove(target)
+        # Above ``low`` is only what the walk passed: kept inline tags, which
+        # close and suspend, and suspended ones, which hold nothing open, so
+        # closing and suspending them again changes nothing.
+        for frame in reversed(chain[low:]):
+            self._close(frame)
+            frame.kind = _SUSPENDED
+        if target is not None:
+            # A converted block's paragraph closes, leaving the block a boundary
+            # with none open; a kept text block closes and becomes that boundary.
+            self._close(target)
+            target.kind = _CONVERTED
 
     def _ensure_paragraph(self) -> None:
         """Give the text arriving here a paragraph, if it sits in a boundary.
@@ -213,19 +250,14 @@ class _Sanitizer(HTMLParser):
         """
         if not self.converting:
             return
-        reopen: list[_Frame] = []
-        for index in range(len(self.stack) - 1, -1, -1):
-            frame = self.stack[index]
-            if frame.kind == _UNWRAPPED:
-                continue
-            if frame.kind == _SUSPENDED:
-                reopen.append(frame)
-                continue
-            if frame.kind == _CONVERTED:
-                self.stack.insert(index + 1, _Frame("", _PARAGRAPH))
-                self._open("<p>")
-            break
-        for frame in reversed(reopen):
+        chain = self.chain
+        low = len(chain)
+        while low and chain[low - 1].kind == _SUSPENDED:
+            low -= 1
+        if low and chain[low - 1].kind == _CONVERTED and not chain[low - 1].paragraph:
+            self._open("<p>")
+            chain[low - 1].paragraph = True
+        for frame in chain[low:]:
             self._open(frame.start)
             frame.kind = _KEPT
 
@@ -295,14 +327,15 @@ class _Sanitizer(HTMLParser):
             return
         if tag in self.schema.paragraph_blocks:
             self._break_paragraph(converted=True)
-            self.stack.append(_Frame(tag, _CONVERTED))
+            boundary = _Frame(tag, _CONVERTED)
+            self._push(boundary)
             if tag in _TEXTBLOCK_TAGS:
-                self.stack.append(_Frame("", _PARAGRAPH))
                 self._open("<p>")
+                boundary.paragraph = True
             return
         if not self.schema.allows(tag):
             if tag not in _VOID_TAGS:
-                self.stack.append(_Frame(tag, _UNWRAPPED))
+                self._push(_Frame(tag, _UNWRAPPED))
             return
         if tag in _BLOCK_TAGS:
             self._break_paragraph(converted=False)
@@ -311,7 +344,7 @@ class _Sanitizer(HTMLParser):
         start = f"<{tag}{self._attributes(tag, attrs)}>"
         self._open(start, void=tag in _VOID_TAGS)
         if tag not in _VOID_TAGS:
-            self.stack.append(_Frame(tag, _KEPT, start))
+            self._push(_Frame(tag, _KEPT, start))
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
@@ -326,10 +359,7 @@ class _Sanitizer(HTMLParser):
             return
         # Close everything opened inside the innermost match too, so crossed
         # tags come back nested rather than leaving the output malformed.
-        for frame in reversed(self.stack[opened[-1] :]):
-            if frame.kind in (_KEPT, _PARAGRAPH):
-                self._close(frame)
-        del self.stack[opened[-1] :]
+        self._close_from(opened[-1])
 
     def handle_data(self, data: str) -> None:
         # The only guard the skip needs: a dropped element's body is CDATA to
@@ -351,10 +381,7 @@ class _Sanitizer(HTMLParser):
         self.out.append(f"&#{name};")
 
     def result(self) -> str:
-        for frame in reversed(self.stack):
-            if frame.kind in (_KEPT, _PARAGRAPH):
-                self._close(frame)
-        self.stack.clear()
+        self._close_from(0)
         return "".join(self.out)
 
 

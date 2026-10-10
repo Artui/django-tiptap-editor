@@ -432,3 +432,51 @@ def test_the_document_and_the_html_paths_narrow_alike(
     html_field = TipTapFormField(required=False, widget=TipTapWidget(config={"features": features}))
     assert narrowed.html == html_field.clean(str(render_doc(doc)))
     assert _clean(features, narrowed.doc).doc == narrowed.doc
+
+
+_IMAGE = {"type": "image", "attrs": {"src": "https://example.test/i.png", "alt": "alt text"}}
+
+
+@pytest.mark.parametrize(
+    ("features", "doc", "html_kept", "doc_kept"),
+    [
+        pytest.param(
+            ["codeBlock"],
+            _doc(_para(_text("b", {"type": "code"}))),
+            "<p><code>b</code></p>",
+            "<p>b</p>",
+            id="inline-code-on-code-blocks",
+        ),
+        pytest.param(
+            ["code"],
+            _doc(_node("codeBlock", _text("x"))),
+            "<p><code>x</code></p>",
+            "<p>x</p>",
+            id="code-block-on-inline-code",
+        ),
+        pytest.param(
+            ["textStyle"],
+            _doc(_para(_text("a", {"type": "textStyle", "attrs": {"color": "red"}}))),
+            "<p><span>a</span></p>",
+            "<p>a</p>",
+            id="colour-on-text-style",
+        ),
+        pytest.param(
+            ["color"],
+            _doc(_para(_text("a", {"type": "textStyle", "attrs": {"fontSize": "18px"}}))),
+            "<p><span>a</span></p>",
+            "<p>a</p>",
+            id="font-size-on-colour",
+        ),
+        pytest.param([], _doc(_para(_text("a"), _IMAGE)), "<p>a</p>", "<p>a</p>", id="image-alt"),
+    ],
+)
+def test_where_the_two_paths_differ_is_what_security_md_lists(
+    features: list[str], doc: dict[str, Any], html_kept: str, doc_kept: str
+) -> None:
+    # docs/security.md tabulates these: a tag shared between features is judged
+    # as a tag on the HTML path and as a node or mark on the document path. The
+    # image row is the same on both, and documented because its alt text goes.
+    html_field = TipTapFormField(required=False, widget=TipTapWidget(config={"features": features}))
+    assert html_field.clean(str(render_doc(doc))) == html_kept
+    assert _clean(features, doc).html == doc_kept

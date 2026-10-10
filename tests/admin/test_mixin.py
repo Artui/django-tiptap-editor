@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.test import override_settings
 
@@ -128,12 +129,26 @@ def test_an_admin_textfield_is_sanitised_on_save() -> None:
 def test_the_admin_textfield_keeps_the_options_a_project_sets() -> None:
     # TipTapFormField is a CharField, so the options a project already passes to
     # an admin text field reach it unchanged, and still count the stored value.
+    # Each option is checked by cleaning a value through it, not by reading the
+    # attribute back: the sanitiser runs after CharField's own conversion, and
+    # an option it undid would still read back as set.
     overrides = {models.TextField: {"max_length": 5, "strip": False, "empty_value": None}}
-    form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
+    fields = _register(formfield_overrides=overrides).get_form(None).base_fields
+    form_field = fields["body"]
     assert isinstance(form_field, TipTapFormField)
     assert isinstance(form_field.widget, AdminTipTapWidget)
-    assert (form_field.max_length, form_field.strip, form_field.empty_value) == (5, False, None)
+    # max_length counts what is stored, so markup the sanitiser removes is free.
     assert form_field.clean("<div>short</div>") == "short"
+    with pytest.raises(ValidationError):
+        form_field.clean("<div>toolong</div>")
+    # strip=False keeps the whitespace a stripping CharField would remove.
+    assert form_field.clean(" ab ") == " ab "
+    # empty_value=None is what a nullable column relies on to store NULL; the
+    # summary column is optional, so an empty submission reaches it.
+    optional = fields["summary"]
+    assert isinstance(optional, TipTapFormField)
+    assert optional.clean("") is None
+    assert optional.clean(None) is None
 
 
 def test_a_projects_own_form_class_wins() -> None:
