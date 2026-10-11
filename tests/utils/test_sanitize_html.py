@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Callable
+from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import TypeVar
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -14,7 +17,7 @@ from django_tiptap_editor.constants import EXTENSION_HTML_VOCABULARY, MAX_DOCUME
 from django_tiptap_editor.types.html_schema import HtmlSchema
 from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.render_doc import render_doc
-from django_tiptap_editor.utils.sanitize_html import sanitize_html
+from django_tiptap_editor.utils.sanitize_html import _reference, _Sanitizer, sanitize_html
 
 # ---------------------------------------------------------------------------
 # Round-trip fidelity.
@@ -341,6 +344,238 @@ def test_unknown_target_is_dropped() -> None:
     assert str(sanitize_html('<a href="/x" target="evilframe">x</a>')) == '<a href="/x">x</a>'
 
 
+# An attribute written twice is read by a browser from its first occurrence, and
+# the rest are ignored; the sanitiser reads it the same way and writes it once.
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        ('<a href="/a" HREF="/b">x</a>', '<a href="/a">x</a>'),
+        # The first is refused, so there is no href at all: the second is not a
+        # fallback a browser would ever have used.
+        ('<a href="javascript:alert(1)" href="/ok">x</a>', "<a>x</a>"),
+        # target and rel are computed from the first occurrence too.
+        ('<a href="/x" target="nope" target="_blank">x</a>', '<a href="/x">x</a>'),
+        (
+            '<p style="text-align: left" style="text-align: right">x</p>',
+            '<p style="text-align: left">x</p>',
+        ),
+    ],
+    ids=["href", "refused-first", "target", "style"],
+)
+def test_a_duplicated_attribute_keeps_its_first_occurrence(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
+# A character reference written without its semicolon is read by a browser as the
+# longest legacy name it starts with (``&ltimg`` is ``<img``), or as plain text
+# when it starts with none (``&bar`` is ``&bar``). ``html.unescape`` implements
+# that rule for text, so it is the reference the stored value is held to: what a
+# browser shows for the posted text is what it shows for the stored one. A
+# reference at the very end of the input is left out: before Python 3.14,
+# html.parser hands that one over as text rather than as a reference.
+_REFERENCES = {
+    "unknown-name-glued-to-a-legacy-one": (
+        "<p>&ltimg src=x onerror=alert(1)&gt;</p>",
+        "<p>&lt;img src=x onerror=alert(1)&gt;</p>",
+    ),
+    "unknown-name": ("<p>&foo; &bar</p>", "<p>&foo; &amp;bar</p>"),
+    "known-name-that-needs-its-semicolon": ("<p>&hellip x</p>", "<p>&amp;hellip x</p>"),
+    "legacy-prefix-with-and-without-semicolon": (
+        "<p>&notit; &notit</p>",
+        "<p>&notit; &not;it</p>",
+    ),
+    "legacy-names-without-semicolons": ("<p>a &amp b &copy d</p>", "<p>a &amp; b &copy; d</p>"),
+}
+
+
+@pytest.mark.parametrize(("html", "expected"), _REFERENCES.values(), ids=_REFERENCES.keys())
+def test_a_reference_without_its_semicolon_is_read_as_a_browser_reads_it(
+    html: str, expected: str
+) -> None:
+    cleaned = str(sanitize_html(html))
+    assert cleaned == expected
+    assert unescape(cleaned) == unescape(html)
+
+
+class _NamedReferences(HTMLParser):
+    """The names this interpreter's html.parser reports as named references."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.names: list[str] = []
+
+    def handle_entityref(self, name: str) -> None:
+        self.names.append(name)
+
+
+def _reports_a_reference_that_ends_the_input() -> bool:
+    """Whether html.parser reports ``&lt`` as a reference when the input ends there."""
+    parser = _NamedReferences()
+    parser.feed("x &lt")
+    parser.close()
+    return parser.names == ["lt"]
+
+
+# The exception the security docs state: Python 3.10 to 3.13 pass a reference
+# that ends the input to handle_data, so it is written as text. Keyed on what
+# the parser does, not on its version number.
+@pytest.mark.parametrize(
+    ("html", "as_a_reference", "as_text"),
+    [
+        ("x &lt", "x &lt;", "x &amp;lt"),
+        ("x &ltimg", "x &lt;img", "x &amp;ltimg"),
+    ],
+)
+def test_a_reference_that_ends_the_input_is_read_as_the_parser_reports_it(
+    html: str, as_a_reference: str, as_text: str
+) -> None:
+    expected = as_a_reference if _reports_a_reference_that_ends_the_input() else as_text
+    assert str(sanitize_html(html)) == expected
+
+
+_T = TypeVar("_T")
+# Every timing bound in this module. It has to clear the slowest honest run:
+# coverage traces every line on Python 3.10 (3.12 and later use a cheaper hook),
+# which takes the closing-tag inputs from about 0.4 seconds to about 1.3 in a
+# container here and to 2.5 on a CI runner, where a bound of 2.5 failed three
+# cells in a row. The quadratic runs are 15 to 31 seconds at these sizes, untraced.
+_BOUND = 6.0
+# A run longer than the bound but shorter than this is read as the runner
+# stalling, and measured again. It stays under the fastest quadratic run, so a
+# quadratic sanitiser is never given a second chance.
+_STALL = 12.0
+_ATTEMPTS = 3
+
+
+def _within_bound(run: Callable[[], _T], *, clock: Callable[[], float] = time.perf_counter) -> _T:
+    """Run ``run`` and fail unless it finishes within ``_BOUND`` seconds.
+
+    It retries, up to ``_ATTEMPTS`` runs, only a run that is over the bound and
+    under ``_STALL``, which is what a stall looks like; any run that passes ends
+    it. The retry cannot hide a quadratic sanitiser, for two reasons. A quadratic
+    run is over ``_STALL`` (the fastest of these inputs takes 15 seconds, on a
+    machine faster than a runner), so it fails on its first run, with no retry
+    and no wait of three runs. And one that came in under ``_STALL`` would be
+    over the bound on every run, where a stall is not, so it still fails.
+    ``test_a_timing_bound_retries_a_stall_and_never_a_quadratic`` holds each half.
+    """
+    for _ in range(_ATTEMPTS):
+        started = clock()
+        result = run()
+        elapsed = clock() - started
+        if elapsed < _BOUND:
+            return result
+        if elapsed >= _STALL:
+            break
+    pytest.fail(f"took {elapsed:.2f} s against a bound of {_BOUND} s")
+
+
+class _Clock:
+    """A clock that reads each run as taking the next of ``durations``."""
+
+    def __init__(self, durations: list[float]) -> None:
+        self.durations = durations
+        self.now = 0.0
+        self.reads = 0
+
+    def __call__(self) -> float:
+        # Called once before a run and once after it.
+        if self.reads % 2:
+            # The last duration repeats, so a run too many is counted, not raised.
+            self.now += self.durations[min(self.reads // 2, len(self.durations) - 1)]
+        self.reads += 1
+        return self.now
+
+
+def _count_runs(durations: list[float]) -> tuple[int, bool]:
+    """How many runs ``_within_bound`` makes over ``durations``, and whether it passed."""
+    runs = []
+    try:
+        _within_bound(lambda: runs.append(1), clock=_Clock(durations))
+    except pytest.fail.Exception:
+        return len(runs), False
+    return len(runs), True
+
+
+@pytest.mark.parametrize(
+    ("durations", "runs", "passed"),
+    [
+        pytest.param([0.4], 1, True, id="within-the-bound"),
+        pytest.param([6.5, 0.4], 2, True, id="a-stall-then-a-normal-run"),
+        pytest.param([6.5, 7.0, 0.4], 3, True, id="two-stalls-then-a-normal-run"),
+        pytest.param([6.5, 7.0, 6.8], 3, False, id="over-the-bound-every-time"),
+        pytest.param([30.0], 1, False, id="far-over-the-bound"),
+        pytest.param([6.5, 30.0], 2, False, id="a-stall-then-far-over"),
+    ],
+)
+def test_a_timing_bound_retries_a_stall_and_never_a_quadratic(
+    durations: list[float], runs: int, passed: bool
+) -> None:
+    assert _count_runs(durations) == (runs, passed)
+
+
+def test_a_long_reference_name_cleans_in_linear_time() -> None:
+    cleaned = str(_within_bound(lambda: sanitize_html("<p>&" + "a" * 200_000 + " x</p>")))
+    assert cleaned == "<p>&amp;" + "a" * 200_000 + " x</p>"
+
+
+# A browser drops one newline directly after a <pre> start tag. Markup the
+# sanitiser removes from between the two (an unknown tag, a comment, a dropped
+# script) would make a newline the browser kept the first thing in the <pre>, and
+# the browser would drop it from the stored value, so one is written back.
+_PRE_NEWLINES = {
+    "after-an-unknown-tag": ("<pre><font>\nx</font></pre>", "<pre>\n\nx</pre>"),
+    "after-a-comment": ("<pre><!-- c -->\nx</pre>", "<pre>\n\nx</pre>"),
+    "after-a-dropped-script": ("<pre><script>s</script>\r\nx</pre>", "<pre>\n\r\nx</pre>"),
+    "across-lines-of-the-start-tag": (
+        '<pre\nclass="a"><font>\nx</font></pre>',
+        "<pre>\n\nx</pre>",
+    ),
+    # A newline written as a reference is dropped the same way; a carriage
+    # return written as one is not a newline to the browser.
+    "a-reference-after-an-unknown-tag": ("<pre><font>&#10;x</font></pre>", "<pre>\n&#10;x</pre>"),
+    "a-hex-reference": ("<pre><font>&#x0A;x</font></pre>", "<pre>\n&#x0A;x</pre>"),
+    "an-uppercase-hex-reference": ("<pre><font>&#X0A;x</font></pre>", "<pre>\n&#X0A;x</pre>"),
+    "a-reference-with-leading-zeros": ("<pre><font>&#010;x</font></pre>", "<pre>\n&#010;x</pre>"),
+    "a-named-reference": ("<pre><font>&NewLine;x</font></pre>", "<pre>\n&NewLine;x</pre>"),
+    "a-reference-directly-after-the-start-tag": ("<pre>&#10;x</pre>", "<pre>&#10;x</pre>"),
+    # Without its semicolon the name is text, not a newline.
+    "an-unterminated-named-reference": (
+        "<pre><font>&NewLine x</font></pre>",
+        "<pre>&amp;NewLine x</pre>",
+    ),
+    "a-carriage-return-reference": ("<pre><font>&#13;x</font></pre>", "<pre>&#13;x</pre>"),
+    "a-hex-reference-to-another-character": (
+        "<pre><font>&#x41;x</font></pre>",
+        "<pre>&#x41;x</pre>",
+    ),
+    "another-named-reference": ("<pre><font>&amp;x</font></pre>", "<pre>&amp;x</pre>"),
+    # Directly after the start tag the browser drops it from the posted markup
+    # and the stored one alike, so nothing is added.
+    "directly-after-the-start-tag": ("<pre>\nx</pre>", "<pre>\nx</pre>"),
+    "directly-after-a-multi-line-start-tag": ('<pre\nclass="a">\nx</pre>', "<pre>\nx</pre>"),
+    # After a kept tag the browser keeps it, in both.
+    "after-a-kept-tag": ("<pre><code>\nx</code></pre>", "<pre><code>\nx</code></pre>"),
+    "not-first": ("<pre><font>x</font>\ny</pre>", "<pre>x\ny</pre>"),
+}
+
+
+@pytest.mark.parametrize(("html", "expected"), _PRE_NEWLINES.values(), ids=_PRE_NEWLINES.keys())
+def test_a_newline_that_becomes_first_in_a_pre_is_kept_visible(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
+# A browser drops a leading newline from a <listing> as from a <pre>. No
+# built-in extension emits one, but a custom extension may declare it.
+@override_settings(TIPTAP_EXTRA_EXTENSIONS={"listing": {"listing": {}}})
+def test_a_newline_that_becomes_first_in_a_declared_listing_is_kept_visible() -> None:
+    schema = get_html_schema()
+    assert str(sanitize_html("<listing><font>\nx</font></listing>", schema=schema)) == (
+        "<listing>\n\nx</listing>"
+    )
+    assert str(sanitize_html("<listing>\nx</listing>", schema=schema)) == "<listing>\nx</listing>"
+
+
 def test_style_property_outside_the_allowlist_is_dropped() -> None:
     assert str(sanitize_html('<p style="position: fixed; text-align: left">x</p>')) == (
         '<p style="text-align: left">x</p>'
@@ -359,12 +594,246 @@ def test_unbalanced_markup_is_closed() -> None:
     assert str(sanitize_html("<p><em>a<strong>b</p>")) == "<p><em>a<strong>b</strong></em></p>"
 
 
+# An end tag for an element already closed matches nothing still open. Each
+# case closes the element and then closes it again.
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        ("<p><strong>x</strong></strong></p>", "<p><strong>x</strong></p>"),
+        ("<p><em>a</em>b</em></p>", "<p><em>a</em>b</p>"),
+        ("<p><font>a</font>b</font></p>", "<p>ab</p>"),
+    ],
+)
+def test_an_end_tag_for_an_element_already_closed_is_ignored(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
 def test_stray_end_tag_is_ignored() -> None:
     assert str(sanitize_html("</p>stray")) == "stray"
 
 
 def test_comment_is_dropped() -> None:
     assert str(sanitize_html("<p>a<!-- note -->b</p>")) == "<p>ab</p>"
+
+
+# Markup the input ends inside of. Older patch releases of html.parser pass it
+# to handle_data as text; newer ones drop it, or report it as a comment or a
+# declaration, neither of which is kept. It is written as text on every
+# version, and the text is what a second pass leaves alone.
+_UNFINISHED_AT_THE_END = {
+    "a-comment": ("<p>a<!-- b", "<p>a&lt;!-- b</p>"),
+    "a-comment-up-to-its-dashes": ("<p>a<!-- b --", "<p>a&lt;!-- b --</p>"),
+    "a-cdata-section": ("<p>a<![CDATA[ b", "<p>a&lt;![CDATA[ b</p>"),
+    "a-bogus-comment": ("<p>a<!x b", "<p>a&lt;!x b</p>"),
+    "a-declaration": ("<p>a<!DOCTYPE b", "<p>a&lt;!DOCTYPE b</p>"),
+    "a-processing-instruction": ("<p>a<? b", "<p>a&lt;? b</p>"),
+    "a-start-tag": ("<p>a<strong", "<p>a&lt;strong</p>"),
+    "a-start-tag-with-a-handler": (
+        "<p>a<img src=x onerror=alert(1)",
+        "<p>a&lt;img src=x onerror=alert(1)</p>",
+    ),
+    "an-attribute-value": ('<p>a<a href="b', '<p>a&lt;a href="b</p>'),
+    "an-end-tag": ("<p>a</strong", "<p>a&lt;/strong</p>"),
+    "in-a-pre": ("<pre><!-- b", "<pre>&lt;!-- b</pre>"),
+    "after-a-newline-in-a-pre": ("<pre>\n<b", "<pre>\n&lt;b</pre>"),
+    "inside-an-unknown-tag": ("<iframe>a<b", "a&lt;b"),
+}
+
+
+@pytest.mark.parametrize(
+    ("html", "expected"), _UNFINISHED_AT_THE_END.values(), ids=_UNFINISHED_AT_THE_END.keys()
+)
+def test_markup_left_unfinished_at_the_end_is_written_as_text(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+    assert str(sanitize_html(expected)) == expected
+
+
+class _ReportingSanitizer(_Sanitizer):
+    """A sanitiser that also records the comments the parser reports."""
+
+    def __init__(self) -> None:
+        super().__init__(get_html_schema())
+        self.comments: list[str] = []
+
+    def handle_comment(self, data: str) -> None:
+        self.comments.append(data)
+
+
+# Once written as text, the tail is taken from the parser, so it is not also
+# handed over by the parser's own close: as text again by an older release, or
+# as a comment by a newer one.
+def test_markup_left_unfinished_at_the_end_is_written_once() -> None:
+    sanitizer = _ReportingSanitizer()
+    sanitizer.feed("<p>a<!-- b")
+    sanitizer.close()
+    assert sanitizer.result() == "<p>a&lt;!-- b</p>"
+    assert sanitizer.comments == []
+
+
+# The tail goes through handle_data, like any other text, and not straight to the
+# output: after a block a restricted field converts, text needs the paragraph that
+# handle_data opens for it, and written bare it would sit outside any paragraph.
+def test_markup_left_unfinished_after_a_converted_block_gets_its_paragraph() -> None:
+    schema = get_html_schema({"features": ["bold"]})
+    assert str(sanitize_html("<blockquote><!-- b", schema=schema)) == "<p>&lt;!-- b</p>"
+
+
+# What the input ends inside of a script or a textarea is that element's
+# content, and is read as the parser reads it: a script's is dropped with the
+# rest of the script, a textarea's written as its text.
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        ("<p>a<script>b</scr", "<p>a</p>"),
+        ("<p>a<style>b<c", "<p>a</p>"),
+        ("<p>a<textarea>b</text", "<p>ab&lt;/text</p>"),
+    ],
+)
+def test_raw_text_left_unfinished_at_the_end_is_read_as_its_content(
+    html: str, expected: str
+) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
+class _StartTags(HTMLParser):
+    """The start tags this interpreter's html.parser reports."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.tags: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.tags.append(tag)
+
+
+def _reads_as_raw_text(tag: str) -> bool:
+    """Whether html.parser reads the content of ``tag`` as text, not markup."""
+    parser = _StartTags()
+    parser.feed(f"<{tag}><b></{tag}>")
+    parser.close()
+    return parser.tags == [tag]
+
+
+# An end tag left unfinished inside a raw-text element. Where the parser reads
+# the element as raw text it drops the tag, as a browser does; earlier patch
+# releases read it as markup and pass the tag along as text. It is left to the
+# parser either way: written as text inside a kept <xmp>, whose content is not
+# unescaped, its "&lt;" would be escaped again by a second pass. Keyed on what
+# the parser does, not on its version number.
+@pytest.mark.parametrize(
+    ("tag", "kept", "as_raw_text", "as_markup"),
+    [
+        ("xmp", True, "<p>a<xmp>b</xmp></p>", "<p>a<xmp>b&lt;/xmp </xmp></p>"),
+        ("textarea", False, "<p>ab</p>", "<p>ab&lt;/textarea </p>"),
+    ],
+    ids=["a-kept-xmp", "an-unwrapped-textarea"],
+)
+def test_an_end_tag_left_unfinished_in_a_raw_text_element_is_left_to_the_parser(
+    tag: str, kept: bool, as_raw_text: str, as_markup: str
+) -> None:
+    tags = {"p": frozenset(), tag: frozenset()} if kept else {"p": frozenset()}
+    schema = HtmlSchema(tags=tags, styles={})
+    cleaned = str(sanitize_html(f"<p>a<{tag}>b</{tag} ", schema=schema))
+    assert cleaned == (as_raw_text if _reads_as_raw_text(tag) else as_markup)
+    assert str(sanitize_html(cleaned, schema=schema)) == cleaned
+
+
+# From Python 3.14, html.parser hands a character reference left unfinished at
+# the end of the input to handle_charref with everything after "&#" as its
+# name, markup included; earlier versions pass it to handle_data as text. On
+# 3.14 a decimal reference running into a hex letter is unfinished wherever it
+# sits. With no semicolon later in the input, every version gives these.
+_UNFINISHED_CHARACTER_REFERENCES = {
+    "digits-then-a-hex-letter": (
+        "<p>&#1a<img src=x onerror=alert(1)></p>",
+        "<p>&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</p>",
+    ),
+    "an-uppercase-hex-letter": (
+        '<p>&#9F<a href="javascript:x">y</a></p>',
+        '<p>&amp;#9F&lt;a href="javascript:x"&gt;y&lt;/a&gt;&lt;/p&gt;</p>',
+    ),
+    "after-a-finished-paragraph": (
+        "<p>a</p><p>&#12e<b onclick=x>y</b></p>",
+        "<p>a</p><p>&amp;#12e&lt;b onclick=x&gt;y&lt;/b&gt;&lt;/p&gt;</p>",
+    ),
+    "at-the-end-of-the-input": ("<p>x &#1a", "<p>x &amp;#1a</p>"),
+}
+
+
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    _UNFINISHED_CHARACTER_REFERENCES.values(),
+    ids=_UNFINISHED_CHARACTER_REFERENCES.keys(),
+)
+def test_an_unfinished_character_reference_is_written_as_text(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
+class _CharacterReferences(HTMLParser):
+    """The names this interpreter's html.parser reports as character references."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.names: list[str] = []
+
+    def handle_charref(self, name: str) -> None:
+        self.names.append(name)
+
+
+def _reports_the_rest_as_a_reference() -> bool:
+    """Whether html.parser hands ``&#1a`` the rest of the input as its name."""
+    parser = _CharacterReferences()
+    parser.feed("&#1a<b>;")
+    parser.close()
+    return parser.names == ["1a<b>;"]
+
+
+# With a semicolon later in the input, Python 3.10 to 3.13 pass "&#" along as
+# text and parse what follows as markup, which is filtered as usual; a parser
+# that hands the rest over as the reference's name gets it written as text.
+# Keyed on what the parser does, not on its version number.
+def test_an_unfinished_character_reference_before_a_semicolon_lets_no_markup_through() -> None:
+    cleaned = str(sanitize_html("<p>&#1a<strong onclick=x>x</strong>;</p>"))
+    if _reports_the_rest_as_a_reference():
+        assert cleaned == "<p>&amp;#1a&lt;strong onclick=x&gt;x&lt;/strong&gt;;&lt;/p&gt;</p>"
+    else:
+        assert cleaned == "<p>&amp;#1a<strong>x</strong>;</p>"
+
+
+# The same rule at the handler, which no interpreter before 3.14 reaches
+# through the parser: a name that is not a reference's is written as text.
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("1a<b onclick=x>", "&amp;#1a&lt;b onclick=x&gt;"),
+        ("1a", "&amp;#1a"),
+        ("x", "&amp;#x"),
+        ("", "&amp;#"),
+        ("12 ", "&amp;#12 "),
+        ("10", "&#10;"),
+        ("X0a", "&#X0a;"),
+    ],
+)
+def test_the_character_reference_handler_writes_any_other_name_as_text(
+    name: str, expected: str
+) -> None:
+    sanitizer = _Sanitizer(get_html_schema())
+    sanitizer.handle_charref(name)
+    assert sanitizer.result() == expected
+
+
+# html.parser only ever hands a named reference letters, digits, hyphens and
+# dots, on every version; markup in one must still come out as text.
+@pytest.mark.parametrize(
+    ("name", "terminated", "expected"),
+    [
+        ("a<b onclick=x>", True, "&a&lt;b onclick=x&gt;;"),
+        ("lt<b onclick=x>", False, "&lt;&lt;b onclick=x&gt;"),
+        ("bar<b onclick=x>", False, "&amp;bar&lt;b onclick=x&gt;"),
+    ],
+)
+def test_a_named_reference_cannot_write_markup(name: str, terminated: bool, expected: str) -> None:
+    assert _reference(name, terminated=terminated) == expected
 
 
 def test_valueless_attribute_is_kept_bare() -> None:
@@ -442,8 +911,8 @@ def test_unclosed_unknown_and_known_tags_both_end_cleanly() -> None:
 # a sanitiser whose walks step over those, each of these takes many seconds at
 # this size; done in linear time, each takes a fraction of one. The bound is far
 # above the linear figure, so a slow runner does not fail it, and far below the
-# quadratic one. Closing tags are left out on purpose: matching one still scans
-# the open elements, on every field, which is a separate cost and not this one.
+# quadratic one. Closing tags are a cost of their own, on every field, and have
+# their own test below.
 _N = 40_000
 _SLOW_INPUTS = {
     "text-in-unknown-tags": ("<div>x" * _N, ["bold"]),
@@ -459,6 +928,25 @@ _SLOW_INPUTS = {
 @pytest.mark.parametrize(("html", "features"), _SLOW_INPUTS.values(), ids=_SLOW_INPUTS.keys())
 def test_a_restricted_field_cleans_in_linear_time(html: str, features: list[str]) -> None:
     schema = get_html_schema({"features": features})
-    start = time.perf_counter()
-    sanitize_html(html, schema=schema)
-    assert time.perf_counter() - start < 2.5
+    _within_bound(lambda: sanitize_html(html, schema=schema))
+
+
+# Inputs that make each end tag pay for every element open below it: unknown tags
+# pile up with no depth limit to stop them, and an end tag that matched nothing
+# (a stray), or matched the innermost element (scanned from the outermost), used
+# to walk all of them. Each takes tens of seconds at this size where every end
+# tag walks the stack, and a fraction of one where it does not. Both kinds of
+# field, because matching an end tag is the same code on each.
+_CLOSING_INPUTS = {
+    "stray-end-tags-after-unknown-tags": "<div>" * _N + "</b>" * _N,
+    "matched-end-tags-after-unknown-tags": "<div>" * _N + "</div>" * _N,
+    "kept-marks-after-unknown-tags": "<div>" * _N + "<strong>x</strong>" * _N,
+    "stray-end-tags-between-unknown-tags": "<div></b>" * _N,
+}
+
+
+@pytest.mark.parametrize("features", [None, ["bold"]], ids=["unrestricted", "restricted"])
+@pytest.mark.parametrize("html", _CLOSING_INPUTS.values(), ids=_CLOSING_INPUTS.keys())
+def test_closing_tags_clean_in_linear_time(html: str, features: list[str] | None) -> None:
+    schema = get_html_schema({"features": features} if features is not None else None)
+    _within_bound(lambda: sanitize_html(html, schema=schema))

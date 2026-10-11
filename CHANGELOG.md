@@ -7,6 +7,105 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-10-11
+
+### Upgrade note — a custom extension may not declare a raw-text or MathML tag
+
+`TIPTAP_EXTRA_EXTENSIONS` now refuses `math`, `noembed`, `noframes`, `plaintext`,
+`textarea`, `title` and `xmp` with `ImproperlyConfigured`, as it already refused
+`script`, `iframe`, `svg` and the other forbidden tags. A browser reads the content
+of each by rules of its own, as raw text or as MathML, where the sanitiser reads
+ordinary markup, so a kept one was checked as one thing and rendered as another:
+escaped text inside `xmp` rendered as a literal `&lt;` and grew on every save.
+
+A declaration that was accepted before can therefore start failing, and **not at
+startup**: the system checks pass, and the error is raised where the setting is
+read, which is when a TipTap form field cleans a value, when the `tiptap_html`
+filter renders HTML-stored content, when a widget's config names custom
+extensions, and when a `TipTapJSONField` validates a document. Have the extension
+emit an ordinary element instead, such as a `span` or `div` with a class or data
+attribute. A name given in the list form declares no tags and is unaffected.
+
+### Added
+
+- **`sanitize_html` is held against nh3 in the test suite.** Seeded fragments of
+  hostile markup are sanitised, and every element of the result is cleaned again,
+  on its own, by nh3 under the same allowlist; an attribute, style declaration or
+  URL nh3 would refuse fails the run. Elements are compared one at a time because
+  the two parse malformed markup differently, and a whole-document comparison is
+  dominated by that difference. A pull request runs 10,000 fragments per field
+  shape and the weekly drift run 100,000 (`SANITIZE_ORACLE_CASES`). Against the
+  sanitiser before the duplicated-attribute fix above it fails, on an `href`
+  written twice; it now passes. nh3 joins the development group only, and the
+  package still depends on Django alone.
+
+### Changed
+
+- **Markup the input ends inside of is stored as text.** `<p>a<!-- b`,
+  `<p>a<strong`, `<p>a<a href="b` and `<p>a</strong` each end inside a comment, a
+  tag or an attribute value, and what became of that tail depended on the Python
+  patch release: earlier ones, such as 3.10.11, 3.11.6 and 3.12.0, wrote it as
+  text, and current releases of every supported version dropped it, so the field
+  was saved without what was typed there. It is now written as text on every
+  version, so `<p>a<!-- b` is stored as `<p>a&lt;!-- b</p>`, and a field posted
+  this way stores the tail as visible text. This is deliberately not the
+  browser's reading: a browser drops an unfinished tag, attribute value or
+  comment, and ends an unfinished CDATA section at its first `>`, parsing what
+  follows. Text keeps everything that was typed and runs none of it. Finished
+  markup is unaffected, and so is the content of a `script`, `style`, `textarea`
+  or other raw-text element the input ends inside of. The editor never writes a
+  field that ends mid-tag.
+
+### Fixed
+
+- **On Python 3.14, an unfinished character reference no longer lets markup
+  through `sanitize_html`.** From 3.14, `html.parser` hands a numeric reference
+  left unfinished at the end of the input to the sanitiser as a reference whose
+  name is the whole rest of the document, and a decimal reference running into a
+  hex letter, such as `&#1a`, counts as unfinished wherever it sits. The
+  sanitiser wrote that name out as it came, so
+  `<p>&#1a<img src=x onerror=alert(1)></p>` was stored and rendered with the
+  event handler intact, on the form path and through the `tiptap_html` filter.
+  A name that is not a reference's is now written as text, so on 3.14 the rest of
+  the field is stored as visible text rather than markup:
+  `<p>&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</p>`. Python 3.10 to
+  3.13 were not affected: they pass the reference along as text, and where a
+  semicolon comes later in the field they go on to parse what follows as markup,
+  which the sanitiser filters as usual.
+- **End tags no longer make `sanitize_html` quadratic.** Each end tag scanned
+  every element open below it, unknown tags included, and a client can open as
+  many unknown tags as it likes, so `"<div>" * 40000 + "</b>" * 40000` took half a
+  minute to clean, on restricted and unrestricted fields alike, and so did a
+  closing `</div>` or `</strong>` under that many unknown tags. A count of the open
+  elements per tag now answers a stray end tag at once, and the search for a match
+  runs down from the innermost element, closing everything it passes, so each
+  element is passed once. The same inputs take a fraction of a second, and the
+  output is unchanged.
+- **An attribute written twice keeps its first occurrence.** `sanitize_html` wrote
+  every copy of it, so `<a href="/a" href="/b">` was stored with both, and it worked
+  out `target` and `rel` from the last copy, where a browser reads the first. Only
+  the first occurrence is now checked and written, so the stored value means what
+  the browser made of the markup that was posted. Markup with no attribute written
+  twice comes back unchanged.
+- **A named character reference missing its semicolon keeps its meaning.**
+  `sanitize_html` wrote a semicolon after the whole name, so `&ltimg`, which a
+  browser shows as `<img`, was stored as `&ltimg;`, which it shows as `<img;`, and
+  `&hellip`, shown as typed, became an ellipsis. Such a reference is now written as
+  a browser reads it: the longest legacy name it starts with, then the rest as text
+  (`&lt;img`), or all of it as text when it starts with none (`&amp;bar`). A
+  reference with its semicolon, and a legacy one without (`&amp`, `&copy`), comes
+  back as before. A reference that is the very last thing in the input is the
+  exception on Python 3.10 to 3.13, whose `html.parser` passes it along as text:
+  `x &lt` is stored as `x &amp;lt`, as it was in earlier releases.
+- **A newline at the start of a `pre` no longer disappears on display.** A browser
+  drops a newline that comes directly after `<pre>`. In `<pre><font>` followed by a
+  newline it is not directly after, so the browser shows it, but `sanitize_html`
+  unwraps the `font` and the stored `<pre>` began with the newline, which the
+  browser then dropped. A second newline is now written ahead of it in that case,
+  and ahead of a newline written as a reference (`&#10;`, `&NewLine;`), which the
+  browser drops the same way. A newline directly after `<pre>` in the posted markup
+  is dropped by the browser from both, and is left as it was.
+
 ## [0.12.0] — 2026-10-11
 
 ### Upgrade note — the admin renders a TipTap widget you configured
@@ -999,7 +1098,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.1...v0.11.0

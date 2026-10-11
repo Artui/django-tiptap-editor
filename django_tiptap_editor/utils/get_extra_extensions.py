@@ -9,7 +9,7 @@ from typing import Any
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from django_tiptap_editor.constants import FORBIDDEN_TAGS, VOCABULARY_KEYS
+from django_tiptap_editor.constants import FORBIDDEN_TAGS, UNPARSEABLE_TAGS, VOCABULARY_KEYS
 
 _TAG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 
@@ -52,6 +52,15 @@ def _vocabulary(name: str, declared: Any) -> Vocabulary:
                 f"executes script or loads a document. Allowing it would defeat the "
                 f"sanitiser. Forbidden: {sorted(FORBIDDEN_TAGS)}."
             )
+        if tag in UNPARSEABLE_TAGS:
+            raise ImproperlyConfigured(
+                f"TIPTAP_EXTRA_EXTENSIONS[{name!r}] declares the tag {tag!r}, whose "
+                f"content a browser parses by rules of its own (raw text, or "
+                f"MathML), not as the HTML the sanitiser reads, so stored content "
+                f"would render as something other than what was checked. Have the "
+                f"extension emit an ordinary element, such as a span or div with a "
+                f"class or data attribute. Refused: {sorted(UNPARSEABLE_TAGS)}."
+            )
         if not isinstance(entry, Mapping) or set(entry) - VOCABULARY_KEYS:
             raise ImproperlyConfigured(
                 f"TIPTAP_EXTRA_EXTENSIONS[{name!r}][{tag!r}] must be a mapping with "
@@ -75,7 +84,8 @@ def get_extra_extensions() -> dict[str, Vocabulary | None]:
       markup survives sanitisation intact.
 
     Raises ``ImproperlyConfigured`` for a malformed declaration, for a tag that
-    executes script, and for an ``on*`` attribute.
+    executes script, for one whose content a browser parses by its own rules
+    (``UNPARSEABLE_TAGS``), and for an ``on*`` attribute.
     """
     extras: Any = getattr(settings, "TIPTAP_EXTRA_EXTENSIONS", [])
     if isinstance(extras, Mapping):

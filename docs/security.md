@@ -50,6 +50,12 @@ allowlist cannot drift apart. The editor's half of that is tested rather than as
 `js/test/html-vocabulary.test.ts` renders every attribute the editor's schema defines,
 and every case in the fidelity corpus, and fails if anything lands outside this table.
 
+The filtering is checked against an independent sanitiser too. In the test suite,
+seeded fragments of hostile markup go through `sanitize_html`, and every element of the
+result is cleaned again by [nh3](https://pypi.org/project/nh3/) under the same allowlist.
+An attribute, style declaration or URL that nh3 would refuse fails the run. nh3 is a
+development dependency only; the package still depends on Django alone.
+
 | | Kept |
 | --- | --- |
 | Blocks | `p`, `h1`–`h6` (with `margin`, `margin-block-end`, `padding-left`, `text-align`), `blockquote`, `pre`/`code`, `hr`, `br`, `ul`, `ol` (`start`, `type`), `li` |
@@ -62,6 +68,56 @@ Everything else is unwrapped: the tag goes, the text inside it stays. A sanitise
 deleted what it did not recognise could quietly empty half a document, so it never
 deletes visible text — the one exception is `script` and `style`, whose bodies are
 code rather than prose and are dropped whole.
+
+### Malformed markup
+
+Markup a browser would repair is read the way a browser reads it, wherever that
+decides what the stored value means:
+
+- **An attribute written twice keeps its first occurrence.** A browser ignores the
+  rest, so `<a href="/a" href="/b">` is stored as `<a href="/a">`, and `target` and
+  `rel` are worked out from their first occurrence too.
+- **A named character reference missing its semicolon is written as a browser reads
+  it.** A browser reads the longest legacy name the reference starts with and the rest
+  as text, or the whole thing as text when it starts with none. So `&ltimg` is stored
+  as `&lt;img`, which shows as `<img` before and after, and `&bar` as `&amp;bar`. A
+  reference written with its semicolon is kept as written, known name or not. One
+  exception depends on the Python version: on Python 3.10 to 3.13, `html.parser`
+  passes a reference that is the very last thing in the input along as text, so
+  `x &lt` is stored as `x &amp;lt` and shows as `x &lt` rather than `x <`. The
+  editor never writes a field that ends mid-reference.
+- **A character reference the parser leaves unfinished is written as text, which
+  is not how a browser reads it.** A browser reads `&#1a` as `&#1` and then `a`,
+  and parses the markup after it. From Python 3.14, `html.parser` hands such a
+  reference to the sanitiser with the whole rest of the field as its name, and
+  that is written as text rather than read the browser's way, so
+  `<p>&#1a<img src=x onerror=alert(1)></p>` is stored as
+  `<p>&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</p>` and the rest of
+  the field shows as typed. Python 3.10 to 3.13 store the same when no semicolon
+  comes later in the field; where one does, they pass `&#` along as text and
+  parse what follows as markup, filtered as usual.
+- **Markup the field ends inside of is written as text, which is not how a browser
+  reads it.** A browser drops a tag, attribute value, comment or declaration left
+  unfinished at the end of the input, and ends an unfinished CDATA section at its
+  first `>`, parsing what follows. The sanitiser writes all of it as text instead,
+  so `<p>a<!-- b` is stored as `<p>a&lt;!-- b</p>` and `<p>a<strong` as
+  `<p>a&lt;strong</p>`: a field posted this way stores the tail as visible text.
+  What `html.parser` does with such a tail differs between Python patch releases,
+  some passing it along as text and current ones dropping it, and text is the one
+  reading that loses nothing typed and runs none of it on all of them. The content
+  of a `script`, `style`, `textarea` or other raw-text element the field ends
+  inside of is read by `html.parser` as before: a script's is dropped, and a
+  textarea's kept as text, `<p>a<textarea>b</text` stored as `<p>ab&lt;/text</p>`.
+  The one form that still depends on the patch release is the element's own end
+  tag left unfinished, as in `<textarea>b</textarea `, which earlier patch
+  releases keep as text and current ones drop, as a browser does. The editor
+  never writes a field that ends mid-tag.
+- **A newline that becomes the first thing in a `pre` stays visible.** A browser
+  drops a newline directly after `<pre>`, whether it is written as a character or as
+  a reference (`&#10;`, `&#xA;`, `&NewLine;`). Where one comes first only because
+  the markup before it was not kept (`<pre><font>` then a newline), a second newline
+  is written ahead of it for the browser to drop. A newline directly after `<pre>`
+  in the posted markup is dropped from both, so nothing is added there.
 
 ### Per field
 
@@ -168,10 +224,13 @@ TIPTAP_EXTRA_EXTENSIONS = {
 
 A declared vocabulary joins the allowlist and the extension's markup survives intact.
 A name given without one (the list form) raises a warning naming the extension, and
-its tags are unwrapped — the wrapper is lost, the text is not. Two declarations are
+its tags are unwrapped — the wrapper is lost, the text is not. Three declarations are
 refused outright: a tag that executes script or loads a document (`script`, `style`,
-`iframe`, `object`, `embed`, `base`, `meta`, `link`, `form`, `svg`, `template`, …) and
-any `on*` attribute.
+`iframe`, `object`, `embed`, `base`, `meta`, `link`, `form`, `svg`, `template`, …), a
+tag whose content a browser parses by rules of its own (`math`, `noembed`, `noframes`,
+`plaintext`, `textarea`, `title`, `xmp`), and any `on*` attribute. The second kind
+would be checked as one thing and rendered as another: escaped text inside `xmp`, for
+one, renders as a literal `&lt;`.
 
 ## JSON storage
 

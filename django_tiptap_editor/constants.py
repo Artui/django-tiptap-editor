@@ -341,6 +341,26 @@ FORBIDDEN_TAGS = frozenset(
     }
 )
 
+# Tags a project may not add through TIPTAP_EXTRA_EXTENSIONS either, for a
+# different reason: a browser parses their content by rules of its own (as raw
+# text, as escapable raw text, or in MathML's namespace) where the sanitiser's
+# html.parser reads ordinary markup, so a kept one would be stored meaning one
+# thing and rendered meaning another. Escaped text inside ``xmp`` renders as
+# literal ``&lt;``, for one, and grows on every save. The tags of this kind that
+# also run script or load a document (``iframe``, ``noscript``, ``svg``) are in
+# FORBIDDEN_TAGS.
+UNPARSEABLE_TAGS = frozenset(
+    {
+        "math",
+        "noembed",
+        "noframes",
+        "plaintext",
+        "textarea",
+        "title",
+        "xmp",
+    }
+)
+
 # Maximum node nesting a stored document may carry. The pure-Python walkers
 # (sanitize_doc, render_doc) recurse per level, so an unbounded document is a
 # cheap way to blow the interpreter's stack; a document deeper than this is
