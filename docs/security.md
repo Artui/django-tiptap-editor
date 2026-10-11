@@ -71,6 +71,11 @@ decides what the stored value means:
 - **An attribute written twice keeps its first occurrence.** A browser ignores the
   rest, so `<a href="/a" href="/b">` is stored as `<a href="/a">`, and `target` and
   `rel` are worked out from their first occurrence too.
+- **A named character reference missing its semicolon is written as a browser reads
+  it.** A browser reads the longest legacy name the reference starts with and the rest
+  as text, or the whole thing as text when it starts with none. So `&ltimg` is stored
+  as `&lt;img`, which shows as `<img` before and after, and `&bar` as `&amp;bar`. A
+  reference written with its semicolon is kept as written, known name or not.
 
 ### Per field
 

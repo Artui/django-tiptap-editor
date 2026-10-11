@@ -38,6 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the first occurrence is now checked and written, so the stored value means what
   the browser made of the markup that was posted. Markup with no attribute written
   twice comes back unchanged.
+- **A named character reference missing its semicolon keeps its meaning.**
+  `sanitize_html` wrote a semicolon after the whole name, so `&ltimg`, which a
+  browser shows as `<img`, was stored as `&ltimg;`, which it shows as `<img;`, and
+  `&hellip`, shown as typed, became an ellipsis. Such a reference is now written as
+  a browser reads it: the longest legacy name it starts with, then the rest as text
+  (`&lt;img`), or all of it as text when it starts with none (`&amp;bar`). A
+  reference with its semicolon, and a legacy one without (`&amp`, `&copy`), comes
+  back as before.
 
 ## [0.12.0] — 2026-10-11
 

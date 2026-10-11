@@ -43,6 +43,7 @@ so each frame is passed once however many end tags arrive.
 from __future__ import annotations
 
 import re
+from html.entities import html5
 from html.parser import HTMLParser
 
 from django.core.exceptions import ValidationError
@@ -121,6 +122,38 @@ _CHARACTER_REFERENCE_NAME = re.compile(r"[0-9]+|[xX][0-9a-fA-F]+")
 _KEPT, _UNWRAPPED, _CONVERTED, _SUSPENDED = range(4)
 
 
+# The named references a browser reads without their semicolon: HTML's legacy
+# names, the entries of its table that do not end in one. None is longer than
+# six characters, so the longest one a name can start with is found in at most
+# that many lookups however long the name is.
+_LEGACY_REFERENCES = frozenset(name for name in html5 if not name.endswith(";"))
+_LONGEST_LEGACY_REFERENCE = max(map(len, _LEGACY_REFERENCES))
+
+
+def _reference(name: str, *, terminated: bool) -> str:
+    """Write the named reference ``&name`` the way a browser reads it.
+
+    With its semicolon a reference is kept as written. Without one, a browser
+    reads the longest legacy name it starts with and the rest as text, so
+    ``&ltimg`` is ``<img``, or reads it all as text when it starts with none, so
+    ``&bar`` is ``&bar``. Writing a semicolon after the whole name, as this used
+    to, gave ``&ltimg;``, which a browser shows as ``<img;``, and turned
+    ``&hellip`` (shown as typed) into an ellipsis. The result always ends its
+    reference, so text that follows cannot run into it.
+
+    html.parser passes a name of letters, digits, hyphens and dots, the rest of
+    the input included when Python 3.14 reaches its end mid-reference, so the
+    escapes change nothing today. They are there so a parser that ever passes
+    more cannot write markup: ``test_a_named_reference_cannot_write_markup``.
+    """
+    if terminated:
+        return f"&{escape_html(name)};"
+    for end in range(min(len(name), _LONGEST_LEGACY_REFERENCE), 0, -1):
+        if name[:end] in _LEGACY_REFERENCES:
+            return f"&{name[:end]};{escape_html(name[end:])}"
+    return f"&amp;{escape_html(name)}"
+
+
 class _Frame:
     """One open element: its source tag, what became of it, and its start tag."""
 
@@ -142,9 +175,11 @@ class _Frame:
 class _Sanitizer(HTMLParser):
     """Rebuild a document from an allowlist, one token at a time.
 
-    ``convert_charrefs=False`` so character references are re-emitted exactly as
+    ``convert_charrefs=False`` so character references are re-emitted as
     written: with conversion on, ``&nbsp;`` would come back as a literal
-    non-breaking space and every save would rewrite the author's markup.
+    non-breaking space and every save would rewrite the author's markup. The one
+    rewrite is a named reference missing its semicolon, which is written the way
+    a browser reads it (``_reference``).
     """
 
     def __init__(self, schema: HtmlSchema) -> None:
@@ -165,6 +200,8 @@ class _Sanitizer(HTMLParser):
         self.open_tags: dict[str, int] = {}
         self.depth = 0
         self.skipping = 0
+        # A named reference reported but not yet written; see ``updatepos``.
+        self.entity: str | None = None
         # Converted, paragraph and suspended frames are only ever made for a tag
         # in ``paragraph_blocks``, so with none of those both paragraph walks
         # below are no-ops, and they return before walking. Without this, text
@@ -403,11 +440,16 @@ class _Sanitizer(HTMLParser):
 
     def handle_entityref(self, name: str) -> None:
         self._ensure_paragraph()
-        # html.parser hands this letters and digits only, the remainder of the
-        # input included when Python 3.14 reaches its end mid-reference, so the
-        # escape changes nothing today. It is there so a parser that ever passes
-        # more cannot write markup: ``test_the_named_reference_handler_cannot_write_markup``.
-        self.out.append(f"&{escape_html(name)};")
+        # Whether the reference ended in a semicolon is not passed in, and it
+        # decides what the reference means, so it is written out by
+        # ``updatepos``, which the parser calls next with the reference's end.
+        self.entity = name
+
+    def updatepos(self, i: int, j: int) -> int:
+        if self.entity is not None:
+            name, self.entity = self.entity, None
+            self.out.append(_reference(name, terminated=self.rawdata[j - 1 : j] == ";"))
+        return super().updatepos(i, j)
 
     def handle_charref(self, name: str) -> None:
         self._ensure_paragraph()

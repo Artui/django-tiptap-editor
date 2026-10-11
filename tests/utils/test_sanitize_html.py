@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -14,7 +15,7 @@ from django_tiptap_editor.constants import EXTENSION_HTML_VOCABULARY, MAX_DOCUME
 from django_tiptap_editor.types.html_schema import HtmlSchema
 from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.render_doc import render_doc
-from django_tiptap_editor.utils.sanitize_html import _Sanitizer, sanitize_html
+from django_tiptap_editor.utils.sanitize_html import _reference, _Sanitizer, sanitize_html
 
 # ---------------------------------------------------------------------------
 # Round-trip fidelity.
@@ -363,6 +364,44 @@ def test_a_duplicated_attribute_keeps_its_first_occurrence(html: str, expected: 
     assert str(sanitize_html(html)) == expected
 
 
+# A character reference written without its semicolon is read by a browser as the
+# longest legacy name it starts with (``&ltimg`` is ``<img``), or as plain text
+# when it starts with none (``&bar`` is ``&bar``). ``html.unescape`` implements
+# that rule for text, so it is the reference the stored value is held to: what a
+# browser shows for the posted text is what it shows for the stored one. A
+# reference at the very end of the input is left out: before Python 3.14,
+# html.parser hands that one over as text rather than as a reference.
+_REFERENCES = {
+    "unknown-name-glued-to-a-legacy-one": (
+        "<p>&ltimg src=x onerror=alert(1)&gt;</p>",
+        "<p>&lt;img src=x onerror=alert(1)&gt;</p>",
+    ),
+    "unknown-name": ("<p>&foo; &bar</p>", "<p>&foo; &amp;bar</p>"),
+    "known-name-that-needs-its-semicolon": ("<p>&hellip x</p>", "<p>&amp;hellip x</p>"),
+    "legacy-prefix-with-and-without-semicolon": (
+        "<p>&notit; &notit</p>",
+        "<p>&notit; &not;it</p>",
+    ),
+    "legacy-names-without-semicolons": ("<p>a &amp b &copy d</p>", "<p>a &amp; b &copy; d</p>"),
+}
+
+
+@pytest.mark.parametrize(("html", "expected"), _REFERENCES.values(), ids=_REFERENCES.keys())
+def test_a_reference_without_its_semicolon_is_read_as_a_browser_reads_it(
+    html: str, expected: str
+) -> None:
+    cleaned = str(sanitize_html(html))
+    assert cleaned == expected
+    assert unescape(cleaned) == unescape(html)
+
+
+def test_a_long_reference_name_cleans_in_linear_time() -> None:
+    started = time.perf_counter()
+    cleaned = str(sanitize_html("<p>&" + "a" * 200_000 + " x</p>"))
+    assert time.perf_counter() - started < 2.5
+    assert cleaned == "<p>&amp;" + "a" * 200_000 + " x</p>"
+
+
 def test_style_property_outside_the_allowlist_is_dropped() -> None:
     assert str(sanitize_html('<p style="position: fixed; text-align: left">x</p>')) == (
         '<p style="text-align: left">x</p>'
@@ -473,12 +512,18 @@ def test_the_character_reference_handler_writes_any_other_name_as_text(
     assert sanitizer.result() == expected
 
 
-# html.parser only ever hands handle_entityref a name of letters and digits,
-# on every version; markup in one must still come out as text.
-def test_the_named_reference_handler_cannot_write_markup() -> None:
-    sanitizer = _Sanitizer(get_html_schema())
-    sanitizer.handle_entityref("a<b onclick=x>")
-    assert sanitizer.result() == "&a&lt;b onclick=x&gt;;"
+# html.parser only ever hands a named reference letters, digits, hyphens and
+# dots, on every version; markup in one must still come out as text.
+@pytest.mark.parametrize(
+    ("name", "terminated", "expected"),
+    [
+        ("a<b onclick=x>", True, "&a&lt;b onclick=x&gt;;"),
+        ("lt<b onclick=x>", False, "&lt;&lt;b onclick=x&gt;"),
+        ("bar<b onclick=x>", False, "&amp;bar&lt;b onclick=x&gt;"),
+    ],
+)
+def test_a_named_reference_cannot_write_markup(name: str, terminated: bool, expected: str) -> None:
+    assert _reference(name, terminated=terminated) == expected
 
 
 def test_valueless_attribute_is_kept_bare() -> None:
