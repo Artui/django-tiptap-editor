@@ -670,6 +670,14 @@ def test_markup_left_unfinished_at_the_end_is_written_once() -> None:
     assert sanitizer.comments == []
 
 
+# The tail goes through handle_data, like any other text, and not straight to the
+# output: after a block a restricted field converts, text needs the paragraph that
+# handle_data opens for it, and written bare it would sit outside any paragraph.
+def test_markup_left_unfinished_after_a_converted_block_gets_its_paragraph() -> None:
+    schema = get_html_schema({"features": ["bold"]})
+    assert str(sanitize_html("<blockquote><!-- b", schema=schema)) == "<p>&lt;!-- b</p>"
+
+
 # What the input ends inside of a script or a textarea is that element's
 # content, and is read as the parser reads it: a script's is dropped with the
 # rest of the script, a textarea's written as its text.

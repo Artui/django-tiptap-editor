@@ -556,6 +556,8 @@ class _Sanitizer(HTMLParser):
         # end tag left unfinished there would be written escaped into a kept
         # <xmp>, whose content is not unescaped, and escaped again by a second
         # pass (``test_an_end_tag_left_unfinished_in_a_raw_text_element_is_left_to_the_parser``).
+        # The tail goes through handle_data so text after a converted block gets its
+        # paragraph (``test_markup_left_unfinished_after_a_converted_block_gets_its_paragraph``).
         tail = self.rawdata
         if tail.startswith("<") and self.cdata_elem is None:
             self.rawdata = ""
