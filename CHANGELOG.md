@@ -16,8 +16,13 @@ each of which was silently ignored before:
 - **A TipTap widget for `TipTapJSONField` in `formfield_overrides` must be in JSON
   storage.** It used to be replaced, so its storage never mattered. Rendered as
   given, one in HTML storage writes HTML into a field that parses a JSON envelope,
-  and every save fails. A new startup check, `django_tiptap_editor.E004`, reports it
-  on the admin class; pass `storage="json"` to the widget.
+  and every save fails. A new system-check warning, `django_tiptap_editor.W001`,
+  reports it on the admin class at startup; pass `storage="json"` to the widget. It
+  skips a field the widget cannot reach (one with its own widget in `Meta.widgets`,
+  one the form declares, one left off the form by `readonly_fields`, `exclude`,
+  `fields` or `fieldsets`), and it is a warning because the admin's request-taking
+  hooks (`get_form`, `get_fields` and the rest) can keep the widget off a field
+  where no startup check can see it.
 - **Only a TipTap widget in `formfield_overrides` is honoured.** An entry there is
   class-wide, so a non-TipTap widget on `models.TextField` (a smaller `Textarea`
   for the fields the mixin leaves alone, say) is still replaced by the editor on
@@ -108,7 +113,8 @@ each of which was silently ignored before:
   Django applies it; a `formfield_overrides` widget that is not a TipTap widget,
   the admin's own `AdminTextareaWidget` default included, is still replaced, since
   an entry there is class-wide. A TipTap widget on a `TipTapJSONField` that would
-  write HTML is reported at startup as `django_tiptap_editor.E004`. A `TextField`
+  write HTML is reported at startup with the warning `django_tiptap_editor.W001`
+  (see the upgrade note). A `TextField`
   keeps `TipTapFormField` whichever widget renders it.
 - **A `height` that is not a CSS length is refused instead of collapsing the
   editor.** A bare number or `"auto"` was written into the page as given and sized

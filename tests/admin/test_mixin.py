@@ -389,50 +389,140 @@ def test_a_widget_from_the_forms_meta_wins() -> None:
 # A project's TipTap widget on a JSON field that is not in JSON storage writes
 # HTML into it, and every save fails. Before the mixin honoured the widget it was
 # silently replaced, so the configuration only started failing when it started
-# being used: E004 says so at startup instead.
+# being used: W001 says so at startup instead. It is a warning, not an error,
+# because whether the widget renders can depend on hooks taking a request
+# (get_fields, get_exclude, get_readonly_fields, get_fieldsets, get_form), which
+# no startup check can call; what is knowable without one is skipped below.
+
+_HTML_WIDGET_ON_JSON = {TipTapJSONField: {"widget": AdminTipTapWidget}}
 
 
-def _e004(**attrs: Any) -> list[checks.CheckMessage]:
-    return [e for e in _register(**attrs).check() if e.id == "django_tiptap_editor.E004"]
+def _messages(**attrs: Any) -> list[checks.CheckMessage]:
+    """Every message the package's own checks report for this admin."""
+    return [e for e in _register(**attrs).check() if e.id.startswith("django_tiptap_editor.")]
+
+
+def _w001(**attrs: Any) -> list[checks.CheckMessage]:
+    return [e for e in _messages(**attrs) if e.id == "django_tiptap_editor.W001"]
 
 
 @pytest.mark.parametrize(
     "widget", [AdminTipTapWidget, AdminTipTapWidget(config={"height": "200px"}), TipTapWidget()]
 )
-def test_check_flags_a_json_field_widget_not_in_json_storage(widget: object) -> None:
+def test_check_warns_of_a_json_field_widget_not_in_json_storage(widget: object) -> None:
     model_admin = _register(formfield_overrides={TipTapJSONField: {"widget": widget}})
-    errors = [e for e in model_admin.check() if e.id == "django_tiptap_editor.E004"]
-    assert len(errors) == 1
-    assert errors[0].obj is type(model_admin)
-    assert "'document'" in errors[0].msg
-    assert 'storage="json"' in errors[0].msg
+    messages = [e for e in model_admin.check() if e.id.startswith("django_tiptap_editor.")]
+    assert [e.id for e in messages] == ["django_tiptap_editor.W001"]
+    assert isinstance(messages[0], checks.Warning)
+    assert messages[0].obj is type(model_admin)
+    assert "'document'" in messages[0].msg
+    assert 'storage="json"' in messages[0].msg
+    # It says it can be wrong, since the request-taking hooks are out of its reach.
+    assert "get_form" in messages[0].msg
 
 
 def test_check_passes_a_json_field_widget_in_json_storage() -> None:
     widget = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON)
-    assert _e004(formfield_overrides={TipTapJSONField: {"widget": widget}}) == []
+    assert _messages(formfield_overrides={TipTapJSONField: {"widget": widget}}) == []
 
 
 @override_settings(TIPTAP_STORAGE_FORMAT="json")
 def test_check_passes_a_widget_that_takes_json_storage_from_settings() -> None:
     # Unpinned, but the project-wide format is JSON, so it writes the envelope.
-    assert _e004(formfield_overrides={TipTapJSONField: {"widget": AdminTipTapWidget}}) == []
+    assert _messages(formfield_overrides=_HTML_WIDGET_ON_JSON) == []
 
 
 def test_check_passes_an_html_widget_on_a_text_field() -> None:
     # HTML storage is right for a TextField, which is what a TipTap widget on
     # one usually is: only the JSON field is held to the envelope.
-    assert _e004(formfield_overrides={models.TextField: {"widget": _TallerWidget}}) == []
+    assert _messages(formfield_overrides={models.TextField: {"widget": _TallerWidget}}) == []
 
 
 def test_check_ignores_widgets_the_mixin_does_not_use() -> None:
     # A non-TipTap widget is replaced by the mixin's own, and a field the mixin
     # does not apply to is Django's business, not this check's.
-    assert _e004(formfield_overrides={TipTapJSONField: {"widget": forms.Textarea}}) == []
-    assert (
-        _e004(
-            formfield_overrides={TipTapJSONField: {"widget": AdminTipTapWidget}},
-            tiptap_fields=["body"],
+    assert _messages(formfield_overrides={TipTapJSONField: {"widget": forms.Textarea}}) == []
+    assert _messages(formfield_overrides=_HTML_WIDGET_ON_JSON, tiptap_fields=["body"]) == []
+
+
+class _MetaWidgetForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = "__all__"
+        widgets = {"document": AdminTipTapWidget(storage=STORAGE_FORMAT_JSON)}
+
+
+class _DeclaredFieldForm(forms.ModelForm):
+    document = forms.JSONField(required=False)
+
+    class Meta:
+        model = Article
+        fields = "__all__"
+
+
+# Each row is an admin that saves correctly, because the widget the check would
+# complain about never renders. Each fails if its skip is removed from
+# ``_check_json_storage``, which names these tests.
+_WIDGET_NEVER_RENDERS = {
+    "meta_widgets": {"form": _MetaWidgetForm},
+    "declared_field": {"form": _DeclaredFieldForm},
+    "readonly_fields": {"readonly_fields": ("document",)},
+    "exclude": {"exclude": ("document",)},
+    "fields": {"fields": ("title", "body")},
+    "fieldsets": {"fieldsets": ((None, {"fields": ("title", ("body", "summary"))}),)},
+}
+
+
+@pytest.mark.parametrize("attrs", _WIDGET_NEVER_RENDERS.values(), ids=_WIDGET_NEVER_RENDERS)
+def test_check_skips_a_field_whose_override_widget_never_renders(attrs: dict[str, Any]) -> None:
+    assert _messages(formfield_overrides=_HTML_WIDGET_ON_JSON, **attrs) == []
+
+
+def test_a_meta_widget_wins_over_an_override_widget() -> None:
+    # Why the Meta.widgets row above is right to skip: the HTML-storage override
+    # is not what renders.
+    model_admin = _register(formfield_overrides=_HTML_WIDGET_ON_JSON, form=_MetaWidgetForm)
+    widget = model_admin.get_form(None).base_fields["document"].widget
+    assert widget.storage == STORAGE_FORMAT_JSON
+
+
+# The same attributes naming the field leave the widget rendering, so the warning
+# stands: these hold the membership half of each skip (a skip on the attribute
+# merely being set would pass the rows above).
+_WIDGET_STILL_RENDERS = {
+    "meta_widgets_for_another_field": {
+        "form": type(
+            "F",
+            (forms.ModelForm,),
+            {
+                "Meta": type(
+                    "Meta",
+                    (),
+                    {"model": Article, "fields": "__all__", "widgets": {"body": forms.Textarea}},
+                )
+            },
         )
-        == []
-    )
+    },
+    "readonly_fields": {"readonly_fields": ("title",)},
+    "exclude": {"exclude": ("summary",)},
+    "fields": {"fields": ("title", "body", "document")},
+    "fieldsets": {"fieldsets": ((None, {"fields": ("title", ("body", "document"))}),)},
+}
+
+
+@pytest.mark.parametrize("attrs", _WIDGET_STILL_RENDERS.values(), ids=_WIDGET_STILL_RENDERS)
+def test_check_still_warns_when_the_field_renders(attrs: dict[str, Any]) -> None:
+    assert len(_w001(formfield_overrides=_HTML_WIDGET_ON_JSON, **attrs)) == 1
+
+
+class _NeedsAnArgument(AdminTipTapWidget):
+    def __init__(self, toolbar_name: str, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.toolbar_name = toolbar_name
+
+
+def test_check_skips_a_widget_class_it_cannot_build() -> None:
+    # Django would build it with no arguments too, and fail on that admin page;
+    # the check is not the place to raise that TypeError, and has nothing to read.
+    overrides = {TipTapJSONField: {"widget": _NeedsAnArgument}}
+    assert _messages(formfield_overrides=overrides) == []
