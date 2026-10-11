@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-10-11
+
 ### Upgrade note — a custom extension may not declare a raw-text or MathML tag
 
 `TIPTAP_EXTRA_EXTENSIONS` now refuses `math`, `noembed`, `noframes`, `plaintext`,
@@ -1079,7 +1081,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.10.1...v0.11.0
