@@ -426,6 +426,11 @@ _PRE_NEWLINES = {
         "<pre>&amp;NewLine x</pre>",
     ),
     "a-carriage-return-reference": ("<pre><font>&#13;x</font></pre>", "<pre>&#13;x</pre>"),
+    "a-hex-reference-to-another-character": (
+        "<pre><font>&#x41;x</font></pre>",
+        "<pre>&#x41;x</pre>",
+    ),
+    "another-named-reference": ("<pre><font>&amp;x</font></pre>", "<pre>&amp;x</pre>"),
     # Directly after the start tag the browser drops it from the posted markup
     # and the stored one alike, so nothing is added.
     "directly-after-the-start-tag": ("<pre>\nx</pre>", "<pre>\nx</pre>"),

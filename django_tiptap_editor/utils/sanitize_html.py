@@ -488,6 +488,9 @@ class _Sanitizer(HTMLParser):
             name, self.entity = self.entity, None
             terminated = self.rawdata[j - 1 : j] == ";"
             # ``&NewLine;`` is the one named newline, and has no legacy form.
+            # Cases of ``test_a_newline_that_becomes_first_in_a_pre_is_kept_visible``
+            # hold each half: "an-unterminated-named-reference" the semicolon,
+            # "another-named-reference" the name.
             self._first_in_pre(newline=terminated and name == "NewLine")
             self.out.append(_reference(name, terminated=terminated))
         return super().updatepos(i, j)
@@ -512,6 +515,9 @@ class _Sanitizer(HTMLParser):
             return
         # A newline written as ``&#10;`` or ``&#xA;``, leading zeros allowed.
         # Compared as text: ``int`` refuses a number of a few thousand digits.
+        # "a-hex-reference" and "a-hex-reference-to-another-character" hold the
+        # hex test, "a-reference-after-an-unknown-tag" and
+        # "a-carriage-return-reference" the decimal one.
         if name[:1] in "xX":
             newline = name[1:].lstrip("0").lower() == "a"
         else:
