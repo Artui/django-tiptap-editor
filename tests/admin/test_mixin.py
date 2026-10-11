@@ -7,6 +7,7 @@ import pytest
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminTextareaWidget
+from django.core import checks
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.test import override_settings
@@ -16,6 +17,7 @@ from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
 from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
+from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 from tests.testapp.models import Article
 
 
@@ -257,9 +259,18 @@ def test_check_runs_from_the_admin_site() -> None:
     assert [e.id for e in site.check(None)] == ["django_tiptap_editor.E002"]
 
 
-# A project's own widget, given through ``formfield_overrides`` or ``Meta.widgets``,
-# is the one the admin renders: the mixin used to replace it with a bare
-# ``AdminTipTapWidget``, so a ``height`` (or any config) set there never arrived.
+# A project's own TipTap widget, given through ``formfield_overrides`` or a form's
+# ``Meta.widgets``, is the one the admin renders: the mixin used to replace it with
+# a bare ``AdminTipTapWidget``, so a ``height`` (or any config) set there never
+# arrived. A ``formfield_overrides`` entry is class-wide, though, so a widget there
+# that is not a TipTap widget (a smaller textarea for every TextField, say) is
+# about the fields the mixin does not apply to, and the editor still replaces it.
+
+
+class _TallerWidget(AdminTipTapWidget):
+    """A project's own subclass, given as a class rather than an instance."""
+
+    admin_defaults = {"height": "700px"}
 
 
 def test_a_projects_own_textfield_widget_wins() -> None:
@@ -271,12 +282,42 @@ def test_a_projects_own_textfield_widget_wins() -> None:
     assert isinstance(form_field, TipTapFormField)
 
 
-def test_a_projects_plain_widget_still_gets_the_sanitising_field() -> None:
-    overrides = {models.TextField: {"widget": forms.Textarea}}
+def test_a_tiptap_widget_subclass_given_as_a_class_wins() -> None:
+    overrides = {models.TextField: {"widget": _TallerWidget}}
     form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
-    assert type(form_field.widget) is forms.Textarea
-    assert isinstance(form_field, TipTapFormField)
-    assert form_field.clean("<p>x</p><script>alert(1)</script>") == "<p>x</p>"
+    assert type(form_field.widget) is _TallerWidget
+    assert form_field.widget.get_config({})["height"] == "700px"
+
+
+def test_a_plain_tiptap_widget_instance_wins() -> None:
+    overrides = {models.TextField: {"widget": TipTapWidget(config={"height": "200px"})}}
+    form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
+    assert type(form_field.widget) is TipTapWidget
+    assert form_field.widget.get_config({})["height"] == "200px"
+
+
+@pytest.mark.parametrize("tiptap_fields", ["__all__", ["body", "document"]])
+@pytest.mark.parametrize("widget", [forms.Textarea, forms.Textarea(attrs={"rows": 3})])
+def test_a_class_wide_widget_that_is_not_tiptap_does_not_replace_the_editor(
+    tiptap_fields: str | list[str], widget: object
+) -> None:
+    overrides = {
+        models.TextField: {"widget": widget},
+        TipTapJSONField: {"widget": widget},
+    }
+    fields = (
+        _register(formfield_overrides=overrides, tiptap_fields=tiptap_fields)
+        .get_form(None)
+        .base_fields
+    )
+    assert type(fields["body"].widget) is AdminTipTapWidget
+    assert isinstance(fields["body"], TipTapFormField)
+    assert type(fields["document"].widget) is AdminTipTapWidget
+    assert fields["document"].widget.storage == STORAGE_FORMAT_JSON
+    # A field the mixin does not apply to gets the project's widget as Django
+    # would give it.
+    if tiptap_fields != "__all__":
+        assert type(fields["summary"].widget) is forms.Textarea
 
 
 def test_the_admins_own_textarea_default_does_not_stop_the_editor() -> None:
@@ -313,20 +354,85 @@ def test_a_widget_override_follows_djangos_mro_lookup() -> None:
     # Django applies the entry of the first class in the field's MRO that has
     # one. TextField's first entry is the admin's own, so an entry for Field
     # never reaches it; a TipTapJSONField has no entry of its own, so it does.
-    overrides = {models.Field: {"widget": forms.Textarea}}
-    fields = _register(formfield_overrides=overrides).get_form(None).base_fields
-    assert isinstance(fields["body"].widget, AdminTipTapWidget)
-    assert type(fields["document"].widget) is forms.Textarea
+    widget = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON, config={"height": "200px"})
+    fields = (
+        _register(formfield_overrides={models.Field: {"widget": widget}}).get_form(None).base_fields
+    )
+    assert fields["body"].widget.get_config({})["height"] == "500px"
+    assert fields["document"].widget.get_config({})["height"] == "200px"
 
 
 def test_a_widget_from_the_forms_meta_wins() -> None:
+    # Meta.widgets names one field, so any widget there is the project's choice
+    # for it, TipTap or not. It reaches the mixin as kwargs["widget"]; assigning
+    # the admin widget over it, rather than setdefault, would lose all three.
     class ArticleForm(forms.ModelForm):
         class Meta:
             model = Article
             fields = "__all__"
-            widgets = {"body": AdminTipTapWidget(config={"height": "200px"})}
+            widgets = {
+                "body": AdminTipTapWidget(config={"height": "200px"}),
+                "summary": forms.Textarea(attrs={"rows": 3}),
+                "document": AdminTipTapWidget(
+                    storage=STORAGE_FORMAT_JSON, config={"height": "250px"}
+                ),
+            }
 
     fields = _register(form=ArticleForm).get_form(None).base_fields
     assert fields["body"].widget.get_config({})["height"] == "200px"
     assert isinstance(fields["body"], TipTapFormField)
-    assert fields["summary"].widget.get_config({})["height"] == "500px"
+    assert type(fields["summary"].widget) is forms.Textarea
+    assert isinstance(fields["summary"], TipTapFormField)
+    assert fields["document"].widget.get_config({})["height"] == "250px"
+
+
+# A project's TipTap widget on a JSON field that is not in JSON storage writes
+# HTML into it, and every save fails. Before the mixin honoured the widget it was
+# silently replaced, so the configuration only started failing when it started
+# being used: E004 says so at startup instead.
+
+
+def _e004(**attrs: Any) -> list[checks.CheckMessage]:
+    return [e for e in _register(**attrs).check() if e.id == "django_tiptap_editor.E004"]
+
+
+@pytest.mark.parametrize(
+    "widget", [AdminTipTapWidget, AdminTipTapWidget(config={"height": "200px"}), TipTapWidget()]
+)
+def test_check_flags_a_json_field_widget_not_in_json_storage(widget: object) -> None:
+    model_admin = _register(formfield_overrides={TipTapJSONField: {"widget": widget}})
+    errors = [e for e in model_admin.check() if e.id == "django_tiptap_editor.E004"]
+    assert len(errors) == 1
+    assert errors[0].obj is type(model_admin)
+    assert "'document'" in errors[0].msg
+    assert 'storage="json"' in errors[0].msg
+
+
+def test_check_passes_a_json_field_widget_in_json_storage() -> None:
+    widget = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON)
+    assert _e004(formfield_overrides={TipTapJSONField: {"widget": widget}}) == []
+
+
+@override_settings(TIPTAP_STORAGE_FORMAT="json")
+def test_check_passes_a_widget_that_takes_json_storage_from_settings() -> None:
+    # Unpinned, but the project-wide format is JSON, so it writes the envelope.
+    assert _e004(formfield_overrides={TipTapJSONField: {"widget": AdminTipTapWidget}}) == []
+
+
+def test_check_passes_an_html_widget_on_a_text_field() -> None:
+    # HTML storage is right for a TextField, which is what a TipTap widget on
+    # one usually is: only the JSON field is held to the envelope.
+    assert _e004(formfield_overrides={models.TextField: {"widget": _TallerWidget}}) == []
+
+
+def test_check_ignores_widgets_the_mixin_does_not_use() -> None:
+    # A non-TipTap widget is replaced by the mixin's own, and a field the mixin
+    # does not apply to is Django's business, not this check's.
+    assert _e004(formfield_overrides={TipTapJSONField: {"widget": forms.Textarea}}) == []
+    assert (
+        _e004(
+            formfield_overrides={TipTapJSONField: {"widget": AdminTipTapWidget}},
+            tiptap_fields=["body"],
+        )
+        == []
+    )

@@ -33,11 +33,13 @@ every dependency included and sorted, whichever `get_config` produced it. See
 `tiptap_fields = "__all__"` (default) or an explicit list of field names. An explicit
 list is checked at startup: a name that is not a field on the model, or one naming a
 field the widget cannot apply to, is a system-check error
-(`django_tiptap_editor.E001`–`E003`) rather than a silent no-op.
+(`django_tiptap_editor.E001`–`E003`) rather than a silent no-op; `E004` is described
+below.
 
 `AdminTipTapWidget` (in JSON storage mode for a `TipTapJSONField`) is only the
-default. A widget the project gives the field is rendered as given, config and all,
-so this is how to size or restrict the admin's editors:
+default. A TipTap widget (a `TipTapWidget` subclass, or an instance of one) the
+project gives the field in `formfield_overrides` is rendered as given, config and
+all, so this is how to size or restrict the admin's editors:
 
 ```python
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
@@ -55,12 +57,19 @@ class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
 ```
 
 The entry is looked up the way Django applies it (the first class in the field's
-MRO that has one), and the admin's own `AdminTextareaWidget` default for
-`TextField` does not count as the project's. A form's `Meta.widgets` works the same
-way for one field. A `TextField` keeps `TipTapFormField` whichever widget renders it,
-so what the admin saves is sanitised either way. For a `TipTapJSONField`, give the
-widget `storage=STORAGE_FORMAT_JSON` as above: the mixin uses the widget as given,
-and one that writes HTML into the field fails validation on save.
+MRO that has one). An entry there is class-wide, so a widget in it that is not a
+TipTap widget, such as a smaller `Textarea` for every `TextField`, is taken to be for
+the fields the mixin leaves alone, and the editor still replaces it on the fields it
+applies to; the admin's own `AdminTextareaWidget` default for `TextField` is one of
+those. A form's `Meta.widgets` names a single field, so any widget given there is
+rendered, TipTap or not. A `TextField` keeps `TipTapFormField` whichever widget
+renders it, so what the admin saves is sanitised either way.
+
+For a `TipTapJSONField`, give the widget `storage=STORAGE_FORMAT_JSON` as above (or
+set `TIPTAP_STORAGE_FORMAT = "json"`): the mixin uses the widget as given, and one
+that writes HTML into the field fails validation on every save. A TipTap widget from
+`formfield_overrides` that would do so is a system-check error,
+`django_tiptap_editor.E004`, reported on the admin class at startup.
 
 ### `TipTapFormField(forms.CharField)`
 

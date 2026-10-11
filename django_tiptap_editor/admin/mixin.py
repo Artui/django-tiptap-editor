@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
 from django.core import checks
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
@@ -12,7 +11,9 @@ from django.db import models
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
 from django_tiptap_editor.forms.fields import TipTapFormField
+from django_tiptap_editor.utils.get_storage_format import get_storage_format
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
+from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 
 def _is_editor_field(db_field: Any) -> bool:
@@ -30,17 +31,22 @@ class TipTapModelAdminMixin:
     ``TipTapFormField`` as its form class, so what the admin saves is sanitised
     (unless the project gives that field a form class of its own, through
     ``formfield_overrides`` or ``Meta.field_classes``). The admin widget is a
-    default too: a widget the project gives the field, through
-    ``formfield_overrides`` or ``Meta.widgets``, is rendered as given, so its
-    ``config`` (``height`` and the rest) applies. ``tiptap_fields`` is ``"__all__"``
-    (every eligible field) or an explicit list of field names. Mix in before
-    ``admin.ModelAdmin``.
+    default too, and a widget the project chose is rendered as given, so its
+    ``config`` (``height`` and the rest) applies: a TipTap widget (a
+    ``TipTapWidget`` subclass or instance) from ``formfield_overrides``, or any
+    widget from the form's ``Meta.widgets``. A ``formfield_overrides`` widget that
+    is not a TipTap widget is class-wide, so it is taken to be for the fields the
+    mixin leaves alone, and the editor still replaces it on the ones it applies
+    to. ``tiptap_fields`` is ``"__all__"`` (every eligible field) or an explicit
+    list of field names. Mix in before ``admin.ModelAdmin``.
 
     ``tiptap_fields`` is checked at startup by Django's check framework
     (``django_tiptap_editor.E001`` to ``E003``): a name that is not a field on
     the model, or one naming a field the widget cannot apply to, used to be a
     silent no-op — the admin simply rendered a plain textarea and nothing said
-    why.
+    why. ``E004`` flags a TipTap widget from ``formfield_overrides`` on a
+    ``TipTapJSONField`` that would render in HTML storage, so every save would
+    fail.
     """
 
     # Provided by admin.ModelAdmin / InlineModelAdmin via the consumer's MRO.
@@ -52,6 +58,7 @@ class TipTapModelAdminMixin:
         return [
             *super().check(**kwargs),  # ty: ignore[unresolved-attribute]
             *self._check_tiptap_fields(),
+            *self._check_json_storage(),
         ]
 
     def _check_tiptap_fields(self) -> list[checks.CheckMessage]:
@@ -118,29 +125,66 @@ class TipTapModelAdminMixin:
         """Whether ``formfield_overrides`` gives this field its own form class."""
         return "form_class" in self._override_for(db_field)[1]
 
-    def _overrides_widget(self, db_field: models.Field) -> bool:
-        """Whether ``formfield_overrides`` gives this field a widget of the project's.
+    def _overriding_widget(self, db_field: models.Field) -> TipTapWidget | None:
+        """The TipTap widget ``formfield_overrides`` gives this field, if any.
 
-        ``ModelAdmin.__init__`` merges ``FORMFIELD_FOR_DBFIELD_DEFAULTS`` into
-        ``formfield_overrides``, so a ``TextField`` always has an entry naming
-        ``AdminTextareaWidget``. That one is the admin's default rather than the
-        project's choice, and is the widget this mixin exists to replace, so an
-        entry whose widget *is* the default reads as no override:
-        ``test_the_admins_own_textarea_default_does_not_stop_the_editor`` fails
-        if the comparison goes.
+        An entry there is class-wide, so only a TipTap widget (a subclass, or an
+        instance of one) is read as meant for the editor. Anything else, such as
+        a smaller textarea for every ``TextField``, is about the fields the mixin
+        does not touch, and is replaced on the ones it does, as it always was.
+        That also covers the ``AdminTextareaWidget`` entry ``ModelAdmin.__init__``
+        merges in for every ``TextField``. A class is returned instantiated, which
+        is what Django would do with it.
         """
-        klass, override = self._override_for(db_field)
-        default = FORMFIELD_FOR_DBFIELD_DEFAULTS.get(klass, {}).get("widget")
-        return override.get("widget", default) is not default
+        widget = self._override_for(db_field)[1].get("widget")
+        if isinstance(widget, type) and issubclass(widget, TipTapWidget):
+            return widget()
+        return widget if isinstance(widget, TipTapWidget) else None
+
+    def _check_json_storage(self) -> list[checks.CheckMessage]:
+        """Report a project TipTap widget on a JSON field that writes HTML.
+
+        The mixin renders such a widget as given, and the glue then writes HTML
+        into a field that parses a JSON envelope, so every save fails. The
+        storage checked is the one the widget will render with: its own, or
+        ``TIPTAP_STORAGE_FORMAT`` when it names none.
+        """
+        errors: list[checks.CheckMessage] = []
+        for db_field in self.model._meta.get_fields():
+            # The type check is held by ``test_check_passes_an_html_widget_on_a_text_field``
+            # (HTML is right for a TextField), the scope check by
+            # ``test_check_ignores_widgets_the_mixin_does_not_use``.
+            if not isinstance(db_field, TipTapJSONField) or not self._tiptap_applies(db_field):
+                continue
+            widget = self._overriding_widget(db_field)
+            # Without the None check a field with no TipTap widget raises
+            # AttributeError (``test_check_ignores_widgets_the_mixin_does_not_use``);
+            # without the storage check every TipTap widget is flagged
+            # (``test_check_passes_a_json_field_widget_in_json_storage``).
+            if widget is not None and (widget.storage or get_storage_format()) != (
+                STORAGE_FORMAT_JSON
+            ):
+                errors.append(
+                    checks.Error(
+                        f"The widget formfield_overrides gives '{db_field.name}', a "
+                        f"TipTapJSONField, is a {type(widget).__name__} in HTML storage, "
+                        "so the editor would write HTML into a JSON field and every save "
+                        'would fail. Pass storage="json" to the widget.',
+                        obj=type(self),
+                        id="django_tiptap_editor.E004",
+                    )
+                )
+        return errors
 
     def formfield_for_dbfield(self, db_field: models.Field, request: Any, **kwargs: Any) -> Any:
         if self._tiptap_applies(db_field):
-            # A widget the project chose, in ``formfield_overrides`` or in its
-            # form's ``Meta.widgets`` (which reaches this method as
-            # ``kwargs["widget"]``, hence ``setdefault``), is the one rendered,
-            # config and all. Replacing it is how a ``height`` set there used to
-            # vanish. The admin widget is only the default.
-            own_widget = self._overrides_widget(db_field)
+            # A TipTap widget the project chose is the one rendered, config and
+            # all: one from ``formfield_overrides`` (see ``_overriding_widget``)
+            # or any widget from its form's ``Meta.widgets``, which names one
+            # field and reaches this method as ``kwargs["widget"]``, hence
+            # ``setdefault``. Replacing them is how a ``height`` set there used
+            # to vanish. The admin widget is only the default.
+            own_widget = self._overriding_widget(db_field) is not None
             if isinstance(db_field, TipTapJSONField):
                 if not own_widget:
                     # An instance (not the class) so JSON storage is pinned — the
