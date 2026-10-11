@@ -1291,7 +1291,7 @@ stored, is in <a href="../security/#what-is-not-narrowed-per-field">Security</a>
 <tr>
 <td><code>TIPTAP_EXTRA_EXTENSIONS</code></td>
 <td><code>[]</code></td>
-<td>Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type <code>TipTapJSONField</code> accepts in a stored document. See <a href="../extending/#declaring-what-an-extension-emits">Extending</a>.</td>
+<td>Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type <code>TipTapJSONField</code> accepts in a stored document. A tag that runs script, or whose content a browser parses by rules of its own (<code>math</code>, <code>textarea</code>, <code>title</code>, <code>xmp</code>, …), raises <code>ImproperlyConfigured</code>. See <a href="../extending/#declaring-what-an-extension-emits">Extending</a>.</td>
 </tr>
 </tbody>
 </table>

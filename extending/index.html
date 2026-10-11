@@ -1148,9 +1148,20 @@ renders.</p>
 extension, and the sanitiser unwraps its tags — the wrapper is dropped on save and the
 text inside it is kept. Declare the vocabulary, or accept that the markup does not
 survive a round trip through the server.</p>
-<p>Two things are refused outright, with <code>ImproperlyConfigured</code>: a tag that executes
-script or loads a document (<code>script</code>, <code>style</code>, <code>iframe</code>, <code>object</code>, <code>embed</code>, <code>base</code>,
-<code>meta</code>, <code>link</code>, <code>form</code>, <code>svg</code>, <code>template</code>, …), and any <code>on*</code> attribute.</p>
+<p>Three things are refused outright, with <code>ImproperlyConfigured</code>:</p>
+<ul>
+<li>a tag that executes script or loads a document (<code>script</code>, <code>style</code>, <code>iframe</code>,
+  <code>object</code>, <code>embed</code>, <code>base</code>, <code>meta</code>, <code>link</code>, <code>form</code>, <code>svg</code>, <code>template</code>, …);</li>
+<li>a tag whose content a browser parses by rules of its own rather than as ordinary
+  HTML: <code>math</code>, <code>noembed</code>, <code>noframes</code>, <code>plaintext</code>, <code>textarea</code>, <code>title</code> and <code>xmp</code>.
+  The sanitiser would check one reading of the content and the browser render
+  another, so an extension that needs one should emit an ordinary element (a <code>span</code>
+  or <code>div</code> with a class or data attribute) instead;</li>
+<li>any <code>on*</code> attribute.</li>
+</ul>
+<p>The error is raised where the setting is read: when a TipTap form field cleans a
+value, when the <code>tiptap_html</code> filter renders one, when a widget's config names custom
+extensions, and when a <code>TipTapJSONField</code> validates a document.</p>
 <h3 id="custom-nodes-and-json-storage">Custom nodes and JSON storage<a class="headerlink" href="#custom-nodes-and-json-storage" title="Permanent link">&para;</a></h3>
 <p><code>TIPTAP_EXTRA_EXTENSIONS</code> is also the vocabulary <a href="../storage/"><code>TipTapJSONField</code></a> validates
 a document against. A node or mark type outside it is <strong>rejected</strong> by <code>full_clean()</code>, a

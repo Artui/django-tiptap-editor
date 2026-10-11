@@ -541,6 +541,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#malformed-markup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Malformed markup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#per-field" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -900,6 +911,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#malformed-markup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Malformed markup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#per-field" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1042,6 +1064,11 @@ built-in extension names come from, so the editor's output and the sanitiser's
 allowlist cannot drift apart. The editor's half of that is tested rather than assumed:
 <code>js/test/html-vocabulary.test.ts</code> renders every attribute the editor's schema defines,
 and every case in the fidelity corpus, and fails if anything lands outside this table.</p>
+<p>The filtering is checked against an independent sanitiser too. In the test suite,
+seeded fragments of hostile markup go through <code>sanitize_html</code>, and every element of the
+result is cleaned again by <a href="https://pypi.org/project/nh3/">nh3</a> under the same allowlist.
+An attribute, style declaration or URL that nh3 would refuse fails the run. nh3 is a
+development dependency only; the package still depends on Django alone.</p>
 <table>
 <thead>
 <tr>
@@ -1076,6 +1103,55 @@ and every case in the fidelity corpus, and fails if anything lands outside this 
 deleted what it did not recognise could quietly empty half a document, so it never
 deletes visible text — the one exception is <code>script</code> and <code>style</code>, whose bodies are
 code rather than prose and are dropped whole.</p>
+<h3 id="malformed-markup">Malformed markup<a class="headerlink" href="#malformed-markup" title="Permanent link">&para;</a></h3>
+<p>Markup a browser would repair is read the way a browser reads it, wherever that
+decides what the stored value means:</p>
+<ul>
+<li><strong>An attribute written twice keeps its first occurrence.</strong> A browser ignores the
+  rest, so <code>&lt;a href="/a" href="/b"&gt;</code> is stored as <code>&lt;a href="/a"&gt;</code>, and <code>target</code> and
+  <code>rel</code> are worked out from their first occurrence too.</li>
+<li><strong>A named character reference missing its semicolon is written as a browser reads
+  it.</strong> A browser reads the longest legacy name the reference starts with and the rest
+  as text, or the whole thing as text when it starts with none. So <code>&amp;ltimg</code> is stored
+  as <code>&amp;lt;img</code>, which shows as <code>&lt;img</code> before and after, and <code>&amp;bar</code> as <code>&amp;amp;bar</code>. A
+  reference written with its semicolon is kept as written, known name or not. One
+  exception depends on the Python version: on Python 3.10 to 3.13, <code>html.parser</code>
+  passes a reference that is the very last thing in the input along as text, so
+  <code>x &amp;lt</code> is stored as <code>x &amp;amp;lt</code> and shows as <code>x &amp;lt</code> rather than <code>x &lt;</code>. The
+  editor never writes a field that ends mid-reference.</li>
+<li><strong>A character reference the parser leaves unfinished is written as text, which
+  is not how a browser reads it.</strong> A browser reads <code>&amp;#1a</code> as <code>&amp;#1;</code> and then <code>a</code>,
+  and parses the markup after it. From Python 3.14, <code>html.parser</code> hands such a
+  reference to the sanitiser with the whole rest of the field as its name, and
+  that is written as text rather than read the browser's way, so
+  <code>&lt;p&gt;&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</code> is stored as
+  <code>&lt;p&gt;&amp;amp;#1a&amp;lt;img src=x onerror=alert(1)&amp;gt;&amp;lt;/p&amp;gt;&lt;/p&gt;</code> and the rest of
+  the field shows as typed. Python 3.10 to 3.13 store the same when no semicolon
+  comes later in the field; where one does, they pass <code>&amp;#</code> along as text and
+  parse what follows as markup, filtered as usual.</li>
+<li><strong>Markup the field ends inside of is written as text, which is not how a browser
+  reads it.</strong> A browser drops a tag, attribute value, comment or declaration left
+  unfinished at the end of the input, and ends an unfinished CDATA section at its
+  first <code>&gt;</code>, parsing what follows. The sanitiser writes all of it as text instead,
+  so <code>&lt;p&gt;a&lt;!-- b</code> is stored as <code>&lt;p&gt;a&amp;lt;!-- b&lt;/p&gt;</code> and <code>&lt;p&gt;a&lt;strong</code> as
+  <code>&lt;p&gt;a&amp;lt;strong&lt;/p&gt;</code>: a field posted this way stores the tail as visible text.
+  What <code>html.parser</code> does with such a tail differs between Python patch releases,
+  some passing it along as text and current ones dropping it, and text is the one
+  reading that loses nothing typed and runs none of it on all of them. The content
+  of a <code>script</code>, <code>style</code>, <code>textarea</code> or other raw-text element the field ends
+  inside of is read by <code>html.parser</code> as before: a script's is dropped, and a
+  textarea's kept as text, <code>&lt;p&gt;a&lt;textarea&gt;b&lt;/text</code> stored as <code>&lt;p&gt;ab&amp;lt;/text&lt;/p&gt;</code>.
+  The one form that still depends on the patch release is the element's own end
+  tag left unfinished, as in <code>&lt;textarea&gt;b&lt;/textarea</code>, which earlier patch
+  releases keep as text and current ones drop, as a browser does. The editor
+  never writes a field that ends mid-tag.</li>
+<li><strong>A newline that becomes the first thing in a <code>pre</code> stays visible.</strong> A browser
+  drops a newline directly after <code>&lt;pre&gt;</code>, whether it is written as a character or as
+  a reference (<code>&amp;#10;</code>, <code>&amp;#xA;</code>, <code>&amp;NewLine;</code>). Where one comes first only because
+  the markup before it was not kept (<code>&lt;pre&gt;&lt;font&gt;</code> then a newline), a second newline
+  is written ahead of it for the browser to drop. A newline directly after <code>&lt;pre&gt;</code>
+  in the posted markup is dropped from both, so nothing is added there.</li>
+</ul>
 <h3 id="per-field">Per field<a class="headerlink" href="#per-field" title="Permanent link">&para;</a></h3>
 <p>The table above is what a field configured without <code>features</code> keeps. A field with
 <a href="../configuration/#restricting-features"><code>features</code></a> keeps only the vocabularies of its
@@ -1193,10 +1269,13 @@ vocabulary:</p>
 </span></code></pre></div>
 <p>A declared vocabulary joins the allowlist and the extension's markup survives intact.
 A name given without one (the list form) raises a warning naming the extension, and
-its tags are unwrapped — the wrapper is lost, the text is not. Two declarations are
+its tags are unwrapped — the wrapper is lost, the text is not. Three declarations are
 refused outright: a tag that executes script or loads a document (<code>script</code>, <code>style</code>,
-<code>iframe</code>, <code>object</code>, <code>embed</code>, <code>base</code>, <code>meta</code>, <code>link</code>, <code>form</code>, <code>svg</code>, <code>template</code>, …) and
-any <code>on*</code> attribute.</p>
+<code>iframe</code>, <code>object</code>, <code>embed</code>, <code>base</code>, <code>meta</code>, <code>link</code>, <code>form</code>, <code>svg</code>, <code>template</code>, …), a
+tag whose content a browser parses by rules of its own (<code>math</code>, <code>noembed</code>, <code>noframes</code>,
+<code>plaintext</code>, <code>textarea</code>, <code>title</code>, <code>xmp</code>), and any <code>on*</code> attribute. The second kind
+would be checked as one thing and rendered as another: escaped text inside <code>xmp</code>, for
+one, renders as a literal <code>&amp;lt;</code>.</p>
 <h2 id="json-storage">JSON storage<a class="headerlink" href="#json-storage" title="Permanent link">&para;</a></h2>
 <p><a href="../storage/">JSON storage</a> (<code>TipTapJSONField</code>) keeps the same boundary, with one extra
 rule. Because protocol allowlisting happens on <em>parse</em> — which a stored-JSON document
