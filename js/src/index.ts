@@ -8,6 +8,7 @@ import type { AnyExtension } from "@tiptap/core";
 import { buildExtensions } from "./build-extensions";
 import { buildShell } from "./build-shell";
 import { htmlToJSON, htmlToStored, renderHTML } from "./convert";
+import { isCssLength } from "./css-length";
 import type { TipTapConfig } from "./default-config";
 import { setEditorConfig } from "./editor-config";
 import { getTranslator, registerLocale, setTranslator } from "./i18n";
@@ -168,6 +169,31 @@ function watchFormSubmit(element: HTMLTextAreaElement, editor: Editor): () => vo
   };
 }
 
+// height is the editing area's minimum and maxHeight its cap (the content region
+// scrolls inside it, under the toolbar). Each is written onto the shell, where
+// it beats a page-wide token on :root, and only once it passes the length rule
+// validate_config applies: init() is public, and a value like "auto" or 500
+// sized the editor to its toolbar. A refused value is reported and the default
+// kept, rather than thrown, so one bad field does not stop the page mounting.
+const LENGTH_PROPERTIES = { height: "--tiptap-height", maxHeight: "--tiptap-max-height" } as const;
+
+function applyLengths(shell: HTMLElement, config: TipTapConfig): void {
+  for (const [key, property] of Object.entries(LENGTH_PROPERTIES)) {
+    const value = config[key];
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+    if (isCssLength(value)) {
+      shell.style.setProperty(property, value);
+    } else {
+      console.error(
+        `[DjangoTipTap] ${key} must be a CSS length such as "400px", "30rem" or ` +
+          `"calc(100vh - 12rem)"; ignoring ${JSON.stringify(value)}`,
+      );
+    }
+  }
+}
+
 function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const id = ensureId(element);
   const existing = instances.get(id);
@@ -227,9 +253,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   // Default chrome, or a consumer's region / shell override (see build-shell).
   const shell = buildShell(editor, config, content, t);
   shell.el.setAttribute(SHELL_ATTR, id);
-  if (config.height) {
-    shell.el.style.setProperty("--tiptap-height", config.height);
-  }
+  applyLengths(shell.el, config);
 
   element.style.display = "none";
   element.parentNode?.insertBefore(shell.el, element.nextSibling);

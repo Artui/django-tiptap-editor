@@ -38,6 +38,7 @@ GLUE_CSS = "django_tiptap_editor/tiptap.glue.esm.css"
 KNOWN_CONFIG_KEYS = frozenset(
     {
         "height",
+        "maxHeight",
         "locale",
         "manualMount",
         "enterKey",
@@ -56,6 +57,50 @@ KNOWN_CONFIG_KEYS = frozenset(
         "highlightColors",
         "colorPicker",
         "imageResize",
+    }
+)
+
+# Units ``height`` and ``maxHeight`` accept (CSS Values 4 absolute, font-relative,
+# viewport and container lengths), lowercase as written. A percentage is left out
+# on purpose: it resolves against a parent that rarely has a height, and then
+# sizes the editor to nothing. Mirrored by js/src/css-length.ts and held equal to
+# it by the truth table in js/test/fixtures/css-lengths.json.
+CSS_LENGTH_UNITS = frozenset(
+    {
+        # absolute
+        "px",
+        "cm",
+        "mm",
+        "q",
+        "in",
+        "pt",
+        "pc",
+        # font-relative, and their root-relative forms
+        "em",
+        "rem",
+        "ex",
+        "rex",
+        "ch",
+        "rch",
+        "cap",
+        "rcap",
+        "ic",
+        "ric",
+        "lh",
+        "rlh",
+        # viewport: default, small, large and dynamic
+        *(
+            f"{size}{axis}"
+            for size in ("", "s", "l", "d")
+            for axis in ("vw", "vh", "vi", "vb", "vmin", "vmax")
+        ),
+        # container query
+        "cqw",
+        "cqh",
+        "cqi",
+        "cqb",
+        "cqmin",
+        "cqmax",
     }
 )
 

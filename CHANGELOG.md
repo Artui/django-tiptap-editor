@@ -63,8 +63,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/security.md` lists each. The JS suite builds an editor for each built-in
   feature alone and checks what it can emit and hold against the allowlist and
   document table the server would clean that field against.
+- **A `maxHeight` config key caps the editor.** `height` is a minimum, so an editor
+  grew with its content for as long as anyone typed. With `maxHeight` set, the
+  editing area stops at that height and its content scrolls inside it, under a
+  toolbar that stays in view; source view is capped the same way. It takes the same
+  CSS lengths as `height`, is also the `--tiptap-max-height` token, and defaults to
+  no cap, so a field without it behaves as before.
 
 ### Fixed
+
+- **A height configured for the admin's editors is the height they get.**
+  `TipTapModelAdminMixin` put a bare `AdminTipTapWidget` on every field it applied
+  to, replacing the widget a project gave the field in `formfield_overrides` or in
+  its form's `Meta.widgets`, so a `height` (or any other config) set there never
+  arrived. A project's widget is now rendered as given, for `TextField`s and
+  `TipTapJSONField`s alike, and `AdminTipTapWidget` is only the default. The entry
+  is found the way Django applies it, and the admin's own `AdminTextareaWidget`
+  default does not count as a project's widget. A `TextField` keeps
+  `TipTapFormField` whichever widget renders it.
+- **A `height` that is not a CSS length is refused instead of collapsing the
+  editor.** A bare number, `"auto"` or a percentage was written into the page as
+  given and sized the editing area to a single line, because a percentage resolves
+  against a parent with no height. `height` and `maxHeight` now take a number with
+  a lowercase CSS unit, or `calc()` / `min()` / `max()` / `clamp()` over such
+  lengths; anything else raises `ImproperlyConfigured` naming the key and the value.
+  The browser runs the same rule on a config passed to `DjangoTipTap.init()`,
+  reporting a refused value with `console.error` and keeping the default. Both
+  sides are held to one table of accepted and refused values.
+- **Design tokens set on `:root`, including through `ui.setTokens`, reach the
+  editor.** The defaults were declared on `.django-tiptap` itself, and an element's
+  own declaration beats an inherited one, so `setTokens`, which writes onto the
+  document root, changed nothing, and neither did a token in a `:root` rule. The
+  defaults now sit on `:where(:root)`, so every editor inherits them and any rule a
+  project writes overrides them; a field's own `height` / `maxHeight` still wins over
+  a page-wide token. No default value changed.
 
 - **`TipTapModelAdminMixin` did not sanitise the fields it put an editor on.** It
   swapped the widget onto every `TextField` and left the form field a plain

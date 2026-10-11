@@ -16,7 +16,8 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 
 | Token | Purpose |
 | --- | --- |
-| `--tiptap-height` | Editing-area min-height |
+| `--tiptap-height` | Editing-area min-height (default `360px`) |
+| `--tiptap-max-height` | Editing-area max-height; the content scrolls past it (default `none`) |
 | `--tiptap-font` | Font family |
 | `--tiptap-fg` / `--tiptap-bg` | Text / surface colour |
 | `--tiptap-border` | Border colour |
@@ -28,12 +29,27 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-accent` | Links, focus, selected-image outline |
 | `--tiptap-modal-z` | Image-picker overlay `z-index` (default `2000`) |
 
+The defaults are declared on the document root with zero specificity
+(`:where(:root)`), and every editor inherits them. So a token set anywhere above an
+editor reaches it, and any rule you write beats the default whichever stylesheet
+loads last. From strongest to weakest:
+
+1. a field's own `height` / `maxHeight` [config](configuration.md#heights), written
+   on that editor's shell;
+2. a token set on `.django-tiptap` or on an element around one editor;
+3. a token set on `:root` / `html`, in CSS or with `ui.setTokens`, which writes there;
+4. the built-in default.
+
 ### In CSS
 
 ```css
-.django-tiptap {
+:root {
   --tiptap-accent: #0b7285;
   --tiptap-radius: 12px;
+}
+
+/* Or for the editors in one part of the page only. */
+.newsletter-form .django-tiptap {
   --tiptap-toolbar-bg: #f3f4f6;
 }
 ```
@@ -53,8 +69,9 @@ stacks even higher, raise the knob — no `!important` needed:
 
 Set `--tiptap-modal-z` on `:root` (or `html`/`body`), **not** on `.django-tiptap`:
 because the overlay is appended to `<body>`, it does not inherit custom properties
-declared on the editor element. Every other token in the table above is read inside
-`.django-tiptap` and can be set there as usual.
+declared on the editor element. The same holds for the overlay's colours, border and
+radius: a token set on `:root` themes the picker as well as the editors, one set on
+`.django-tiptap` only the editors.
 
 ### In JS
 
@@ -62,6 +79,10 @@ declared on the editor element. Every other token in the table above is read ins
 DjangoTipTap.ui.setTokens({ accent: "#0b7285", radius: "12px" });
 // bare keys are prefixed with --tiptap-; or pass full "--tiptap-…" names.
 ```
+
+`setTokens` writes onto `document.documentElement`, so it is the page-wide layer (3
+above): every editor follows it, including ones mounted later, and a field's own
+`height` / `maxHeight` config still wins over a `height` / `max-height` token.
 
 ## Targeting parts
 

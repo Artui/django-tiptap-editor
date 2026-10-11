@@ -11,7 +11,11 @@ export interface MergeTag {
 export type EnterKeyMode = "paragraph" | "hardBreak" | "swap";
 
 export interface TipTapConfig {
+  // CSS lengths ("400px", "30rem", "calc(100vh - 12rem)"; no percentages). height
+  // is the editing area's minimum; maxHeight caps it, and the content scrolls
+  // inside the cap under the toolbar. Omit maxHeight to let the editor grow.
   height?: string;
+  maxHeight?: string;
   locale?: string;
   manualMount?: boolean;
   enterKey?: EnterKeyMode;

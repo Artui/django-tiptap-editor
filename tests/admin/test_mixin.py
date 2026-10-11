@@ -6,12 +6,14 @@ from typing import Any
 import pytest
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.widgets import AdminTextareaWidget
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.test import override_settings
 
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
+from django_tiptap_editor.fields.tiptap_json_field import TipTapJSONField
 from django_tiptap_editor.forms.fields import TipTapFormField
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget
 from tests.testapp.models import Article
@@ -253,3 +255,78 @@ def test_check_runs_from_the_admin_site() -> None:
         type("BadAdmin", (TipTapModelAdminMixin, admin.ModelAdmin), {"tiptap_fields": ["nope"]}),
     )
     assert [e.id for e in site.check(None)] == ["django_tiptap_editor.E002"]
+
+
+# A project's own widget, given through ``formfield_overrides`` or ``Meta.widgets``,
+# is the one the admin renders: the mixin used to replace it with a bare
+# ``AdminTipTapWidget``, so a ``height`` (or any config) set there never arrived.
+
+
+def test_a_projects_own_textfield_widget_wins() -> None:
+    overrides = {models.TextField: {"widget": AdminTipTapWidget(config={"height": "200px"})}}
+    form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
+    assert isinstance(form_field.widget, AdminTipTapWidget)
+    assert form_field.widget.get_config({})["height"] == "200px"
+    # Only the widget was the project's, so the field still sanitises.
+    assert isinstance(form_field, TipTapFormField)
+
+
+def test_a_projects_plain_widget_still_gets_the_sanitising_field() -> None:
+    overrides = {models.TextField: {"widget": forms.Textarea}}
+    form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
+    assert type(form_field.widget) is forms.Textarea
+    assert isinstance(form_field, TipTapFormField)
+    assert form_field.clean("<p>x</p><script>alert(1)</script>") == "<p>x</p>"
+
+
+def test_the_admins_own_textarea_default_does_not_stop_the_editor() -> None:
+    # ModelAdmin merges its defaults into formfield_overrides, so TextField always
+    # has an entry naming AdminTextareaWidget. That entry is Django's, not the
+    # project's: read as an override, it would take the editor off every admin.
+    model_admin = _register()
+    assert model_admin.formfield_overrides[models.TextField]["widget"] is AdminTextareaWidget
+    assert isinstance(model_admin.get_form(None).base_fields["body"].widget, AdminTipTapWidget)
+
+
+def test_a_projects_own_json_field_widget_wins() -> None:
+    widget = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON, config={"height": "200px"})
+    overrides = {TipTapJSONField: {"widget": widget}}
+    form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["document"]
+    assert form_field.widget.get_config({})["height"] == "200px"
+    assert form_field.widget.storage == STORAGE_FORMAT_JSON
+
+
+def test_a_json_field_widget_without_json_storage_fails_loudly() -> None:
+    # The mixin uses the project's widget as given, so one left in HTML storage
+    # makes the glue write HTML into a JSON field. docs/api.md says that fails
+    # validation on save rather than storing something else; this holds it.
+    overrides = {TipTapJSONField: {"widget": AdminTipTapWidget(config={"height": "200px"})}}
+    model_admin = _register(formfield_overrides=overrides)
+    rendered = model_admin.get_form(None)()["document"].as_widget()
+    assert 'data-tiptap-storage="html"' in rendered
+    form = _admin_form(model_admin, document="<p>hi</p>")
+    assert not form.is_valid()
+    assert "document" in form.errors
+
+
+def test_a_widget_override_follows_djangos_mro_lookup() -> None:
+    # Django applies the entry of the first class in the field's MRO that has
+    # one. TextField's first entry is the admin's own, so an entry for Field
+    # never reaches it; a TipTapJSONField has no entry of its own, so it does.
+    overrides = {models.Field: {"widget": forms.Textarea}}
+    fields = _register(formfield_overrides=overrides).get_form(None).base_fields
+    assert isinstance(fields["body"].widget, AdminTipTapWidget)
+    assert type(fields["document"].widget) is forms.Textarea
+
+
+def test_a_widget_from_the_forms_meta_wins() -> None:
+    class ArticleForm(forms.ModelForm):
+        class Meta:
+            model = Article
+            fields = "__all__"
+            widgets = {"body": AdminTipTapWidget(config={"height": "200px"})}
+
+    fields = _register(form=ArticleForm).get_form(None).base_fields
+    assert fields["body"].widget.get_config({})["height"] == "200px"
+    assert isinstance(fields["body"], TipTapFormField)
+    assert fields["summary"].widget.get_config({})["height"] == "500px"

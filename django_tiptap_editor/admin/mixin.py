@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
 from django.core import checks
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
@@ -28,7 +29,10 @@ class TipTapModelAdminMixin:
     ``{doc, html}`` envelope still round-trips. A ``TextField`` also gets
     ``TipTapFormField`` as its form class, so what the admin saves is sanitised
     (unless the project gives that field a form class of its own, through
-    ``formfield_overrides`` or ``Meta.field_classes``). ``tiptap_fields`` is ``"__all__"``
+    ``formfield_overrides`` or ``Meta.field_classes``). The admin widget is a
+    default too: a widget the project gives the field, through
+    ``formfield_overrides`` or ``Meta.widgets``, is rendered as given, so its
+    ``config`` (``height`` and the rest) applies. ``tiptap_fields`` is ``"__all__"``
     (every eligible field) or an explicit list of field names. Mix in before
     ``admin.ModelAdmin``.
 
@@ -94,32 +98,63 @@ class TipTapModelAdminMixin:
     def _tiptap_applies(self, db_field: models.Field) -> bool:
         return self.tiptap_fields == "__all__" or db_field.name in self.tiptap_fields
 
-    def _overrides_form_class(self, db_field: models.Field) -> bool:
-        """Whether ``formfield_overrides`` gives this field its own form class.
+    def _override_for(self, db_field: models.Field) -> tuple[type, dict[str, Any]]:
+        """The ``formfield_overrides`` entry Django will apply to this field.
 
         Django applies the entry of the first class in the field's MRO that has
-        one, and merges the kwargs passed here *over* it, so a ``form_class``
-        set here would beat the project's. Checked the same way, so the
-        project's wins.
+        one, and merges the kwargs passed here *over* it, so anything set here
+        would beat the project's. Looked up the same way, so the project's wins.
+        Returns the class the entry belongs to as well, so a caller can tell the
+        admin's own defaults from the project's. ``(object, {})`` when no class
+        has an entry.
         """
         overrides = getattr(self, "formfield_overrides", {})
         for klass in type(db_field).mro():
             if klass in overrides:
-                return "form_class" in overrides[klass]
-        return False
+                return klass, overrides[klass]
+        return object, {}
+
+    def _overrides_form_class(self, db_field: models.Field) -> bool:
+        """Whether ``formfield_overrides`` gives this field its own form class."""
+        return "form_class" in self._override_for(db_field)[1]
+
+    def _overrides_widget(self, db_field: models.Field) -> bool:
+        """Whether ``formfield_overrides`` gives this field a widget of the project's.
+
+        ``ModelAdmin.__init__`` merges ``FORMFIELD_FOR_DBFIELD_DEFAULTS`` into
+        ``formfield_overrides``, so a ``TextField`` always has an entry naming
+        ``AdminTextareaWidget``. That one is the admin's default rather than the
+        project's choice, and is the widget this mixin exists to replace, so an
+        entry whose widget *is* the default reads as no override:
+        ``test_the_admins_own_textarea_default_does_not_stop_the_editor`` fails
+        if the comparison goes.
+        """
+        klass, override = self._override_for(db_field)
+        default = FORMFIELD_FOR_DBFIELD_DEFAULTS.get(klass, {}).get("widget")
+        return override.get("widget", default) is not default
 
     def formfield_for_dbfield(self, db_field: models.Field, request: Any, **kwargs: Any) -> Any:
         if self._tiptap_applies(db_field):
+            # A widget the project chose, in ``formfield_overrides`` or in its
+            # form's ``Meta.widgets`` (which reaches this method as
+            # ``kwargs["widget"]``, hence ``setdefault``), is the one rendered,
+            # config and all. Replacing it is how a ``height`` set there used to
+            # vanish. The admin widget is only the default.
+            own_widget = self._overrides_widget(db_field)
             if isinstance(db_field, TipTapJSONField):
-                # An instance (not the class) so JSON storage is pinned — the
-                # class would resolve storage from settings and could serialize
-                # HTML into a JSON column.
-                kwargs["widget"] = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON)
+                if not own_widget:
+                    # An instance (not the class) so JSON storage is pinned — the
+                    # class would resolve storage from settings and could
+                    # serialize HTML into a JSON column.
+                    kwargs.setdefault("widget", AdminTipTapWidget(storage=STORAGE_FORMAT_JSON))
             elif isinstance(db_field, models.TextField):
-                kwargs["widget"] = AdminTipTapWidget
+                if not own_widget:
+                    kwargs.setdefault("widget", AdminTipTapWidget)
                 # The widget alone left the form field a plain CharField, so the
-                # admin stored a direct POST unsanitised. ``setdefault`` keeps a
-                # ``form_class`` already passed in (``Meta.field_classes``).
+                # admin stored a direct POST unsanitised. Applied whichever widget
+                # renders: a project's own widget is no reason to store its POST
+                # raw. ``setdefault`` keeps a ``form_class`` already passed in
+                # (``Meta.field_classes``).
                 if not self._overrides_form_class(db_field):
                     kwargs.setdefault("form_class", TipTapFormField)
         # super() resolves to admin.ModelAdmin via the consumer's MRO.

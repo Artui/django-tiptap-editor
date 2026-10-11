@@ -1,7 +1,17 @@
 /* Design-token contract (the stable, default theming path). Override any of
-   these via DjangoTipTap.ui.setTokens({...}) or plain CSS on :root. */
-.django-tiptap {
+   these via DjangoTipTap.ui.setTokens({...}), or plain CSS on :root, on
+   .django-tiptap or on any element around an editor.
+
+   The defaults sit on the root and nowhere else, so every editor inherits them.
+   Declared on .django-tiptap they shadowed the root: an element's own
+   declaration beats an inherited value, so a token set on :root, which is
+   where setTokens writes, never reached the editor. :where() makes the selector
+   zero-specificity, so any rule a project writes (:root, html, .django-tiptap)
+   beats the default whichever stylesheet loads last. A field's own height /
+   maxHeight is written inline on its shell and beats all of them. */
+:where(:root) {
   --tiptap-height: 360px;
+  --tiptap-max-height: none;
   --tiptap-font: inherit;
   --tiptap-fg: #1f2329;
   --tiptap-bg: #ffffff;
@@ -13,7 +23,9 @@
   --tiptap-btn-active-bg: #e0e7ff;
   --tiptap-btn-active-fg: #3538cd;
   --tiptap-accent: #3538cd;
+}
 
+.django-tiptap {
   display: flex;
   flex-direction: column;
   position: relative; /* positioning context for floating menus */
@@ -277,9 +289,13 @@
   pointer-events: none;
 }
 
-/* Editing surface */
+/* Editing surface. The content region is the scroller, and maxHeight caps it
+   rather than the shell: the toolbar and statusbar sit outside it and stay in
+   view, the cap measures the same area height does, and source view (appended
+   in here) is capped by the same rule. */
 .django-tiptap__content {
   flex: 1 1 auto;
+  max-height: var(--tiptap-max-height);
   overflow-y: auto;
   display: flex;
   flex-direction: column;

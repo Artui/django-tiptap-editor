@@ -9,7 +9,8 @@ any omitted key.
 
 | Key | Type | Notes |
 | --- | --- | --- |
-| `height` | str | Editor min-height, e.g. `"400px"`. |
+| `height` | str | Minimum height of the editing area, as a [CSS length](#heights): `"400px"`, `"30rem"`. Default `360px` (`500px` in the admin). The editor still grows with its content; cap it with `maxHeight`. |
+| `maxHeight` | str | Maximum height of the editing area, as a [CSS length](#heights): `"600px"`, `"calc(100vh - 12rem)"`. Past it the content scrolls inside the editor and the toolbar stays in view. Default: no cap. |
 | `locale` | str | `"en"` or `"sv"` built in; add more with `registerLocale`. |
 | `manualMount` | bool | Opt the field out of auto-mount (initial scan + observer); mount it yourself after registering renderers. See [Theming → Load order](theming.md#load-order). |
 | `enterKey` | str | Enter / Shift-Enter behaviour **outside lists**: `"paragraph"` (default — Enter splits into a new paragraph, Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"` (exchange the two). Inside a list item Enter always starts the next item and Shift-Enter always breaks the line — see [Extending → The Enter key](extending.md#the-enter-key-built-in). |
@@ -48,6 +49,45 @@ TipTapWidget(
     }
 )
 ```
+
+### Heights
+
+`height` and `maxHeight` size the editing area, the part under the toolbar.
+`height` is a minimum and `maxHeight` a cap: with both set the editor starts at
+`height`, grows as you type, and from `maxHeight` on the content scrolls inside it
+while the toolbar stays put. Source view opens in the same area and keeps the same
+cap.
+
+```python
+TipTapWidget(config={"height": "200px", "maxHeight": "calc(100vh - 12rem)"})
+```
+
+Both take a **CSS length**, and anything else raises `ImproperlyConfigured`
+naming the key and the value:
+
+- a number and a lowercase unit: `px`, `rem`, `em`, `ch`, `ex`, `lh`, the viewport
+  units (`vh`, `vw`, `vmin`, `vmax`, `vi`, `vb` and their `s`/`l`/`d` forms such as
+  `dvh`), container units (`cqh`, `cqw`, ...) and the absolute ones (`cm`, `mm`,
+  `in`, `pt`, `pc`, `q`);
+- or `calc()`, `min()`, `max()` or `clamp()` over those lengths, plain numbers and
+  `+ - * /`, nested if you like: `"min(600px, 80vh)"`.
+
+**Refused**: a bare number (`500`, not a string), a unitless string (`"500"`),
+`"auto"`, `"none"`, keywords such as `"inherit"`, and **percentages**, inside
+`calc()` too. Each of these used to be written into the page and size the editor
+to a single line, because a percentage resolves against a parent that usually has
+no height. `var()`, `url()`, quotes, `;` and `!important` are refused as well: the
+value is only ever arithmetic on lengths. The check is on the tokens, not the
+arithmetic, so a malformed expression such as `"calc(10px + * 2px)"` passes it and
+is ignored by the browser.
+
+Set `None` to drop a value a broader layer gave, for instance a project-wide
+`maxHeight` from `TIPTAP_DEFAULT_CONFIG` on a field that should grow freely. Keep
+`maxHeight` at or above `height`.
+
+The same rule runs in the browser for a config passed to `DjangoTipTap.init()`:
+a value it refuses is reported with `console.error` and the default is kept,
+so one bad field does not stop the rest of the page mounting.
 
 ### Toolbar buttons
 
