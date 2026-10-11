@@ -75,7 +75,9 @@ attribute. A name given in the list form declares no tags and is unaffected.
   a browser reads it: the longest legacy name it starts with, then the rest as text
   (`&lt;img`), or all of it as text when it starts with none (`&amp;bar`). A
   reference with its semicolon, and a legacy one without (`&amp`, `&copy`), comes
-  back as before.
+  back as before. A reference that is the very last thing in the input is the
+  exception on Python 3.10 to 3.13, whose `html.parser` passes it along as text:
+  `x &lt` is stored as `x &amp;lt`, as it was in earlier releases.
 - **A newline at the start of a `pre` no longer disappears on display.** A browser
   drops a newline that comes directly after `<pre>`. In `<pre><font>` followed by a
   newline it is not directly after, so the browser shows it, but `sanitize_html`

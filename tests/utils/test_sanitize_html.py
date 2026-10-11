@@ -395,6 +395,42 @@ def test_a_reference_without_its_semicolon_is_read_as_a_browser_reads_it(
     assert unescape(cleaned) == unescape(html)
 
 
+class _NamedReferences(HTMLParser):
+    """The names this interpreter's html.parser reports as named references."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.names: list[str] = []
+
+    def handle_entityref(self, name: str) -> None:
+        self.names.append(name)
+
+
+def _reports_a_reference_that_ends_the_input() -> bool:
+    """Whether html.parser reports ``&lt`` as a reference when the input ends there."""
+    parser = _NamedReferences()
+    parser.feed("x &lt")
+    parser.close()
+    return parser.names == ["lt"]
+
+
+# The exception the security docs state: Python 3.10 to 3.13 pass a reference
+# that ends the input to handle_data, so it is written as text. Keyed on what
+# the parser does, not on its version number.
+@pytest.mark.parametrize(
+    ("html", "as_a_reference", "as_text"),
+    [
+        ("x &lt", "x &lt;", "x &amp;lt"),
+        ("x &ltimg", "x &lt;img", "x &amp;ltimg"),
+    ],
+)
+def test_a_reference_that_ends_the_input_is_read_as_the_parser_reports_it(
+    html: str, as_a_reference: str, as_text: str
+) -> None:
+    expected = as_a_reference if _reports_a_reference_that_ends_the_input() else as_text
+    assert str(sanitize_html(html)) == expected
+
+
 def test_a_long_reference_name_cleans_in_linear_time() -> None:
     started = time.perf_counter()
     cleaned = str(sanitize_html("<p>&" + "a" * 200_000 + " x</p>"))

@@ -81,7 +81,21 @@ decides what the stored value means:
   it.** A browser reads the longest legacy name the reference starts with and the rest
   as text, or the whole thing as text when it starts with none. So `&ltimg` is stored
   as `&lt;img`, which shows as `<img` before and after, and `&bar` as `&amp;bar`. A
-  reference written with its semicolon is kept as written, known name or not.
+  reference written with its semicolon is kept as written, known name or not. One
+  exception depends on the Python version: on Python 3.10 to 3.13, `html.parser`
+  passes a reference that is the very last thing in the input along as text, so
+  `x &lt` is stored as `x &amp;lt` and shows as `x &lt` rather than `x <`. The
+  editor never writes a field that ends mid-reference.
+- **A character reference the parser leaves unfinished is written as text, which
+  is not how a browser reads it.** A browser reads `&#1a` as `&#1` and then `a`,
+  and parses the markup after it. From Python 3.14, `html.parser` hands such a
+  reference to the sanitiser with the whole rest of the field as its name, and
+  that is written as text rather than read the browser's way, so
+  `<p>&#1a<img src=x onerror=alert(1)></p>` is stored as
+  `<p>&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</p>` and the rest of
+  the field shows as typed. Python 3.10 to 3.13 store the same when no semicolon
+  comes later in the field; where one does, they pass `&#` along as text and
+  parse what follows as markup, filtered as usual.
 - **A newline that becomes the first thing in a `pre` stays visible.** A browser
   drops a newline directly after `<pre>`, whether it is written as a character or as
   a reference (`&#10;`, `&#xA;`, `&NewLine;`). Where one comes first only because
