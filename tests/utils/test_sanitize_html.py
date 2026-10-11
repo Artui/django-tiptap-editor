@@ -534,8 +534,8 @@ def test_unclosed_unknown_and_known_tags_both_end_cleanly() -> None:
 # a sanitiser whose walks step over those, each of these takes many seconds at
 # this size; done in linear time, each takes a fraction of one. The bound is far
 # above the linear figure, so a slow runner does not fail it, and far below the
-# quadratic one. Closing tags are left out on purpose: matching one still scans
-# the open elements, on every field, which is a separate cost and not this one.
+# quadratic one. Closing tags are a cost of their own, on every field, and have
+# their own test below.
 _N = 40_000
 _SLOW_INPUTS = {
     "text-in-unknown-tags": ("<div>x" * _N, ["bold"]),
@@ -551,6 +551,29 @@ _SLOW_INPUTS = {
 @pytest.mark.parametrize(("html", "features"), _SLOW_INPUTS.values(), ids=_SLOW_INPUTS.keys())
 def test_a_restricted_field_cleans_in_linear_time(html: str, features: list[str]) -> None:
     schema = get_html_schema({"features": features})
+    start = time.perf_counter()
+    sanitize_html(html, schema=schema)
+    assert time.perf_counter() - start < 2.5
+
+
+# Inputs that make each end tag pay for every element open below it: unknown tags
+# pile up with no depth limit to stop them, and an end tag that matched nothing
+# (a stray), or matched the innermost element (scanned from the outermost), used
+# to walk all of them. Each takes tens of seconds at this size where every end
+# tag walks the stack, and a fraction of one where it does not. Both kinds of
+# field, because matching an end tag is the same code on each.
+_CLOSING_INPUTS = {
+    "stray-end-tags-after-unknown-tags": "<div>" * _N + "</b>" * _N,
+    "matched-end-tags-after-unknown-tags": "<div>" * _N + "</div>" * _N,
+    "kept-marks-after-unknown-tags": "<div>" * _N + "<strong>x</strong>" * _N,
+    "stray-end-tags-between-unknown-tags": "<div></b>" * _N,
+}
+
+
+@pytest.mark.parametrize("features", [None, ["bold"]], ids=["unrestricted", "restricted"])
+@pytest.mark.parametrize("html", _CLOSING_INPUTS.values(), ids=_CLOSING_INPUTS.keys())
+def test_closing_tags_clean_in_linear_time(html: str, features: list[str] | None) -> None:
+    schema = get_html_schema({"features": features} if features is not None else None)
     start = time.perf_counter()
     sanitize_html(html, schema=schema)
     assert time.perf_counter() - start < 2.5

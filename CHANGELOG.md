@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3.13 were not affected: they pass the reference along as text, and where a
   semicolon comes later in the field they go on to parse what follows as markup,
   which the sanitiser filters as usual.
+- **End tags no longer make `sanitize_html` quadratic.** Each end tag scanned
+  every element open below it, unknown tags included, and a client can open as
+  many unknown tags as it likes, so `"<div>" * 40000 + "</b>" * 40000` took half a
+  minute to clean, on restricted and unrestricted fields alike, and so did a
+  closing `</div>` or `</strong>` under that many unknown tags. A count of the open
+  elements per tag now answers a stray end tag at once, and the search for a match
+  runs down from the innermost element, closing everything it passes, so each
+  element is passed once. The same inputs take a fraction of a second, and the
+  output is unchanged.
 
 ## [0.12.0] — 2026-10-11
 

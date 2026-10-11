@@ -33,6 +33,11 @@ from the middle of either list. What a walk passes over on the chain is kept
 inline tags, which count toward the depth limit, and inline tags a boundary
 suspended, which the next text reopens (and so count toward it again), so no
 walk is longer than that limit.
+
+An end tag does walk the stack, unknown tags included, so that walk is paid for
+differently: a count of open frames per tag says at once whether anything
+matches, and the walk runs down from the top and closes every frame it passes,
+so each frame is passed once however many end tags arrive.
 """
 
 from __future__ import annotations
@@ -152,6 +157,12 @@ class _Sanitizer(HTMLParser):
         # anything else, so it is in this list for exactly as long as it is on
         # the stack, and the two are only ever appended to or cut at the top.
         self.chain: list[_Frame] = []
+        # How many frames of each source tag are on the stack, so an end tag
+        # that matches nothing is known to without a walk. Without it every
+        # stray ``</b>`` walked the whole stack, which unknown tags can make as
+        # deep as a client likes: ``"<div>" * 40000 + "</b>" * 40000`` took half
+        # a minute. ``test_closing_tags_clean_in_linear_time`` holds it.
+        self.open_tags: dict[str, int] = {}
         self.depth = 0
         self.skipping = 0
         # Converted, paragraph and suspended frames are only ever made for a tag
@@ -183,6 +194,7 @@ class _Sanitizer(HTMLParser):
 
     def _push(self, frame: _Frame) -> None:
         self.stack.append(frame)
+        self.open_tags[frame.source] = self.open_tags.get(frame.source, 0) + 1
         if frame.kind != _UNWRAPPED:
             self.chain.append(frame)
 
@@ -190,6 +202,7 @@ class _Sanitizer(HTMLParser):
         """Close and drop ``stack[index:]``, innermost first."""
         for frame in reversed(self.stack[index:]):
             self._close(frame)
+            self.open_tags[frame.source] -= 1
             if frame.kind != _UNWRAPPED:
                 self.chain.pop()
         del self.stack[index:]
@@ -357,13 +370,19 @@ class _Sanitizer(HTMLParser):
             return
         if tag in _VOID_TAGS:
             return
-        opened = [index for index, frame in enumerate(self.stack) if frame.source == tag]
-        if not opened:
+        if not self.open_tags.get(tag):
             # A stray end tag with nothing open to close.
             return
         # Close everything opened inside the innermost match too, so crossed
-        # tags come back nested rather than leaving the output malformed.
-        self._close_from(opened[-1])
+        # tags come back nested rather than leaving the output malformed. The
+        # search runs down from the top, and every frame it passes is closed
+        # with the match, so no frame is ever passed twice: a forward scan from
+        # the bottom made ``"<div>" * 40000 + "</div>" * 40000`` walk the whole
+        # stack once per end tag.
+        index = len(self.stack) - 1
+        while self.stack[index].source != tag:
+            index -= 1
+        self._close_from(index)
 
     def handle_data(self, data: str) -> None:
         # The only guard the skip needs: a dropped element's body is CDATA to
