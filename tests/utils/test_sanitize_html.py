@@ -434,16 +434,16 @@ def test_a_reference_that_ends_the_input_is_read_as_the_parser_reports_it(
 
 
 _T = TypeVar("_T")
-# Every timing bound in this module. The linear figures sit far below it (a
-# third of a second for the closing-tag inputs on Python 3.10) and the quadratic
-# ones far above (15 to 31 seconds at these sizes).
-_BOUND = 2.5
+# Every timing bound in this module. It has to clear the slowest honest run:
+# coverage traces every line on Python 3.10 (3.12 and later use a cheaper hook),
+# which takes the closing-tag inputs from about 0.4 seconds to about 1.3 in a
+# container here and to 2.5 on a CI runner, where a bound of 2.5 failed three
+# cells in a row. The quadratic runs are 15 to 31 seconds at these sizes, untraced.
+_BOUND = 6.0
 # A run longer than the bound but shorter than this is read as the runner
-# stalling, and measured again. A pause on a shared CI runner adds a second or
-# two to whichever run it lands in: one cell once timed two linear cases at 2.51
-# and 2.54 seconds, back to back, where every other cell and every local run
-# took under half a second.
-_STALL = 4 * _BOUND
+# stalling, and measured again. It stays under the fastest quadratic run, so a
+# quadratic sanitiser is never given a second chance.
+_STALL = 12.0
 _ATTEMPTS = 3
 
 
@@ -453,7 +453,7 @@ def _within_bound(run: Callable[[], _T], *, clock: Callable[[], float] = time.pe
     It retries, up to ``_ATTEMPTS`` runs, only a run that is over the bound and
     under ``_STALL``, which is what a stall looks like; any run that passes ends
     it. The retry cannot hide a quadratic sanitiser, for two reasons. A quadratic
-    run is over ``_STALL`` (the slowest of these inputs at 15 seconds, on a
+    run is over ``_STALL`` (the fastest of these inputs takes 15 seconds, on a
     machine faster than a runner), so it fails on its first run, with no retry
     and no wait of three runs. And one that came in under ``_STALL`` would be
     over the bound on every run, where a stall is not, so it still fails.
@@ -501,11 +501,11 @@ def _count_runs(durations: list[float]) -> tuple[int, bool]:
     ("durations", "runs", "passed"),
     [
         pytest.param([0.4], 1, True, id="within-the-bound"),
-        pytest.param([2.6, 0.4], 2, True, id="a-stall-then-a-normal-run"),
-        pytest.param([2.6, 3.0, 0.4], 3, True, id="two-stalls-then-a-normal-run"),
-        pytest.param([2.6, 3.0, 2.7], 3, False, id="over-the-bound-every-time"),
-        pytest.param([15.0], 1, False, id="far-over-the-bound"),
-        pytest.param([2.6, 15.0], 2, False, id="a-stall-then-far-over"),
+        pytest.param([6.5, 0.4], 2, True, id="a-stall-then-a-normal-run"),
+        pytest.param([6.5, 7.0, 0.4], 3, True, id="two-stalls-then-a-normal-run"),
+        pytest.param([6.5, 7.0, 6.8], 3, False, id="over-the-bound-every-time"),
+        pytest.param([30.0], 1, False, id="far-over-the-bound"),
+        pytest.param([6.5, 30.0], 2, False, id="a-stall-then-far-over"),
     ],
 )
 def test_a_timing_bound_retries_a_stall_and_never_a_quadratic(
