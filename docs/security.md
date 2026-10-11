@@ -76,11 +76,12 @@ decides what the stored value means:
   as text, or the whole thing as text when it starts with none. So `&ltimg` is stored
   as `&lt;img`, which shows as `<img` before and after, and `&bar` as `&amp;bar`. A
   reference written with its semicolon is kept as written, known name or not.
-- **A newline that becomes the first thing in a `pre` stays visible.** A browser drops
-  a newline directly after `<pre>`. Where one comes first only because the markup
-  before it was not kept (`<pre><font>` then a newline), a second newline is written
-  ahead of it for the browser to drop. A newline directly after `<pre>` in the posted
-  markup is dropped from both, so nothing is added there.
+- **A newline that becomes the first thing in a `pre` stays visible.** A browser
+  drops a newline directly after `<pre>`, whether it is written as a character or as
+  a reference (`&#10;`, `&#xA;`, `&NewLine;`). Where one comes first only because
+  the markup before it was not kept (`<pre><font>` then a newline), a second newline
+  is written ahead of it for the browser to drop. A newline directly after `<pre>`
+  in the posted markup is dropped from both, so nothing is added there.
 
 ### Per field
 

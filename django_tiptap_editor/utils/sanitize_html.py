@@ -453,24 +453,28 @@ class _Sanitizer(HTMLParser):
         # Whitespace between blocks opens no paragraph: it would be an empty one.
         if data.strip(_HTML_WHITESPACE):
             self._ensure_paragraph()
-        if self.newline_at is not None:
-            # A browser drops a newline (CR LF and CR count, it reads both as
-            # one) that comes first in a <pre>. Where it comes first only
-            # because the markup before it was not kept, it was not first in the
-            # source and the browser kept it there, so one is written ahead of
-            # it to be dropped instead. Each condition is held by a case of
-            # ``test_a_newline_that_becomes_first_in_a_pre_is_kept_visible``:
-            # "after-a-kept-tag" (nothing emitted since), "not-first" (the
-            # newline) and "directly-after-the-start-tag" (where it sat).
-            emitted, source_end = self.newline_at
-            self.newline_at = None
-            if (
-                emitted == len(self.out)
-                and data.startswith(("\n", "\r"))
-                and self.getpos() != source_end
-            ):
-                self.out.append("\n")
+        # CR LF and a lone CR count: a browser reads both as one newline.
+        self._first_in_pre(newline=data.startswith(("\n", "\r")))
         self.out.append(escape_html(data))
+
+    def _first_in_pre(self, *, newline: bool) -> None:
+        """Keep a newline visible that the sanitiser made first in a ``<pre>``.
+
+        Called before text is written. A browser drops a newline that comes
+        first in a ``<pre>``. Where it comes first only because the markup
+        before it was not kept, it was not first in the source and the browser
+        kept it there, so one is written ahead of it to be dropped instead. Each
+        condition is held by a case of
+        ``test_a_newline_that_becomes_first_in_a_pre_is_kept_visible``:
+        "after-a-kept-tag" (nothing emitted since), "not-first" (the newline)
+        and "directly-after-the-start-tag" (where it sat).
+        """
+        if self.newline_at is None:
+            return
+        emitted, source_end = self.newline_at
+        self.newline_at = None
+        if emitted == len(self.out) and newline and self.getpos() != source_end:
+            self.out.append("\n")
 
     def handle_entityref(self, name: str) -> None:
         self._ensure_paragraph()
@@ -482,7 +486,10 @@ class _Sanitizer(HTMLParser):
     def updatepos(self, i: int, j: int) -> int:
         if self.entity is not None:
             name, self.entity = self.entity, None
-            self.out.append(_reference(name, terminated=self.rawdata[j - 1 : j] == ";"))
+            terminated = self.rawdata[j - 1 : j] == ";"
+            # ``&NewLine;`` is the one named newline, and has no legacy form.
+            self._first_in_pre(newline=terminated and name == "NewLine")
+            self.out.append(_reference(name, terminated=terminated))
         return super().updatepos(i, j)
 
     def handle_charref(self, name: str) -> None:
@@ -503,6 +510,13 @@ class _Sanitizer(HTMLParser):
         if not _CHARACTER_REFERENCE_NAME.fullmatch(name):
             self.out.append(escape_html(f"&#{name}"))
             return
+        # A newline written as ``&#10;`` or ``&#xA;``, leading zeros allowed.
+        # Compared as text: ``int`` refuses a number of a few thousand digits.
+        if name[:1] in "xX":
+            newline = name[1:].lstrip("0").lower() == "a"
+        else:
+            newline = name.lstrip("0") == "10"
+        self._first_in_pre(newline=newline)
         self.out.append(f"&#{name};")
 
     def result(self) -> str:

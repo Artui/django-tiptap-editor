@@ -414,6 +414,18 @@ _PRE_NEWLINES = {
         '<pre\nclass="a"><font>\nx</font></pre>',
         "<pre>\n\nx</pre>",
     ),
+    # A newline written as a reference is dropped the same way; a carriage
+    # return written as one is not a newline to the browser.
+    "a-reference-after-an-unknown-tag": ("<pre><font>&#10;x</font></pre>", "<pre>\n&#10;x</pre>"),
+    "a-hex-reference": ("<pre><font>&#x0A;x</font></pre>", "<pre>\n&#x0A;x</pre>"),
+    "a-named-reference": ("<pre><font>&NewLine;x</font></pre>", "<pre>\n&NewLine;x</pre>"),
+    "a-reference-directly-after-the-start-tag": ("<pre>&#10;x</pre>", "<pre>&#10;x</pre>"),
+    # Without its semicolon the name is text, not a newline.
+    "an-unterminated-named-reference": (
+        "<pre><font>&NewLine x</font></pre>",
+        "<pre>&amp;NewLine x</pre>",
+    ),
+    "a-carriage-return-reference": ("<pre><font>&#13;x</font></pre>", "<pre>&#13;x</pre>"),
     # Directly after the start tag the browser drops it from the posted markup
     # and the stored one alike, so nothing is added.
     "directly-after-the-start-tag": ("<pre>\nx</pre>", "<pre>\nx</pre>"),

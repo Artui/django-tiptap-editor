@@ -64,12 +64,13 @@ attribute. A name given in the list form declares no tags and is unaffected.
   reference with its semicolon, and a legacy one without (`&amp`, `&copy`), comes
   back as before.
 - **A newline at the start of a `pre` no longer disappears on display.** A browser
-  drops a newline that comes directly after `<pre>`. In `<pre><font>` followed by
-  a newline it is not directly after, so the browser shows it, but `sanitize_html`
+  drops a newline that comes directly after `<pre>`. In `<pre><font>` followed by a
+  newline it is not directly after, so the browser shows it, but `sanitize_html`
   unwraps the `font` and the stored `<pre>` began with the newline, which the
-  browser then dropped. A second newline is now written ahead of it in that case.
-  A newline directly after `<pre>` in the posted markup is dropped by the browser
-  from both, and is left as it was.
+  browser then dropped. A second newline is now written ahead of it in that case,
+  and ahead of a newline written as a reference (`&#10;`, `&NewLine;`), which the
+  browser drops the same way. A newline directly after `<pre>` in the posted markup
+  is dropped by the browser from both, and is left as it was.
 
 ## [0.12.0] — 2026-10-11
 
