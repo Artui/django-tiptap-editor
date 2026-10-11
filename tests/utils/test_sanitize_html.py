@@ -14,7 +14,7 @@ from django_tiptap_editor.constants import EXTENSION_HTML_VOCABULARY, MAX_DOCUME
 from django_tiptap_editor.types.html_schema import HtmlSchema
 from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.render_doc import render_doc
-from django_tiptap_editor.utils.sanitize_html import sanitize_html
+from django_tiptap_editor.utils.sanitize_html import _Sanitizer, sanitize_html
 
 # ---------------------------------------------------------------------------
 # Round-trip fidelity.
@@ -365,6 +365,98 @@ def test_stray_end_tag_is_ignored() -> None:
 
 def test_comment_is_dropped() -> None:
     assert str(sanitize_html("<p>a<!-- note -->b</p>")) == "<p>ab</p>"
+
+
+# From Python 3.14, html.parser hands a character reference left unfinished at
+# the end of the input to handle_charref with everything after "&#" as its
+# name, markup included; earlier versions pass it to handle_data as text. On
+# 3.14 a decimal reference running into a hex letter is unfinished wherever it
+# sits. With no semicolon later in the input, every version gives these.
+_UNFINISHED_CHARACTER_REFERENCES = {
+    "digits-then-a-hex-letter": (
+        "<p>&#1a<img src=x onerror=alert(1)></p>",
+        "<p>&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</p>",
+    ),
+    "an-uppercase-hex-letter": (
+        '<p>&#9F<a href="javascript:x">y</a></p>',
+        '<p>&amp;#9F&lt;a href="javascript:x"&gt;y&lt;/a&gt;&lt;/p&gt;</p>',
+    ),
+    "after-a-finished-paragraph": (
+        "<p>a</p><p>&#12e<b onclick=x>y</b></p>",
+        "<p>a</p><p>&amp;#12e&lt;b onclick=x&gt;y&lt;/b&gt;&lt;/p&gt;</p>",
+    ),
+    "at-the-end-of-the-input": ("<p>x &#1a", "<p>x &amp;#1a</p>"),
+}
+
+
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    _UNFINISHED_CHARACTER_REFERENCES.values(),
+    ids=_UNFINISHED_CHARACTER_REFERENCES.keys(),
+)
+def test_an_unfinished_character_reference_is_written_as_text(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
+class _CharacterReferences(HTMLParser):
+    """The names this interpreter's html.parser reports as character references."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.names: list[str] = []
+
+    def handle_charref(self, name: str) -> None:
+        self.names.append(name)
+
+
+def _reports_the_rest_as_a_reference() -> bool:
+    """Whether html.parser hands ``&#1a`` the rest of the input as its name."""
+    parser = _CharacterReferences()
+    parser.feed("&#1a<b>;")
+    parser.close()
+    return parser.names == ["1a<b>;"]
+
+
+# With a semicolon later in the input, Python 3.10 to 3.13 pass "&#" along as
+# text and parse what follows as markup, which is filtered as usual; a parser
+# that hands the rest over as the reference's name gets it written as text.
+# Keyed on what the parser does, not on its version number.
+def test_an_unfinished_character_reference_before_a_semicolon_lets_no_markup_through() -> None:
+    cleaned = str(sanitize_html("<p>&#1a<strong onclick=x>x</strong>;</p>"))
+    if _reports_the_rest_as_a_reference():
+        assert cleaned == "<p>&amp;#1a&lt;strong onclick=x&gt;x&lt;/strong&gt;;&lt;/p&gt;</p>"
+    else:
+        assert cleaned == "<p>&amp;#1a<strong>x</strong>;</p>"
+
+
+# The same rule at the handler, which no interpreter before 3.14 reaches
+# through the parser: a name that is not a reference's is written as text.
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("1a<b onclick=x>", "&amp;#1a&lt;b onclick=x&gt;"),
+        ("1a", "&amp;#1a"),
+        ("x", "&amp;#x"),
+        ("", "&amp;#"),
+        ("12 ", "&amp;#12 "),
+        ("10", "&#10;"),
+        ("X0a", "&#X0a;"),
+    ],
+)
+def test_the_character_reference_handler_writes_any_other_name_as_text(
+    name: str, expected: str
+) -> None:
+    sanitizer = _Sanitizer(get_html_schema())
+    sanitizer.handle_charref(name)
+    assert sanitizer.result() == expected
+
+
+# html.parser only ever hands handle_entityref a name of letters and digits,
+# on every version; markup in one must still come out as text.
+def test_the_named_reference_handler_cannot_write_markup() -> None:
+    sanitizer = _Sanitizer(get_html_schema())
+    sanitizer.handle_entityref("a<b onclick=x>")
+    assert sanitizer.result() == "&a&lt;b onclick=x&gt;;"
 
 
 def test_valueless_attribute_is_kept_bare() -> None:

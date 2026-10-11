@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **On Python 3.14, an unfinished character reference no longer lets markup
+  through `sanitize_html`.** From 3.14, `html.parser` hands a numeric reference
+  left unfinished at the end of the input to the sanitiser as a reference whose
+  name is the whole rest of the document, and a decimal reference running into a
+  hex letter, such as `&#1a`, counts as unfinished wherever it sits. The
+  sanitiser wrote that name out as it came, so
+  `<p>&#1a<img src=x onerror=alert(1)></p>` was stored and rendered with the
+  event handler intact, on the form path and through the `tiptap_html` filter.
+  A name that is not a reference's is now written as text, so on 3.14 the rest of
+  the field is stored as visible text rather than markup:
+  `<p>&amp;#1a&lt;img src=x onerror=alert(1)&gt;&lt;/p&gt;</p>`. Python 3.10 to
+  3.13 were not affected: they pass the reference along as text, and where a
+  semicolon comes later in the field they go on to parse what follows as markup,
+  which the sanitiser filters as usual.
+
 ## [0.12.0] — 2026-10-11
 
 ### Upgrade note — the admin renders a TipTap widget you configured

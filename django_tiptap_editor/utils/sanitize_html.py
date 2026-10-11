@@ -37,6 +37,7 @@ walk is longer than that limit.
 
 from __future__ import annotations
 
+import re
 from html.parser import HTMLParser
 
 from django.core.exceptions import ValidationError
@@ -103,6 +104,9 @@ _TEXTBLOCK_TAGS = frozenset({"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"})
 # HTML's whitespace, which is all a text node between two blocks holds. Narrower
 # than str.strip(), which would also take a non-breaking space for nothing.
 _HTML_WHITESPACE = " \t\n\r\f"
+
+# A character reference's name, decimal or hex, as html.parser reads one.
+_CHARACTER_REFERENCE_NAME = re.compile(r"[0-9]+|[xX][0-9a-fA-F]+")
 
 # What a stack frame is. KEPT is emitted and open; UNWRAPPED was never emitted;
 # CONVERTED is a paragraph boundary, emitting nothing itself, inside which text
@@ -374,10 +378,30 @@ class _Sanitizer(HTMLParser):
 
     def handle_entityref(self, name: str) -> None:
         self._ensure_paragraph()
-        self.out.append(f"&{name};")
+        # html.parser hands this letters and digits only, the remainder of the
+        # input included when Python 3.14 reaches its end mid-reference, so the
+        # escape changes nothing today. It is there so a parser that ever passes
+        # more cannot write markup: ``test_the_named_reference_handler_cannot_write_markup``.
+        self.out.append(f"&{escape_html(name)};")
 
     def handle_charref(self, name: str) -> None:
         self._ensure_paragraph()
+        # From Python 3.14, a character reference left unfinished at the end of
+        # the input reaches here with everything after ``&#`` as its name, the
+        # rest of the document included, where earlier versions pass it to
+        # ``handle_data`` as text. ``&#1a`` is unfinished wherever it sits: the
+        # parser holds the rest back as possibly more of the reference, then
+        # hands all of it over on close. Writing that name as a reference would
+        # pass the markup after it through unsanitised, so a name that is not a
+        # reference's is written as the text it is. A browser would read ``&#1``
+        # and parse the markup after it; text is the safe reading of what the
+        # parser no longer separates, not the browser's.
+        # ``test_an_unfinished_character_reference_is_written_as_text`` holds
+        # it on 3.14, and ``test_the_character_reference_handler_writes_any_other_name_as_text``
+        # on every version.
+        if not _CHARACTER_REFERENCE_NAME.fullmatch(name):
+            self.out.append(escape_html(f"&#{name}"))
+            return
         self.out.append(f"&#{name};")
 
     def result(self) -> str:
