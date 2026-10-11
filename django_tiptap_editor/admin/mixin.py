@@ -203,13 +203,8 @@ class TipTapModelAdminMixin:
         for db_field in self.model._meta.get_fields():
             # The type check is held by ``test_check_passes_an_html_widget_on_a_text_field``
             # (HTML is right for a TextField), the scope check by
-            # ``test_check_ignores_widgets_the_mixin_does_not_use``, the reach
-            # check by ``test_check_skips_a_field_whose_override_widget_never_renders``.
-            if (
-                not isinstance(db_field, TipTapJSONField)
-                or not self._tiptap_applies(db_field)
-                or not self._override_widget_renders(db_field.name)
-            ):
+            # ``test_check_ignores_widgets_the_mixin_does_not_use``.
+            if not isinstance(db_field, TipTapJSONField) or not self._tiptap_applies(db_field):
                 continue
             try:
                 widget = self._overriding_widget(db_field)
@@ -223,9 +218,20 @@ class TipTapModelAdminMixin:
             # AttributeError (``test_check_ignores_widgets_the_mixin_does_not_use``);
             # without the storage check every TipTap widget is flagged
             # (``test_check_passes_a_json_field_widget_in_json_storage``).
-            if widget is not None and (widget.storage or get_storage_format()) != (
-                STORAGE_FORMAT_JSON
-            ):
+            if widget is None or (widget.storage or get_storage_format()) == STORAGE_FORMAT_JSON:
+                continue
+            # Read only once there is something to warn of, and tolerantly:
+            # Django's own checks report a malformed ``fieldsets``, ``fields``,
+            # ``exclude`` or ``readonly_fields`` and carry on to this one, which
+            # must not turn their error into a traceback
+            # (``test_a_malformed_admin_gets_djangos_error_not_a_traceback``).
+            # The reach check itself is held by
+            # ``test_check_skips_a_field_whose_override_widget_never_renders``.
+            try:
+                renders = self._override_widget_renders(db_field.name)
+            except (AttributeError, KeyError, TypeError, ValueError):
+                continue
+            if renders:
                 warnings.append(
                     checks.Warning(
                         f"The widget formfield_overrides gives '{db_field.name}', a "

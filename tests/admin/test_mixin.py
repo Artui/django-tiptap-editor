@@ -503,9 +503,19 @@ _WIDGET_STILL_RENDERS = {
             },
         )
     },
+    "declared_field_for_another_field": {
+        "form": type(
+            "F",
+            (forms.ModelForm,),
+            {
+                "title": forms.CharField(),
+                "Meta": type("Meta", (), {"model": Article, "fields": "__all__"}),
+            },
+        )
+    },
     "readonly_fields": {"readonly_fields": ("title",)},
     "exclude": {"exclude": ("summary",)},
-    "fields": {"fields": ("title", "body", "document")},
+    "fields": {"fields": ("title", ("body", "document"))},
     "fieldsets": {"fieldsets": ((None, {"fields": ("title", ("body", "document"))}),)},
 }
 
@@ -513,6 +523,25 @@ _WIDGET_STILL_RENDERS = {
 @pytest.mark.parametrize("attrs", _WIDGET_STILL_RENDERS.values(), ids=_WIDGET_STILL_RENDERS)
 def test_check_still_warns_when_the_field_renders(attrs: dict[str, Any]) -> None:
     assert len(_w001(formfield_overrides=_HTML_WIDGET_ON_JSON, **attrs)) == 1
+
+
+@pytest.mark.parametrize(
+    ("attrs", "expected"),
+    [
+        ({"fieldsets": ((None, {}),)}, "admin.E011"),
+        ({"fieldsets": (("only a name",),)}, "admin.E009"),
+        ({"readonly_fields": 3}, "admin.E034"),
+        ({"exclude": 3}, "admin.E014"),
+    ],
+)
+@pytest.mark.parametrize("overrides", [{}, _HTML_WIDGET_ON_JSON])
+def test_a_malformed_admin_gets_djangos_error_not_a_traceback(
+    attrs: dict[str, Any], expected: str, overrides: dict[Any, Any]
+) -> None:
+    # Django's own checks report a malformed attribute and carry on, so this
+    # check runs on it too, and must not raise reading it.
+    ids = [e.id for e in _register(formfield_overrides=overrides, **attrs).check()]
+    assert expected in ids
 
 
 class _NeedsAnArgument(AdminTipTapWidget):
