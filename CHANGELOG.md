@@ -17,16 +17,15 @@ each of which was silently ignored before:
   storage.** It used to be replaced, so its storage never mattered. Rendered as
   given, one in HTML storage writes HTML into a field that parses a JSON envelope,
   and every save fails. A new startup check, `django_tiptap_editor.E004`, reports it
-  on the admin class; pass `storage="json"` to the widget (or set
-  `TIPTAP_STORAGE_FORMAT = "json"` project-wide).
+  on the admin class; pass `storage="json"` to the widget.
 - **Only a TipTap widget in `formfield_overrides` is honoured.** An entry there is
   class-wide, so a non-TipTap widget on `models.TextField` (a smaller `Textarea`
   for the fields the mixin leaves alone, say) is still replaced by the editor on
-  the fields the mixin applies to, as before. A TipTap widget there, an
-  `AdminTipTapWidget` subclass or instance, now applies to every such field. A
+  the fields the mixin applies to, as before. A TipTap widget there, a
+  `TipTapWidget` subclass or an instance of one, now applies to every such field. A
   form's `Meta.widgets` names one field, and any widget given there is rendered,
   TipTap or not.
-- **`height` and `maxHeight` must be CSS lengths**, and a value that was accepted
+- **`height` and `maxHeight` must be CSS lengths**, and a `height` that was accepted
   before now raises `ImproperlyConfigured` when the widget renders: an integer
   (`500`, which the editor read as no height at all), a `var()` reference, and a
   percentage, whether plain or inside `calc()`. Write `"500px"`, set the
@@ -118,9 +117,8 @@ each of which was silently ignored before:
   has none, as in the admin and most forms, it collapsed the editor the same way,
   and where it has one it rendered. `height` and `maxHeight` now take a number with
   a CSS length unit, or `calc()` / `min()` / `max()` / `clamp()` over such lengths;
-  anything else, percentages and `var()` references included, raises
-  `ImproperlyConfigured` naming the key and the value (the upgrade note above lists
-  what to write instead). The browser runs the same rule on a config passed to
+  anything else raises `ImproperlyConfigured` naming the key and the value (the
+  upgrade note above lists what newly raises and what to write instead). The browser runs the same rule on a config passed to
   `DjangoTipTap.init()`, reporting a refused value with `console.error` and keeping
   the default. Both sides are held to one table of accepted and refused values,
   and both read an empty string as unset.
