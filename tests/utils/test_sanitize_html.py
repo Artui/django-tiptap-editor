@@ -418,6 +418,8 @@ _PRE_NEWLINES = {
     # return written as one is not a newline to the browser.
     "a-reference-after-an-unknown-tag": ("<pre><font>&#10;x</font></pre>", "<pre>\n&#10;x</pre>"),
     "a-hex-reference": ("<pre><font>&#x0A;x</font></pre>", "<pre>\n&#x0A;x</pre>"),
+    "an-uppercase-hex-reference": ("<pre><font>&#X0A;x</font></pre>", "<pre>\n&#X0A;x</pre>"),
+    "a-reference-with-leading-zeros": ("<pre><font>&#010;x</font></pre>", "<pre>\n&#010;x</pre>"),
     "a-named-reference": ("<pre><font>&NewLine;x</font></pre>", "<pre>\n&NewLine;x</pre>"),
     "a-reference-directly-after-the-start-tag": ("<pre>&#10;x</pre>", "<pre>&#10;x</pre>"),
     # Without its semicolon the name is text, not a newline.
@@ -444,6 +446,17 @@ _PRE_NEWLINES = {
 @pytest.mark.parametrize(("html", "expected"), _PRE_NEWLINES.values(), ids=_PRE_NEWLINES.keys())
 def test_a_newline_that_becomes_first_in_a_pre_is_kept_visible(html: str, expected: str) -> None:
     assert str(sanitize_html(html)) == expected
+
+
+# A browser drops a leading newline from a <listing> as from a <pre>. No
+# built-in extension emits one, but a custom extension may declare it.
+@override_settings(TIPTAP_EXTRA_EXTENSIONS={"listing": {"listing": {}}})
+def test_a_newline_that_becomes_first_in_a_declared_listing_is_kept_visible() -> None:
+    schema = get_html_schema()
+    assert str(sanitize_html("<listing><font>\nx</font></listing>", schema=schema)) == (
+        "<listing>\n\nx</listing>"
+    )
+    assert str(sanitize_html("<listing>\nx</listing>", schema=schema)) == "<listing>\nx</listing>"
 
 
 def test_style_property_outside_the_allowlist_is_dropped() -> None:

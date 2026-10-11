@@ -108,7 +108,10 @@ _BLOCK_TAGS = PARAGRAPH_BLOCK_TAGS | {
 _TEXTBLOCK_TAGS = frozenset({"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"})
 
 # Elements a browser drops a newline from when it comes first in them.
-# ``textarea`` is the third, and it is never kept.
+# ``textarea`` is the third, and it is never kept. No built-in extension emits
+# ``listing``; a custom one may declare it, and
+# ``test_a_newline_that_becomes_first_in_a_declared_listing_is_kept_visible``
+# holds it here.
 _LEADING_NEWLINE_TAGS = frozenset({"pre", "listing"})
 
 # HTML's whitespace, which is all a text node between two blocks holds. Narrower
@@ -519,8 +522,9 @@ class _Sanitizer(HTMLParser):
         # A newline written as ``&#10;`` or ``&#xA;``, leading zeros allowed.
         # Compared as text: ``int`` refuses a number of a few thousand digits.
         # "a-hex-reference" and "a-hex-reference-to-another-character" hold the
-        # hex test, "a-reference-after-an-unknown-tag" and
-        # "a-carriage-return-reference" the decimal one.
+        # hex test and "an-uppercase-hex-reference" its capital X;
+        # "a-reference-after-an-unknown-tag" and "a-carriage-return-reference"
+        # the decimal one, and "a-reference-with-leading-zeros" its zeros.
         if name[:1] in "xX":
             newline = name[1:].lstrip("0").lower() == "a"
         else:
