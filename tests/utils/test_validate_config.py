@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
+from django_tiptap_editor import constants
 from django_tiptap_editor.utils.validate_config import validate_config
 
 
@@ -150,3 +154,68 @@ def test_an_unknown_feature_name_raises_naming_it_and_the_allowed_set() -> None:
 def test_a_custom_extension_is_not_a_feature() -> None:
     with pytest.raises(ImproperlyConfigured, match=r"Unknown TipTap feature\(s\): \['callout'\]"):
         validate_config({"features": ["callout"], "extensions": ["callout"]})
+
+
+# ``height`` and ``maxHeight`` become a CSS custom property the editor sizes
+# itself with. A value that is not a length (a number, "auto", a percentage of a
+# parent with no height) used to be accepted and collapse the editor to its
+# toolbar. The table is shared with the JS suite, which runs the same cases
+# through init(), so the two sides cannot disagree about what a length is.
+_LENGTHS = json.loads(
+    (
+        Path(__file__).resolve().parents[2] / "js" / "test" / "fixtures" / "css-lengths.json"
+    ).read_text(encoding="utf-8")
+)
+
+
+def test_the_length_tables_units_are_the_validators() -> None:
+    assert _LENGTHS["units"] == sorted(constants.CSS_LENGTH_UNITS)
+
+
+@pytest.mark.parametrize("unit", _LENGTHS["units"])
+def test_a_length_in_every_unit_is_accepted(unit: str) -> None:
+    for value in (f"10{unit}", f"calc(100vh - 10{unit})"):
+        assert validate_config({"height": value}) == {"height": value}
+
+
+@pytest.mark.parametrize("key", ["height", "maxHeight"])
+@pytest.mark.parametrize("value", _LENGTHS["accepted"])
+def test_a_css_length_is_accepted(key: str, value: str) -> None:
+    assert validate_config({key: value}) == {key: value}
+
+
+@pytest.mark.parametrize("key", ["height", "maxHeight"])
+@pytest.mark.parametrize("value", _LENGTHS["rejected"])
+def test_a_string_that_is_not_a_css_length_raises(key: str, value: str) -> None:
+    with pytest.raises(ImproperlyConfigured) as raised:
+        validate_config({key: value})
+    # The message names the key and the value, so the setting is findable.
+    assert f"TipTap {key} must be a CSS length" in str(raised.value)
+    assert repr(value) in str(raised.value)
+
+
+@pytest.mark.parametrize("key", ["height", "maxHeight"])
+@pytest.mark.parametrize("value", [500, 1.5, True, ["500px"], {"min": "1px"}])
+def test_a_height_that_is_not_a_string_raises(key: str, value: object) -> None:
+    with pytest.raises(ImproperlyConfigured, match=rf"TipTap {key} must be a CSS length"):
+        validate_config({key: value})
+
+
+@pytest.mark.parametrize("key", ["height", "maxHeight"])
+@pytest.mark.parametrize("value", [None, ""])
+def test_a_none_or_empty_height_reads_as_omitted(key: str, value: str | None) -> None:
+    # How a field drops a project-wide maxHeight: None over the default. An
+    # empty string has always meant the same in the browser (the glue skips a
+    # falsy value), and was accepted here before the length rule existed, so it
+    # stays a way of saying "unset" rather than becoming an error.
+    assert validate_config({key: value}) == {key: value}
+
+
+def test_the_ascii_flag_keeps_non_ascii_letters_out_of_function_names() -> None:
+    # Under a Unicode IGNORECASE, "i" also matches the dotless and dotted
+    # capital I, so these read as min() here while the browser and the JS side
+    # (whose /i flag never folds non-ASCII onto ASCII) refuse them. They are in
+    # the shared table too; this names the reason.
+    for value in ("mın(10px, 20px)", "MİN(10px, 20px)"):
+        with pytest.raises(ImproperlyConfigured, match="must be a CSS length"):
+            validate_config({"height": value})

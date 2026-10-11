@@ -56,7 +56,10 @@ class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
 ```
 
 Every `TextField` becomes a TipTap editor. To limit which fields, set
-`tiptap_fields = ["body"]`. The admin always uses the self-contained bundle.
+`tiptap_fields = ["body"]`. To size or configure those editors, give the fields your own
+`AdminTipTapWidget(config={...})` in `formfield_overrides`; the mixin renders it as given
+(see [the mixin's reference](api.md#tiptapmodeladminmixin)). The admin always uses the
+self-contained bundle.
 
 ## Dynamic forms (htmx, Turbo, admin inlines)
 
