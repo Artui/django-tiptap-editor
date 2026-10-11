@@ -200,7 +200,10 @@ class _Sanitizer(HTMLParser):
         # that matches nothing is known to without a walk. Without it every
         # stray ``</b>`` walked the whole stack, which unknown tags can make as
         # deep as a client likes: ``"<div>" * 40000 + "</b>" * 40000`` took half
-        # a minute. ``test_closing_tags_clean_in_linear_time`` holds it.
+        # a minute. ``test_closing_tags_clean_in_linear_time`` holds it, and
+        # ``test_an_end_tag_for_an_element_already_closed_is_ignored`` holds the
+        # count going down as frames close: left up, a second ``</strong>``
+        # would search for a frame that is gone and fail.
         self.open_tags: dict[str, int] = {}
         self.depth = 0
         self.skipping = 0

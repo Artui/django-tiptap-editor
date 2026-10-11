@@ -464,6 +464,20 @@ def test_unbalanced_markup_is_closed() -> None:
     assert str(sanitize_html("<p><em>a<strong>b</p>")) == "<p><em>a<strong>b</strong></em></p>"
 
 
+# An end tag for an element already closed matches nothing still open. Each
+# case closes the element and then closes it again.
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        ("<p><strong>x</strong></strong></p>", "<p><strong>x</strong></p>"),
+        ("<p><em>a</em>b</em></p>", "<p><em>a</em>b</p>"),
+        ("<p><font>a</font>b</font></p>", "<p>ab</p>"),
+    ],
+)
+def test_an_end_tag_for_an_element_already_closed_is_ignored(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
 def test_stray_end_tag_is_ignored() -> None:
     assert str(sanitize_html("</p>stray")) == "stray"
 
