@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Callable
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import TypeVar
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -431,10 +433,89 @@ def test_a_reference_that_ends_the_input_is_read_as_the_parser_reports_it(
     assert str(sanitize_html(html)) == expected
 
 
+_T = TypeVar("_T")
+# Every timing bound in this module. The linear figures sit far below it (a
+# third of a second for the closing-tag inputs on Python 3.10) and the quadratic
+# ones far above (15 to 31 seconds at these sizes).
+_BOUND = 2.5
+# A run longer than the bound but shorter than this is read as the runner
+# stalling, and measured again. A pause on a shared CI runner adds a second or
+# two to whichever run it lands in: one cell once timed two linear cases at 2.51
+# and 2.54 seconds, back to back, where every other cell and every local run
+# took under half a second.
+_STALL = 4 * _BOUND
+_ATTEMPTS = 3
+
+
+def _within_bound(run: Callable[[], _T], *, clock: Callable[[], float] = time.perf_counter) -> _T:
+    """Run ``run`` and fail unless it finishes within ``_BOUND`` seconds.
+
+    It retries, up to ``_ATTEMPTS`` runs, only a run that is over the bound and
+    under ``_STALL``, which is what a stall looks like; any run that passes ends
+    it. The retry cannot hide a quadratic sanitiser, for two reasons. A quadratic
+    run is over ``_STALL`` (the slowest of these inputs at 15 seconds, on a
+    machine faster than a runner), so it fails on its first run, with no retry
+    and no wait of three runs. And one that came in under ``_STALL`` would be
+    over the bound on every run, where a stall is not, so it still fails.
+    ``test_a_timing_bound_retries_a_stall_and_never_a_quadratic`` holds each half.
+    """
+    for _ in range(_ATTEMPTS):
+        started = clock()
+        result = run()
+        elapsed = clock() - started
+        if elapsed < _BOUND:
+            return result
+        if elapsed >= _STALL:
+            break
+    pytest.fail(f"took {elapsed:.2f} s against a bound of {_BOUND} s")
+
+
+class _Clock:
+    """A clock that reads each run as taking the next of ``durations``."""
+
+    def __init__(self, durations: list[float]) -> None:
+        self.durations = durations
+        self.now = 0.0
+        self.reads = 0
+
+    def __call__(self) -> float:
+        # Called once before a run and once after it.
+        if self.reads % 2:
+            # The last duration repeats, so a run too many is counted, not raised.
+            self.now += self.durations[min(self.reads // 2, len(self.durations) - 1)]
+        self.reads += 1
+        return self.now
+
+
+def _count_runs(durations: list[float]) -> tuple[int, bool]:
+    """How many runs ``_within_bound`` makes over ``durations``, and whether it passed."""
+    runs = []
+    try:
+        _within_bound(lambda: runs.append(1), clock=_Clock(durations))
+    except pytest.fail.Exception:
+        return len(runs), False
+    return len(runs), True
+
+
+@pytest.mark.parametrize(
+    ("durations", "runs", "passed"),
+    [
+        pytest.param([0.4], 1, True, id="within-the-bound"),
+        pytest.param([2.6, 0.4], 2, True, id="a-stall-then-a-normal-run"),
+        pytest.param([2.6, 3.0, 0.4], 3, True, id="two-stalls-then-a-normal-run"),
+        pytest.param([2.6, 3.0, 2.7], 3, False, id="over-the-bound-every-time"),
+        pytest.param([15.0], 1, False, id="far-over-the-bound"),
+        pytest.param([2.6, 15.0], 2, False, id="a-stall-then-far-over"),
+    ],
+)
+def test_a_timing_bound_retries_a_stall_and_never_a_quadratic(
+    durations: list[float], runs: int, passed: bool
+) -> None:
+    assert _count_runs(durations) == (runs, passed)
+
+
 def test_a_long_reference_name_cleans_in_linear_time() -> None:
-    started = time.perf_counter()
-    cleaned = str(sanitize_html("<p>&" + "a" * 200_000 + " x</p>"))
-    assert time.perf_counter() - started < 2.5
+    cleaned = str(_within_bound(lambda: sanitize_html("<p>&" + "a" * 200_000 + " x</p>")))
     assert cleaned == "<p>&amp;" + "a" * 200_000 + " x</p>"
 
 
@@ -725,9 +806,7 @@ _SLOW_INPUTS = {
 @pytest.mark.parametrize(("html", "features"), _SLOW_INPUTS.values(), ids=_SLOW_INPUTS.keys())
 def test_a_restricted_field_cleans_in_linear_time(html: str, features: list[str]) -> None:
     schema = get_html_schema({"features": features})
-    start = time.perf_counter()
-    sanitize_html(html, schema=schema)
-    assert time.perf_counter() - start < 2.5
+    _within_bound(lambda: sanitize_html(html, schema=schema))
 
 
 # Inputs that make each end tag pay for every element open below it: unknown tags
@@ -748,6 +827,4 @@ _CLOSING_INPUTS = {
 @pytest.mark.parametrize("html", _CLOSING_INPUTS.values(), ids=_CLOSING_INPUTS.keys())
 def test_closing_tags_clean_in_linear_time(html: str, features: list[str] | None) -> None:
     schema = get_html_schema({"features": features} if features is not None else None)
-    start = time.perf_counter()
-    sanitize_html(html, schema=schema)
-    assert time.perf_counter() - start < 2.5
+    _within_bound(lambda: sanitize_html(html, schema=schema))
