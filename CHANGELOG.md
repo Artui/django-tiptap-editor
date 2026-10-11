@@ -46,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`&lt;img`), or all of it as text when it starts with none (`&amp;bar`). A
   reference with its semicolon, and a legacy one without (`&amp`, `&copy`), comes
   back as before.
+- **A newline at the start of a `pre` no longer disappears on display.** A browser
+  drops a newline that comes directly after `<pre>`. In `<pre><font>` followed by
+  a newline it is not directly after, so the browser shows it, but `sanitize_html`
+  unwraps the `font` and the stored `<pre>` began with the newline, which the
+  browser then dropped. A second newline is now written ahead of it in that case.
+  A newline directly after `<pre>` in the posted markup is dropped by the browser
+  from both, and is left as it was.
 
 ## [0.12.0] — 2026-10-11
 

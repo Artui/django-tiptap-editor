@@ -107,6 +107,10 @@ _BLOCK_TAGS = PARAGRAPH_BLOCK_TAGS | {
 # closed there, and what follows it inside becomes paragraphs of its own.
 _TEXTBLOCK_TAGS = frozenset({"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"})
 
+# Elements a browser drops a newline from when it comes first in them.
+# ``textarea`` is the third, and it is never kept.
+_LEADING_NEWLINE_TAGS = frozenset({"pre", "listing"})
+
 # HTML's whitespace, which is all a text node between two blocks holds. Narrower
 # than str.strip(), which would also take a non-breaking space for nothing.
 _HTML_WHITESPACE = " \t\n\r\f"
@@ -202,6 +206,9 @@ class _Sanitizer(HTMLParser):
         self.skipping = 0
         # A named reference reported but not yet written; see ``updatepos``.
         self.entity: str | None = None
+        # For a <pre> just opened: how much output there was after its start
+        # tag, and where that tag ended in the source; see ``handle_data``.
+        self.newline_at: tuple[int, tuple[int, int]] | None = None
         # Converted, paragraph and suspended frames are only ever made for a tag
         # in ``paragraph_blocks``, so with none of those both paragraph walks
         # below are no-ops, and they return before walking. Without this, text
@@ -405,6 +412,16 @@ class _Sanitizer(HTMLParser):
         self._open(start, void=tag in _VOID_TAGS)
         if tag not in _VOID_TAGS:
             self._push(_Frame(tag, _KEPT, start))
+        if tag in _LEADING_NEWLINE_TAGS:
+            self.newline_at = (len(self.out), self._source_end(self.get_starttag_text() or ""))
+
+    def _source_end(self, text: str) -> tuple[int, int]:
+        """Where in the source ``text``, which starts at ``getpos()``, ends."""
+        line, offset = self.getpos()
+        newlines = text.count("\n")
+        if newlines:
+            return line + newlines, len(text) - text.rindex("\n") - 1
+        return line, offset + len(text)
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
@@ -436,6 +453,23 @@ class _Sanitizer(HTMLParser):
         # Whitespace between blocks opens no paragraph: it would be an empty one.
         if data.strip(_HTML_WHITESPACE):
             self._ensure_paragraph()
+        if self.newline_at is not None:
+            # A browser drops a newline (CR LF and CR count, it reads both as
+            # one) that comes first in a <pre>. Where it comes first only
+            # because the markup before it was not kept, it was not first in the
+            # source and the browser kept it there, so one is written ahead of
+            # it to be dropped instead. Each condition is held by a case of
+            # ``test_a_newline_that_becomes_first_in_a_pre_is_kept_visible``:
+            # "after-a-kept-tag" (nothing emitted since), "not-first" (the
+            # newline) and "directly-after-the-start-tag" (where it sat).
+            emitted, source_end = self.newline_at
+            self.newline_at = None
+            if (
+                emitted == len(self.out)
+                and data.startswith(("\n", "\r"))
+                and self.getpos() != source_end
+            ):
+                self.out.append("\n")
         self.out.append(escape_html(data))
 
     def handle_entityref(self, name: str) -> None:

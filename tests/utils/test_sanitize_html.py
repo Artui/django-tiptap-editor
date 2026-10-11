@@ -402,6 +402,33 @@ def test_a_long_reference_name_cleans_in_linear_time() -> None:
     assert cleaned == "<p>&amp;" + "a" * 200_000 + " x</p>"
 
 
+# A browser drops one newline directly after a <pre> start tag. Markup the
+# sanitiser removes from between the two (an unknown tag, a comment, a dropped
+# script) would make a newline the browser kept the first thing in the <pre>, and
+# the browser would drop it from the stored value, so one is written back.
+_PRE_NEWLINES = {
+    "after-an-unknown-tag": ("<pre><font>\nx</font></pre>", "<pre>\n\nx</pre>"),
+    "after-a-comment": ("<pre><!-- c -->\nx</pre>", "<pre>\n\nx</pre>"),
+    "after-a-dropped-script": ("<pre><script>s</script>\r\nx</pre>", "<pre>\n\r\nx</pre>"),
+    "across-lines-of-the-start-tag": (
+        '<pre\nclass="a"><font>\nx</font></pre>',
+        "<pre>\n\nx</pre>",
+    ),
+    # Directly after the start tag the browser drops it from the posted markup
+    # and the stored one alike, so nothing is added.
+    "directly-after-the-start-tag": ("<pre>\nx</pre>", "<pre>\nx</pre>"),
+    "directly-after-a-multi-line-start-tag": ('<pre\nclass="a">\nx</pre>', "<pre>\nx</pre>"),
+    # After a kept tag the browser keeps it, in both.
+    "after-a-kept-tag": ("<pre><code>\nx</code></pre>", "<pre><code>\nx</code></pre>"),
+    "not-first": ("<pre><font>x</font>\ny</pre>", "<pre>x\ny</pre>"),
+}
+
+
+@pytest.mark.parametrize(("html", "expected"), _PRE_NEWLINES.values(), ids=_PRE_NEWLINES.keys())
+def test_a_newline_that_becomes_first_in_a_pre_is_kept_visible(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
 def test_style_property_outside_the_allowlist_is_dropped() -> None:
     assert str(sanitize_html('<p style="position: fixed; text-align: left">x</p>')) == (
         '<p style="text-align: left">x</p>'
