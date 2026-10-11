@@ -281,14 +281,20 @@ class _Sanitizer(HTMLParser):
     def _attributes(self, tag: str, attrs: list[tuple[str, str | None]]) -> str:
         allowed = self.schema.attributes(tag)
         properties = self.schema.style_properties(tag)
+        # A browser reads an attribute written twice from its first occurrence
+        # and ignores the rest, so only the first is checked and written. Kept
+        # whole, ``<a href="/a" href="/b">`` came back with both, and target and
+        # rel were computed from the last occurrence where a browser reads the
+        # first. ``test_a_duplicated_attribute_keeps_its_first_occurrence``.
+        first: dict[str, str | None] = {}
+        for raw_name, raw_value in attrs:
+            first.setdefault(raw_name.lower(), raw_value)
         if "target" in allowed or "rel" in allowed:
-            values = {name.lower(): value for name, value in attrs}
-            target, rel = get_link_attributes(values.get("target"), values.get("rel"))
+            target, rel = get_link_attributes(first.get("target"), first.get("rel"))
         else:
             target, rel = "", ""
         rendered: list[str] = []
-        for raw_name, raw_value in attrs:
-            name = raw_name.lower()
+        for name, raw_value in first.items():
             if name == "style":
                 declarations = self._style(raw_value, properties)
                 if declarations:

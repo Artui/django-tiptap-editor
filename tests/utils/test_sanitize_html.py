@@ -341,6 +341,28 @@ def test_unknown_target_is_dropped() -> None:
     assert str(sanitize_html('<a href="/x" target="evilframe">x</a>')) == '<a href="/x">x</a>'
 
 
+# An attribute written twice is read by a browser from its first occurrence, and
+# the rest are ignored; the sanitiser reads it the same way and writes it once.
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        ('<a href="/a" HREF="/b">x</a>', '<a href="/a">x</a>'),
+        # The first is refused, so there is no href at all: the second is not a
+        # fallback a browser would ever have used.
+        ('<a href="javascript:alert(1)" href="/ok">x</a>', "<a>x</a>"),
+        # target and rel are computed from the first occurrence too.
+        ('<a href="/x" target="nope" target="_blank">x</a>', '<a href="/x">x</a>'),
+        (
+            '<p style="text-align: left" style="text-align: right">x</p>',
+            '<p style="text-align: left">x</p>',
+        ),
+    ],
+    ids=["href", "refused-first", "target", "style"],
+)
+def test_a_duplicated_attribute_keeps_its_first_occurrence(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
 def test_style_property_outside_the_allowlist_is_dropped() -> None:
     assert str(sanitize_html('<p style="position: fixed; text-align: left">x</p>')) == (
         '<p style="text-align: left">x</p>'

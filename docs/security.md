@@ -63,6 +63,15 @@ deleted what it did not recognise could quietly empty half a document, so it nev
 deletes visible text — the one exception is `script` and `style`, whose bodies are
 code rather than prose and are dropped whole.
 
+### Malformed markup
+
+Markup a browser would repair is read the way a browser reads it, wherever that
+decides what the stored value means:
+
+- **An attribute written twice keeps its first occurrence.** A browser ignores the
+  rest, so `<a href="/a" href="/b">` is stored as `<a href="/a">`, and `target` and
+  `rel` are worked out from their first occurrence too.
+
 ### Per field
 
 The table above is what a field configured without `features` keeps. A field with

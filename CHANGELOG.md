@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runs down from the innermost element, closing everything it passes, so each
   element is passed once. The same inputs take a fraction of a second, and the
   output is unchanged.
+- **An attribute written twice keeps its first occurrence.** `sanitize_html` wrote
+  every copy of it, so `<a href="/a" href="/b">` was stored with both, and it worked
+  out `target` and `rel` from the last copy, where a browser reads the first. Only
+  the first occurrence is now checked and written, so the stored value means what
+  the browser made of the markup that was posted. Markup with no attribute written
+  twice comes back unchanged.
 
 ## [0.12.0] — 2026-10-11
 
