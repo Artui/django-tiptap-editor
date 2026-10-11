@@ -92,9 +92,20 @@ extension, and the sanitiser unwraps its tags — the wrapper is dropped on save
 text inside it is kept. Declare the vocabulary, or accept that the markup does not
 survive a round trip through the server.
 
-Two things are refused outright, with `ImproperlyConfigured`: a tag that executes
-script or loads a document (`script`, `style`, `iframe`, `object`, `embed`, `base`,
-`meta`, `link`, `form`, `svg`, `template`, …), and any `on*` attribute.
+Three things are refused outright, with `ImproperlyConfigured`:
+
+- a tag that executes script or loads a document (`script`, `style`, `iframe`,
+  `object`, `embed`, `base`, `meta`, `link`, `form`, `svg`, `template`, …);
+- a tag whose content a browser parses by rules of its own rather than as ordinary
+  HTML: `math`, `noembed`, `noframes`, `plaintext`, `textarea`, `title` and `xmp`.
+  The sanitiser would check one reading of the content and the browser render
+  another, so an extension that needs one should emit an ordinary element (a `span`
+  or `div` with a class or data attribute) instead;
+- any `on*` attribute.
+
+The error is raised where the setting is read: when a TipTap form field cleans a
+value, when the `tiptap_html` filter renders one, when a widget's config names custom
+extensions, and when a `TipTapJSONField` validates a document.
 
 
 ### Custom nodes and JSON storage

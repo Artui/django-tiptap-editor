@@ -187,10 +187,13 @@ TIPTAP_EXTRA_EXTENSIONS = {
 
 A declared vocabulary joins the allowlist and the extension's markup survives intact.
 A name given without one (the list form) raises a warning naming the extension, and
-its tags are unwrapped — the wrapper is lost, the text is not. Two declarations are
+its tags are unwrapped — the wrapper is lost, the text is not. Three declarations are
 refused outright: a tag that executes script or loads a document (`script`, `style`,
-`iframe`, `object`, `embed`, `base`, `meta`, `link`, `form`, `svg`, `template`, …) and
-any `on*` attribute.
+`iframe`, `object`, `embed`, `base`, `meta`, `link`, `form`, `svg`, `template`, …), a
+tag whose content a browser parses by rules of its own (`math`, `noembed`, `noframes`,
+`plaintext`, `textarea`, `title`, `xmp`), and any `on*` attribute. The second kind
+would be checked as one thing and rendered as another: escaped text inside `xmp`, for
+one, renders as a literal `&lt;`.
 
 ## JSON storage
 

@@ -211,7 +211,7 @@ stored, is in [Security](security.md#what-is-not-narrowed-per-field).
 | `TIPTAP_DEFAULT_CONFIG` | `{}` | Config merged under every widget's per-field config. |
 | `TIPTAP_ASSET_MODE` | `"bundle"` | `"bundle"` or `"external"` — see [Asset modes](asset-modes.md). |
 | `TIPTAP_IMPORT_MAP` | CDN default | External mode: bare-specifier → URL map. |
-| `TIPTAP_EXTRA_EXTENSIONS` | `[]` | Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type `TipTapJSONField` accepts in a stored document. See [Extending](extending.md#declaring-what-an-extension-emits). |
+| `TIPTAP_EXTRA_EXTENSIONS` | `[]` | Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type `TipTapJSONField` accepts in a stored document. A tag that runs script, or whose content a browser parses by rules of its own (`math`, `textarea`, `title`, `xmp`, …), raises `ImproperlyConfigured`. See [Extending](extending.md#declaring-what-an-extension-emits). |
 
 ```python
 TIPTAP_DEFAULT_CONFIG = {"height": "450px", "locale": "sv"}

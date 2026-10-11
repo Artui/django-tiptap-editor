@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrade note — a custom extension may not declare a raw-text or MathML tag
+
+`TIPTAP_EXTRA_EXTENSIONS` now refuses `math`, `noembed`, `noframes`, `plaintext`,
+`textarea`, `title` and `xmp` with `ImproperlyConfigured`, as it already refused
+`script`, `iframe`, `svg` and the other forbidden tags. A browser reads the content
+of each by rules of its own, as raw text or as MathML, where the sanitiser reads
+ordinary markup, so a kept one was checked as one thing and rendered as another:
+escaped text inside `xmp` rendered as a literal `&lt;` and grew on every save.
+
+A declaration that was accepted before can therefore start failing, and **not at
+startup**: the system checks pass, and the error is raised where the setting is
+read, which is when a TipTap form field cleans a value, when the `tiptap_html`
+filter renders HTML-stored content, when a widget's config names custom
+extensions, and when a `TipTapJSONField` validates a document. Have the extension
+emit an ordinary element instead, such as a `span` or `div` with a class or data
+attribute. A name given in the list form declares no tags and is unaffected.
+
 ### Fixed
 
 - **On Python 3.14, an unfinished character reference no longer lets markup
