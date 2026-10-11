@@ -96,6 +96,22 @@ decides what the stored value means:
   the field shows as typed. Python 3.10 to 3.13 store the same when no semicolon
   comes later in the field; where one does, they pass `&#` along as text and
   parse what follows as markup, filtered as usual.
+- **Markup the field ends inside of is written as text, which is not how a browser
+  reads it.** A browser drops a tag, attribute value, comment or declaration left
+  unfinished at the end of the input, and ends an unfinished CDATA section at its
+  first `>`, parsing what follows. The sanitiser writes all of it as text instead,
+  so `<p>a<!-- b` is stored as `<p>a&lt;!-- b</p>` and `<p>a<strong` as
+  `<p>a&lt;strong</p>`: a field posted this way stores the tail as visible text.
+  What `html.parser` does with such a tail differs between Python patch releases,
+  some passing it along as text and current ones dropping it, and text is the one
+  reading that loses nothing typed and runs none of it on all of them. The content
+  of a `script`, `style`, `textarea` or other raw-text element the field ends
+  inside of is read by `html.parser` as before: a script's is dropped, and a
+  textarea's kept as text, `<p>a<textarea>b</text` stored as `<p>ab&lt;/text</p>`.
+  The one form that still depends on the patch release is the element's own end
+  tag left unfinished, as in `<textarea>b</textarea `, which earlier patch
+  releases keep as text and current ones drop, as a browser does. The editor
+  never writes a field that ends mid-tag.
 - **A newline that becomes the first thing in a `pre` stays visible.** A browser
   drops a newline directly after `<pre>`, whether it is written as a character or as
   a reference (`&#10;`, `&#xA;`, `&NewLine;`). Where one comes first only because

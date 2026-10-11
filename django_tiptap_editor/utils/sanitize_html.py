@@ -532,6 +532,36 @@ class _Sanitizer(HTMLParser):
         self._first_in_pre(newline=newline)
         self.out.append(f"&#{name};")
 
+    def close(self) -> None:
+        # Markup the input ends inside of (``<!-- x``, ``<![CDATA[ x``,
+        # ``<strong``, ``<a href="x``, ``</p``) is still unparsed here, and what
+        # the parser's own close does with it depends on its patch release:
+        # older ones pass it to ``handle_data`` as text, newer ones drop a tag
+        # and report a comment or a CDATA section, none of which is kept. So it
+        # is written as text here, on every version, and taken from the parser
+        # so it is not handed over a second time
+        # (``test_markup_left_unfinished_at_the_end_is_written_once``). A
+        # browser drops most of these, and reads the start of an unfinished
+        # CDATA section as markup; text is the reading that loses nothing the
+        # author typed and runs nothing they did not, not the browser's.
+        # ``test_markup_left_unfinished_at_the_end_is_written_as_text`` holds it.
+        #
+        # Only markup is taken: a tail that does not start with "<" is a
+        # reference the parser finishes itself, and it is read as the parser
+        # reports it (``test_a_reference_that_ends_the_input_is_read_as_the_parser_reports_it``
+        # holds that on 3.14, and
+        # ``test_an_unfinished_character_reference_before_a_semicolon_lets_no_markup_through``
+        # on 3.10 and 3.13). Nor is the content of a raw-text element such
+        # as <script> or <textarea>, which the parser reads as text already: an
+        # end tag left unfinished there would be written escaped into a kept
+        # <xmp>, whose content is not unescaped, and escaped again by a second
+        # pass (``test_an_end_tag_left_unfinished_in_a_raw_text_element_is_left_to_the_parser``).
+        tail = self.rawdata
+        if tail.startswith("<") and self.cdata_elem is None:
+            self.rawdata = ""
+            self.handle_data(tail)
+        super().close()
+
     def result(self) -> str:
         self._close_from(0)
         return "".join(self.out)

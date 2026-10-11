@@ -616,6 +616,120 @@ def test_comment_is_dropped() -> None:
     assert str(sanitize_html("<p>a<!-- note -->b</p>")) == "<p>ab</p>"
 
 
+# Markup the input ends inside of. Older patch releases of html.parser pass it
+# to handle_data as text; newer ones drop it, or report it as a comment or a
+# declaration, neither of which is kept. It is written as text on every
+# version, and the text is what a second pass leaves alone.
+_UNFINISHED_AT_THE_END = {
+    "a-comment": ("<p>a<!-- b", "<p>a&lt;!-- b</p>"),
+    "a-comment-up-to-its-dashes": ("<p>a<!-- b --", "<p>a&lt;!-- b --</p>"),
+    "a-cdata-section": ("<p>a<![CDATA[ b", "<p>a&lt;![CDATA[ b</p>"),
+    "a-bogus-comment": ("<p>a<!x b", "<p>a&lt;!x b</p>"),
+    "a-declaration": ("<p>a<!DOCTYPE b", "<p>a&lt;!DOCTYPE b</p>"),
+    "a-processing-instruction": ("<p>a<? b", "<p>a&lt;? b</p>"),
+    "a-start-tag": ("<p>a<strong", "<p>a&lt;strong</p>"),
+    "a-start-tag-with-a-handler": (
+        "<p>a<img src=x onerror=alert(1)",
+        "<p>a&lt;img src=x onerror=alert(1)</p>",
+    ),
+    "an-attribute-value": ('<p>a<a href="b', '<p>a&lt;a href="b</p>'),
+    "an-end-tag": ("<p>a</strong", "<p>a&lt;/strong</p>"),
+    "in-a-pre": ("<pre><!-- b", "<pre>&lt;!-- b</pre>"),
+    "after-a-newline-in-a-pre": ("<pre>\n<b", "<pre>\n&lt;b</pre>"),
+    "inside-an-unknown-tag": ("<iframe>a<b", "a&lt;b"),
+}
+
+
+@pytest.mark.parametrize(
+    ("html", "expected"), _UNFINISHED_AT_THE_END.values(), ids=_UNFINISHED_AT_THE_END.keys()
+)
+def test_markup_left_unfinished_at_the_end_is_written_as_text(html: str, expected: str) -> None:
+    assert str(sanitize_html(html)) == expected
+    assert str(sanitize_html(expected)) == expected
+
+
+class _ReportingSanitizer(_Sanitizer):
+    """A sanitiser that also records the comments the parser reports."""
+
+    def __init__(self) -> None:
+        super().__init__(get_html_schema())
+        self.comments: list[str] = []
+
+    def handle_comment(self, data: str) -> None:
+        self.comments.append(data)
+
+
+# Once written as text, the tail is taken from the parser, so it is not also
+# handed over by the parser's own close: as text again by an older release, or
+# as a comment by a newer one.
+def test_markup_left_unfinished_at_the_end_is_written_once() -> None:
+    sanitizer = _ReportingSanitizer()
+    sanitizer.feed("<p>a<!-- b")
+    sanitizer.close()
+    assert sanitizer.result() == "<p>a&lt;!-- b</p>"
+    assert sanitizer.comments == []
+
+
+# What the input ends inside of a script or a textarea is that element's
+# content, and is read as the parser reads it: a script's is dropped with the
+# rest of the script, a textarea's written as its text.
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        ("<p>a<script>b</scr", "<p>a</p>"),
+        ("<p>a<style>b<c", "<p>a</p>"),
+        ("<p>a<textarea>b</text", "<p>ab&lt;/text</p>"),
+    ],
+)
+def test_raw_text_left_unfinished_at_the_end_is_read_as_its_content(
+    html: str, expected: str
+) -> None:
+    assert str(sanitize_html(html)) == expected
+
+
+class _StartTags(HTMLParser):
+    """The start tags this interpreter's html.parser reports."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.tags: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.tags.append(tag)
+
+
+def _reads_as_raw_text(tag: str) -> bool:
+    """Whether html.parser reads the content of ``tag`` as text, not markup."""
+    parser = _StartTags()
+    parser.feed(f"<{tag}><b></{tag}>")
+    parser.close()
+    return parser.tags == [tag]
+
+
+# An end tag left unfinished inside a raw-text element. Where the parser reads
+# the element as raw text it drops the tag, as a browser does; earlier patch
+# releases read it as markup and pass the tag along as text. It is left to the
+# parser either way: written as text inside a kept <xmp>, whose content is not
+# unescaped, its "&lt;" would be escaped again by a second pass. Keyed on what
+# the parser does, not on its version number.
+@pytest.mark.parametrize(
+    ("tag", "kept", "as_raw_text", "as_markup"),
+    [
+        ("xmp", True, "<p>a<xmp>b</xmp></p>", "<p>a<xmp>b&lt;/xmp </xmp></p>"),
+        ("textarea", False, "<p>ab</p>", "<p>ab&lt;/textarea </p>"),
+    ],
+    ids=["a-kept-xmp", "an-unwrapped-textarea"],
+)
+def test_an_end_tag_left_unfinished_in_a_raw_text_element_is_left_to_the_parser(
+    tag: str, kept: bool, as_raw_text: str, as_markup: str
+) -> None:
+    tags = {"p": frozenset(), tag: frozenset()} if kept else {"p": frozenset()}
+    schema = HtmlSchema(tags=tags, styles={})
+    cleaned = str(sanitize_html(f"<p>a<{tag}>b</{tag} ", schema=schema))
+    assert cleaned == (as_raw_text if _reads_as_raw_text(tag) else as_markup)
+    assert str(sanitize_html(cleaned, schema=schema)) == cleaned
+
+
 # From Python 3.14, html.parser hands a character reference left unfinished at
 # the end of the input to handle_charref with everything after "&#" as its
 # name, markup included; earlier versions pass it to handle_data as text. On

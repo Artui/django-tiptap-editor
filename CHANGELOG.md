@@ -39,6 +39,23 @@ attribute. A name given in the list form declares no tags and is unaffected.
   written twice; it now passes. nh3 joins the development group only, and the
   package still depends on Django alone.
 
+### Changed
+
+- **Markup the input ends inside of is stored as text.** `<p>a<!-- b`,
+  `<p>a<strong`, `<p>a<a href="b` and `<p>a</strong` each end inside a comment, a
+  tag or an attribute value, and what became of that tail depended on the Python
+  patch release: earlier ones, such as 3.10.11, 3.11.6 and 3.12.0, wrote it as
+  text, and current releases of every supported version dropped it, so the field
+  was saved without what was typed there. It is now written as text on every
+  version, so `<p>a<!-- b` is stored as `<p>a&lt;!-- b</p>`, and a field posted
+  this way stores the tail as visible text. This is deliberately not the
+  browser's reading: a browser drops an unfinished tag, attribute value or
+  comment, and ends an unfinished CDATA section at its first `>`, parsing what
+  follows. Text keeps everything that was typed and runs none of it. Finished
+  markup is unaffected, and so is the content of a `script`, `style`, `textarea`
+  or other raw-text element the input ends inside of. The editor never writes a
+  field that ends mid-tag.
+
 ### Fixed
 
 - **On Python 3.14, an unfinished character reference no longer lets markup
