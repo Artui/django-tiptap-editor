@@ -30,7 +30,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-modal-z` | Image-picker overlay `z-index` (default `2000`) |
 
 The defaults are declared on the document root with zero specificity
-(`:where(:root)`), and every editor inherits them. So a token set anywhere above an
+(`:where(:root, :host)`), and every editor inherits them. So a token set anywhere above an
 editor reaches it, and any rule you write beats the default whichever stylesheet
 loads last. From strongest to weakest:
 
@@ -39,6 +39,12 @@ loads last. From strongest to weakest:
 2. a token set on `.django-tiptap` or on an element around one editor;
 3. a token set on `:root` / `html`, in CSS or with `ui.setTokens`, which writes there;
 4. the built-in default.
+
+The defaults are declared on `:host` as well (`:where(:root, :host)`), for a page
+that loads the stylesheet inside a shadow root, as a web component wrapping the
+editor does: `:root` matches nothing there. Inside a shadow root the defaults sit on
+the host element, so a token set on the document's `:root` (including with
+`ui.setTokens`) stops at the host; set it on the host element instead.
 
 ### In CSS
 

@@ -76,10 +76,15 @@ describe.each(Object.entries(PROPERTIES))("config.%s", (key, property) => {
   it.each(lengths.rejected)("refuses %j, leaving the default in place", (value) => {
     const shell = mount({ [key]: value });
     expect(shell.style.getPropertyValue(property)).toBe("");
-    // "" is falsy, so it never reached the write; anything else is reported.
-    if (value !== "") {
-      expect(errors).toHaveBeenCalledWith(expect.stringContaining(`${key} must be a CSS length`));
-    }
+    expect(errors).toHaveBeenCalledWith(expect.stringContaining(`${key} must be a CSS length`));
+  });
+
+  it("reads an empty string as omitted, as validate_config does", () => {
+    // The glue always skipped a falsy height, so "" has meant "unset" on a
+    // hand-written data-tiptap-config or an init() call; it is not an error.
+    const shell = mount({ [key]: "" });
+    expect(shell.style.getPropertyValue(property)).toBe("");
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it("reads null as omitted, which is how a field drops a project-wide value", () => {
@@ -120,6 +125,14 @@ function stylesheet(): CSSStyleRule[] {
   return styleRules(sheet.cssRules);
 }
 
+// jsdom's selector engine answers false for every element on a selector list
+// holding :host, which would let a shell selector hide beside it. Nothing in a
+// document (rather than a shadow tree) matches :host, so dropping it from the
+// list changes no answer the browser would give here.
+function withoutHost(selector: string): string {
+  return selector.replace(/\s*,\s*:host(?=\s*[,)])|:host\s*,\s*/g, "");
+}
+
 function declared(rule: CSSStyleRule): string[] {
   return Array.from({ length: rule.style.length }, (_, i) => rule.style[i]);
 }
@@ -131,7 +144,7 @@ describe("design tokens", () => {
     const inside = [shell, ...Array.from(shell.querySelectorAll("*"))];
     const shadowing = rules
       .filter((rule) => declared(rule).some((name) => name.startsWith("--tiptap-")))
-      .filter((rule) => inside.some((el) => el.matches(rule.selectorText)))
+      .filter((rule) => inside.some((el) => el.matches(withoutHost(rule.selectorText))))
       .map((rule) => rule.selectorText);
     expect(shadowing).toEqual([]);
   });
@@ -142,8 +155,22 @@ describe("design tokens", () => {
     const defaults = stylesheet().filter((rule) =>
       declared(rule).some((name) => name.startsWith("--tiptap-")),
     );
-    expect(defaults.map((rule) => rule.selectorText)).toEqual([":where(:root)"]);
+    expect(defaults.map((rule) => rule.selectorText)).toEqual([":where(:root, :host)"]);
+    // jsdom's selector engine answers false for any list holding :host, so the
+    // :root half is matched on its own.
     expect(document.documentElement.matches(":where(:root)")).toBe(true);
+  });
+
+  it("declares the defaults on a shadow root's host too", () => {
+    // Loaded inside a shadow root, :root matches nothing, so an editor mounted
+    // there renders with no defaults (verified in Chrome: 84px tall with a
+    // black border). jsdom does not implement :host, so this reads the rule's
+    // selector list rather than matching it.
+    const [defaults] = stylesheet().filter((rule) =>
+      declared(rule).some((name) => name.startsWith("--tiptap-")),
+    );
+    const inner = /^:where\((.*)\)$/.exec(defaults.selectorText)?.[1] ?? "";
+    expect(inner.split(",").map((selector) => selector.trim())).toContain(":host");
   });
 
   it("setTokens writes the token onto :root, under the per-instance config", () => {

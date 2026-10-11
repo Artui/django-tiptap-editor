@@ -202,6 +202,20 @@ def test_a_height_that_is_not_a_string_raises(key: str, value: object) -> None:
 
 
 @pytest.mark.parametrize("key", ["height", "maxHeight"])
-def test_a_none_height_reads_as_omitted(key: str) -> None:
-    # How a field drops a project-wide maxHeight: None over the default.
-    assert validate_config({key: None}) == {key: None}
+@pytest.mark.parametrize("value", [None, ""])
+def test_a_none_or_empty_height_reads_as_omitted(key: str, value: str | None) -> None:
+    # How a field drops a project-wide maxHeight: None over the default. An
+    # empty string has always meant the same in the browser (the glue skips a
+    # falsy value), and was accepted here before the length rule existed, so it
+    # stays a way of saying "unset" rather than becoming an error.
+    assert validate_config({key: value}) == {key: value}
+
+
+def test_the_ascii_flag_keeps_non_ascii_letters_out_of_function_names() -> None:
+    # Under a Unicode IGNORECASE, "i" also matches the dotless and dotted
+    # capital I, so these read as min() here while the browser and the JS side
+    # (whose /i flag never folds non-ASCII onto ASCII) refuse them. They are in
+    # the shared table too; this names the reason.
+    for value in ("mın(10px, 20px)", "MİN(10px, 20px)"):
+        with pytest.raises(ImproperlyConfigured, match="must be a CSS length"):
+            validate_config({"height": value})

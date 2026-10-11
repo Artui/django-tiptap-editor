@@ -8,8 +8,14 @@
    where setTokens writes, never reached the editor. :where() makes the selector
    zero-specificity, so any rule a project writes (:root, html, .django-tiptap)
    beats the default whichever stylesheet loads last. A field's own height /
-   maxHeight is written inline on its shell and beats all of them. */
-:where(:root) {
+   maxHeight is written inline on its shell and beats all of them.
+
+   :host is the root of a shadow tree: a page that loads this stylesheet inside
+   a shadow root, as a web component wrapping the editor does, never matches
+   :root there, so without it that editor had no defaults at all (no height, no
+   border colour). There the defaults sit on the host element, so a token set on
+   the document's :root stops at it; a rule on the host element does reach it. */
+:where(:root, :host) {
   --tiptap-height: 360px;
   --tiptap-max-height: none;
   --tiptap-font: inherit;

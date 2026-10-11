@@ -74,9 +74,11 @@ naming the key and the value:
 
 **Refused**: a bare number (`500`, not a string), a unitless string (`"500"`),
 `"auto"`, `"none"`, keywords such as `"inherit"`, and **percentages**, inside
-`calc()` too. Each of these used to be written into the page and size the editor
-to a single line, because a percentage resolves against a parent that usually has
-no height. `var()`, `url()`, quotes, `;` and `!important` are refused as well: the
+`calc()` too. The numbers and keywords used to be written into the page and size
+the editor to a single line. A percentage resolves against the height of the
+element around the editor, so it did the same wherever that element has none, as in
+the admin and most forms; use a viewport unit (`"60vh"`) or `calc(100vh - ...)`
+instead. `var()`, `url()`, quotes, `;` and `!important` are refused as well: the
 value is only ever arithmetic on lengths. To size editors from a stylesheet
 instead, leave the key out and set the `--tiptap-height` / `--tiptap-max-height`
 [tokens](theming.md#tokens). The check is on the tokens, not the
@@ -84,7 +86,8 @@ arithmetic, so a malformed expression such as `"calc(10px + * 2px)"` passes it a
 is ignored by the browser.
 
 Set `None` to drop a value a broader layer gave, for instance a project-wide
-`maxHeight` from `TIPTAP_DEFAULT_CONFIG` on a field that should grow freely. Keep
+`maxHeight` from `TIPTAP_DEFAULT_CONFIG` on a field that should grow freely. An
+empty string `""` reads as unset too, here and in the browser. Keep
 `maxHeight` at or above `height`.
 
 The same rule runs in the browser for a config passed to `DjangoTipTap.init()`:

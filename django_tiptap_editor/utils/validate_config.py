@@ -120,12 +120,16 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         if value is not None and not isinstance(value, bool):
             raise ImproperlyConfigured(f"TipTap {key} must be a boolean, got {value!r}.")
 
-    # The type check is held by ``test_a_height_that_is_not_a_string_raises``
-    # (the length check would raise TypeError on a number), the length check by
+    # None and "" both read as unset, as they do in the glue, which skips a falsy
+    # value: ``test_a_none_or_empty_height_reads_as_omitted`` holds both. The
+    # type check is held by ``test_a_height_that_is_not_a_string_raises`` (the
+    # length check would raise TypeError on a number), the length check by
     # ``test_a_string_that_is_not_a_css_length_raises``.
     for key in _LENGTH_KEYS:
         value = config.get(key)
-        if value is not None and (not isinstance(value, str) or not _is_css_length(value)):
+        if value is None or value == "":
+            continue
+        if not isinstance(value, str) or not _is_css_length(value):
             raise ImproperlyConfigured(
                 f"TipTap {key} must be a CSS length such as '400px', '30rem' or "
                 f"'calc(100vh - 12rem)', got {value!r}. A bare number, 'auto' or a "

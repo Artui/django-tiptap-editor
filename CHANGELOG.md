@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrade note — the admin renders a TipTap widget you configured
+
+`TipTapModelAdminMixin` now renders a TipTap widget a project gives a field, where it
+used to replace it with a bare `AdminTipTapWidget`. Three things can start failing,
+each of which was silently ignored before:
+
+- **A TipTap widget for `TipTapJSONField` in `formfield_overrides` must be in JSON
+  storage.** It used to be replaced, so its storage never mattered. Rendered as
+  given, one in HTML storage writes HTML into a field that parses a JSON envelope,
+  and every save fails. A new startup check, `django_tiptap_editor.E004`, reports it
+  on the admin class; pass `storage="json"` to the widget (or set
+  `TIPTAP_STORAGE_FORMAT = "json"` project-wide).
+- **Only a TipTap widget in `formfield_overrides` is honoured.** An entry there is
+  class-wide, so a non-TipTap widget on `models.TextField` (a smaller `Textarea`
+  for the fields the mixin leaves alone, say) is still replaced by the editor on
+  the fields the mixin applies to, as before. A TipTap widget there, an
+  `AdminTipTapWidget` subclass or instance, now applies to every such field. A
+  form's `Meta.widgets` names one field, and any widget given there is rendered,
+  TipTap or not.
+- **`height` and `maxHeight` must be CSS lengths**, and a value that was accepted
+  before now raises `ImproperlyConfigured` when the widget renders: an integer
+  (`500`, which the editor read as no height at all), a `var()` reference, and a
+  percentage, whether plain or inside `calc()`. Write `"500px"`, set the
+  `--tiptap-height` token instead of a `var()`, and use a viewport unit (`"60vh"`)
+  or `calc(100vh - ...)` where a percentage was meant. `None` and `""` still read
+  as unset.
+
 ### Added
 
 - **A field can restrict what its editor can do with the `features` config key.**
@@ -76,29 +103,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TipTapModelAdminMixin` put a bare `AdminTipTapWidget` on every field it applied
   to, replacing the widget a project gave the field in `formfield_overrides` or in
   its form's `Meta.widgets`, so a `height` (or any other config) set there never
-  arrived. A project's widget is now rendered as given, for `TextField`s and
-  `TipTapJSONField`s alike, and `AdminTipTapWidget` is only the default. The entry
-  is found the way Django applies it, and the admin's own `AdminTextareaWidget`
-  default does not count as a project's widget. A `TextField` keeps
-  `TipTapFormField` whichever widget renders it.
+  arrived. A TipTap widget from `formfield_overrides`, and any widget from
+  `Meta.widgets`, is now rendered as given, for `TextField`s and `TipTapJSONField`s
+  alike, and `AdminTipTapWidget` is only the default. The entry is found the way
+  Django applies it; a `formfield_overrides` widget that is not a TipTap widget,
+  the admin's own `AdminTextareaWidget` default included, is still replaced, since
+  an entry there is class-wide. A TipTap widget on a `TipTapJSONField` that would
+  write HTML is reported at startup as `django_tiptap_editor.E004`. A `TextField`
+  keeps `TipTapFormField` whichever widget renders it.
 - **A `height` that is not a CSS length is refused instead of collapsing the
-  editor.** A bare number, `"auto"` or a percentage was written into the page as
-  given and sized the editing area to a single line, because a percentage resolves
-  against a parent with no height. `height` and `maxHeight` now take a number with
-  a CSS length unit, or `calc()` / `min()` / `max()` / `clamp()` over such
-  lengths; anything else raises `ImproperlyConfigured` naming the key and the value.
-  That includes a few values a browser did render, which now raise when the widget
-  renders: a `var()` reference (set the `--tiptap-height` token instead) and a
-  percentage inside `calc()`. The browser runs the same rule on a config passed to
+  editor.** A bare number or `"auto"` was written into the page as given and sized
+  the editing area to a single line. A percentage, plain or inside `calc()`,
+  resolves against the height of the element around the editor: where that element
+  has none, as in the admin and most forms, it collapsed the editor the same way,
+  and where it has one it rendered. `height` and `maxHeight` now take a number with
+  a CSS length unit, or `calc()` / `min()` / `max()` / `clamp()` over such lengths;
+  anything else, percentages and `var()` references included, raises
+  `ImproperlyConfigured` naming the key and the value (the upgrade note above lists
+  what to write instead). The browser runs the same rule on a config passed to
   `DjangoTipTap.init()`, reporting a refused value with `console.error` and keeping
-  the default. Both sides are held to one table of accepted and refused values.
+  the default. Both sides are held to one table of accepted and refused values,
+  and both read an empty string as unset.
 - **Design tokens set on `:root`, including through `ui.setTokens`, reach the
   editor.** The defaults were declared on `.django-tiptap` itself, and an element's
   own declaration beats an inherited one, so `setTokens`, which writes onto the
   document root, changed nothing, and neither did a token in a `:root` rule. The
-  defaults now sit on `:where(:root)`, so every editor inherits them and any rule a
-  project writes overrides them; a field's own `height` / `maxHeight` still wins over
-  a page-wide token. No default value changed.
+  defaults now sit on `:where(:root, :host)`, so every editor inherits them and any
+  rule a project writes overrides them; a field's own `height` / `maxHeight` still
+  wins over a page-wide token. `:host` keeps the defaults for a stylesheet loaded
+  inside a shadow root, where `:root` matches nothing; there a token is set on the
+  host element. No default value changed.
 
 - **`TipTapModelAdminMixin` did not sanitise the fields it put an editor on.** It
   swapped the widget onto every `TextField` and left the form field a plain

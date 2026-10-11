@@ -1,5 +1,5 @@
 {
-  "description": "The CSS length rule for the height and maxHeight config keys, as a truth table both sides run: tests/utils/test_validate_config.py through validate_config, js/test/editor-height.test.ts through init(). Hand-written, not generated: add a case here and both suites check it. units must equal constants.CSS_LENGTH_UNITS. The rule is lexical, so the last accepted case is malformed arithmetic it lets through, as docs/configuration.md says.",
+  "description": "The CSS length rule for the height and maxHeight config keys, as a truth table both sides run: tests/utils/test_validate_config.py through validate_config, js/test/editor-height.test.ts through init(). Hand-written, not generated: add a case here and both suites check it. units must equal constants.CSS_LENGTH_UNITS. The rule is lexical, so the last accepted case is malformed arithmetic it lets through, as docs/configuration.md says. The empty string is in neither list: both sides read it as omitted, and each suite tests that on its own.",
   "units": [
     "cap",
     "ch",
@@ -77,7 +77,6 @@
     "calc(10px + * 2px)"
   ],
   "rejected": [
-    "",
     "500",
     "0",
     "-10px",
@@ -115,6 +114,8 @@
     "calc(10px) + 1px",
     "min(10px, 20px",
     "calc(10px;)",
-    "fit-content(10px)"
+    "fit-content(10px)",
+    "mın(10px, 20px)",
+    "MİN(10px, 20px)"
   ]
 }
