@@ -422,10 +422,32 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#heights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heights
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#toolbar-buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
         Toolbar buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restricting-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restricting features
       
     </span>
   </a>
@@ -834,10 +856,32 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#heights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heights
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#toolbar-buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
         Toolbar buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restricting-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restricting features
       
     </span>
   </a>
@@ -903,7 +947,12 @@ any omitted key.</p>
 <tr>
 <td><code>height</code></td>
 <td>str</td>
-<td>Editor min-height, e.g. <code>"400px"</code>.</td>
+<td>Minimum height of the editing area, as a <a href="#heights">CSS length</a>: <code>"400px"</code>, <code>"30rem"</code>. Default <code>360px</code> (<code>500px</code> in the admin). The editor still grows with its content; cap it with <code>maxHeight</code>.</td>
+</tr>
+<tr>
+<td><code>maxHeight</code></td>
+<td>str</td>
+<td>Maximum height of the editing area, as a <a href="#heights">CSS length</a>: <code>"600px"</code>, <code>"calc(100vh - 12rem)"</code>. Past it the content scrolls inside the editor and the toolbar stays in view. Default: no cap.</td>
 </tr>
 <tr>
 <td><code>locale</code></td>
@@ -926,9 +975,14 @@ any omitted key.</p>
 <td>Groups of <a href="#toolbar-buttons">button keys</a>. Omit for the default.</td>
 </tr>
 <tr>
+<td><code>features</code></td>
+<td>list[str]</td>
+<td>Built-in extensions this field's editor may use; everything else is off, shortcuts and paste included. Omit for every built-in. See <a href="#restricting-features">Restricting features</a>.</td>
+</tr>
+<tr>
 <td><code>extensions</code></td>
 <td>list[str]</td>
-<td>Extension names. Built-ins are always on; list custom ones (and add them to <code>TIPTAP_EXTRA_EXTENSIONS</code>).</td>
+<td>Custom extension names (add them to <code>TIPTAP_EXTRA_EXTENSIONS</code>). Built-ins listed here change nothing; to turn built-ins off, use <a href="#restricting-features"><code>features</code></a>.</td>
 </tr>
 <tr>
 <td><code>linkProtocols</code></td>
@@ -987,8 +1041,9 @@ any omitted key.</p>
 </tr>
 </tbody>
 </table>
-<p>Unknown top-level keys, and extension names that are neither built in nor in
-<code>TIPTAP_EXTRA_EXTENSIONS</code>, raise <code>ImproperlyConfigured</code> — typos fail loudly.</p>
+<p>Unknown top-level keys, extension names that are neither built in nor in
+<code>TIPTAP_EXTRA_EXTENSIONS</code>, and feature names that are not built in raise
+<code>ImproperlyConfigured</code> — typos fail loudly.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">TipTapWidget</span><span class="p">(</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">config</span><span class="o">=</span><span class="p">{</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;500px&quot;</span><span class="p">,</span>
@@ -1004,6 +1059,43 @@ any omitted key.</p>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="p">}</span>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span>
 </span></code></pre></div>
+<h3 id="heights">Heights<a class="headerlink" href="#heights" title="Permanent link">&para;</a></h3>
+<p><code>height</code> and <code>maxHeight</code> size the editing area, the part under the toolbar.
+<code>height</code> is a minimum and <code>maxHeight</code> a cap: with both set the editor starts at
+<code>height</code>, grows as you type, and from <code>maxHeight</code> on the content scrolls inside it
+while the toolbar stays put. Source view opens in the same area and keeps the same
+cap.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">TipTapWidget</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;200px&quot;</span><span class="p">,</span> <span class="s2">&quot;maxHeight&quot;</span><span class="p">:</span> <span class="s2">&quot;calc(100vh - 12rem)&quot;</span><span class="p">})</span>
+</span></code></pre></div>
+<p>Both take a <strong>CSS length</strong>, and anything else raises <code>ImproperlyConfigured</code>
+naming the key and the value:</p>
+<ul>
+<li>a number and a unit, in any case: <code>px</code>, <code>rem</code>, <code>em</code>, <code>ch</code>, <code>ex</code>, <code>lh</code>, the viewport
+  units (<code>vh</code>, <code>vw</code>, <code>vmin</code>, <code>vmax</code>, <code>vi</code>, <code>vb</code> and their <code>s</code>/<code>l</code>/<code>d</code> forms such as
+  <code>dvh</code>), container units (<code>cqh</code>, <code>cqw</code>, ...) and the absolute ones (<code>cm</code>, <code>mm</code>,
+  <code>in</code>, <code>pt</code>, <code>pc</code>, <code>q</code>);</li>
+<li>or <code>calc()</code>, <code>min()</code>, <code>max()</code> or <code>clamp()</code> over those lengths, plain numbers and
+  <code>+ - * /</code>, nested if you like: <code>"min(600px, 80vh)"</code>.</li>
+</ul>
+<p><strong>Refused</strong>: a bare number (<code>500</code>, not a string), a unitless string (<code>"500"</code>),
+<code>"auto"</code>, <code>"none"</code>, keywords such as <code>"inherit"</code>, and <strong>percentages</strong>, inside
+<code>calc()</code> too. The numbers and keywords used to be written into the page and size
+the editor to a single line. A percentage resolves against the height of the
+element around the editor, so it did the same wherever that element has none, as in
+the admin and most forms; use a viewport unit (<code>"60vh"</code>) or <code>calc(100vh - ...)</code>
+instead. <code>var()</code>, <code>url()</code>, quotes, <code>;</code> and <code>!important</code> are refused as well: the
+value is only ever arithmetic on lengths. To size editors from a stylesheet
+instead, leave the key out and set the <code>--tiptap-height</code> / <code>--tiptap-max-height</code>
+<a href="../theming/#tokens">tokens</a>. The check is on the tokens, not the
+arithmetic, so a malformed expression such as <code>"calc(10px + * 2px)"</code> passes it and
+is ignored by the browser.</p>
+<p>Set <code>None</code> to drop a value a broader layer gave, for instance a project-wide
+<code>maxHeight</code> from <code>TIPTAP_DEFAULT_CONFIG</code> on a field that should grow freely. An
+empty string <code>""</code> reads as unset too, here and in the browser. Keep
+<code>maxHeight</code> at or above <code>height</code>.</p>
+<p>The same rule runs in the browser for a config passed to <code>DjangoTipTap.init()</code>:
+a value it refuses is reported with <code>console.error</code> and the default is kept,
+so one bad field does not stop the rest of the page mounting.</p>
 <h3 id="toolbar-buttons">Toolbar buttons<a class="headerlink" href="#toolbar-buttons" title="Permanent link">&para;</a></h3>
 <p><code>undo</code> <code>redo</code> · <code>bold</code> <code>italic</code> <code>underline</code> <code>strike</code> <code>code</code> · <code>fontSize</code> <code>fontFamily</code>
 <code>color</code> <code>highlight</code> · <code>h1</code> <code>h2</code> <code>h3</code> <code>paragraph</code> · <code>bulletList</code> <code>orderedList</code>
@@ -1011,6 +1103,166 @@ any omitted key.</p>
 <code>link</code> <code>unlink</code> <code>clearFormatting</code> · <code>sourceView</code> · <code>mergeTags</code> (opt-in).</p>
 <p>A group is an inner array; groups render with separators. Register your own buttons with
 <a href="../extending/#toolbar-buttons"><code>ui.registerButton</code></a>.</p>
+<h3 id="restricting-features">Restricting features<a class="headerlink" href="#restricting-features" title="Permanent link">&para;</a></h3>
+<p><code>toolbar</code> decides which buttons a field shows; <code>features</code> decides what its editor can do.
+Leaving the heading buttons out of the toolbar does not stop an author typing <code>##</code>,
+pressing Ctrl+Alt+2 or pasting an <code>&lt;h2&gt;</code>: each still reaches the heading extension. List
+<code>features</code> and an extension that is not listed is not mounted, so none of those paths
+produces its content.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># An email body: inline formatting, links and lists, nothing else.</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">TipTapWidget</span><span class="p">(</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">config</span><span class="o">=</span><span class="p">{</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;italic&quot;</span><span class="p">,</span> <span class="s2">&quot;underline&quot;</span><span class="p">,</span> <span class="s2">&quot;link&quot;</span><span class="p">,</span> <span class="s2">&quot;bulletList&quot;</span><span class="p">,</span> <span class="s2">&quot;orderedList&quot;</span><span class="p">],</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="s2">&quot;toolbar&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="s2">&quot;italic&quot;</span><span class="p">,</span> <span class="s2">&quot;underline&quot;</span><span class="p">,</span> <span class="s2">&quot;link&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;bulletList&quot;</span><span class="p">,</span> <span class="s2">&quot;orderedList&quot;</span><span class="p">]],</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="p">}</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Omit <code>features</code> and every built-in is on, exactly as without the key. <code>[]</code> is valid and
+leaves paragraphs, text and line breaks. A name that is not a built-in extension raises
+<code>ImproperlyConfigured</code>; custom extensions are switched on through <code>extensions</code>, not here.
+A project-wide <code>features</code> in <code>TIPTAP_DEFAULT_CONFIG</code> applies to every field, a field's own
+list replaces it, and <code>"features": None</code> on one field gives that field every built-in again.</p>
+<p>What a restricted field does in the browser:</p>
+<ul>
+<li>A built-in toolbar button whose feature is off is not rendered. An explicit <code>toolbar</code>
+  that names one still works for the rest: the button is left out and the console warns
+  once, naming the button and the missing feature. Groups left empty disappear, so no
+  stray separator renders.</li>
+<li>A custom button declares what it needs with <code>requires</code> (see
+  <a href="../extending/#toolbar-buttons">Extending</a>); one without it is always shown.</li>
+<li>Image files dropped or pasted into a field without <code>image</code> are left alone: nothing is
+  inserted and nothing is uploaded.</li>
+<li>JSON-stored content saved before a field was restricted still opens. If the field's
+  schema cannot build the stored document, the editor loads the HTML mirror instead, which
+  keeps the text and drops the unsupported markup, rather than opening empty.</li>
+</ul>
+<p>The feature names, grouped:</p>
+<!-- features:groups -->
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inline marks</td>
+<td><code>bold</code> <code>italic</code> <code>underline</code> <code>strike</code> <code>code</code> <code>subscript</code> <code>superscript</code></td>
+</tr>
+<tr>
+<td>Text style</td>
+<td><code>textStyle</code> <code>fontFamily</code> <code>fontSize</code> <code>color</code> <code>backgroundColor</code> <code>highlight</code></td>
+</tr>
+<tr>
+<td>Blocks</td>
+<td><code>heading</code> <code>blockquote</code> <code>codeBlock</code> <code>horizontalRule</code> <code>textAlign</code></td>
+</tr>
+<tr>
+<td>Lists</td>
+<td><code>bulletList</code> <code>orderedList</code> <code>listItem</code></td>
+</tr>
+<tr>
+<td>Links and media</td>
+<td><code>link</code> <code>image</code></td>
+</tr>
+<tr>
+<td>Tables</td>
+<td><code>table</code> <code>tableRow</code> <code>tableCell</code> <code>tableHeader</code></td>
+</tr>
+<tr>
+<td>Editor</td>
+<td><code>characterCount</code> <code>sourceView</code></td>
+</tr>
+</tbody>
+</table>
+<!-- /features:groups -->
+
+<p><strong>Always on</strong>, whatever the list says: <!-- features:core --><code>document</code> <code>dropcursor</code>
+<code>gapcursor</code> <code>hardBreak</code> <code>history</code> <code>paragraph</code> <code>text</code><!-- /features:core -->. Naming one of
+them is accepted and changes nothing. <code>hardBreak</code> is core rather than a feature because
+Shift-Enter inside a list item and a pasted <code>&lt;br&gt;</code> both need it: without it, lines an
+author kept apart would merge.</p>
+<p><strong>Dependencies are pulled in.</strong> A feature that cannot work without another brings it
+along, so naming <code>table</code> alone gives a table with rows and cells, and naming a row, cell
+or header alone gives the whole table:</p>
+<!-- features:dependencies -->
+<table>
+<thead>
+<tr>
+<th>Listing</th>
+<th>Also turns on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backgroundColor</code></td>
+<td><code>textStyle</code></td>
+</tr>
+<tr>
+<td><code>bulletList</code></td>
+<td><code>listItem</code></td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td><code>textStyle</code></td>
+</tr>
+<tr>
+<td><code>fontFamily</code></td>
+<td><code>textStyle</code></td>
+</tr>
+<tr>
+<td><code>fontSize</code></td>
+<td><code>textStyle</code></td>
+</tr>
+<tr>
+<td><code>highlight</code></td>
+<td><code>backgroundColor</code> <code>textStyle</code></td>
+</tr>
+<tr>
+<td><code>orderedList</code></td>
+<td><code>listItem</code></td>
+</tr>
+<tr>
+<td><code>table</code></td>
+<td><code>tableCell</code> <code>tableHeader</code> <code>tableRow</code></td>
+</tr>
+<tr>
+<td><code>tableCell</code></td>
+<td><code>table</code></td>
+</tr>
+<tr>
+<td><code>tableHeader</code></td>
+<td><code>table</code></td>
+</tr>
+<tr>
+<td><code>tableRow</code></td>
+<td><code>table</code></td>
+</tr>
+</tbody>
+</table>
+<!-- /features:dependencies -->
+
+<p>The widget writes the resolved set, listed features plus core plus dependencies, into
+<code>data-tiptap-config</code>, and <code>django_tiptap_editor.utils.resolve_features</code> returns the same
+set on the server.</p>
+<p><code>features</code> restricts the server as well as the editor. <code>TipTapFormField</code> and
+<code>TipTapJSONFormField</code> clean a submitted value against the vocabularies of that resolved
+set, plus the custom extensions the field's own <code>extensions</code> names, so a client that posts
+the field directly, skipping the editor, cannot store what the editor could not have
+made:</p>
+<ul>
+<li>a block the field lacks becomes a paragraph: a heading, quote, code block, list item or
+  table cell keeps its text and loses its tag, and the list or table around it is
+  unwrapped;</li>
+<li>a mark the field lacks is unwrapped, keeping its text;</li>
+<li>an attribute or style property that belongs to a missing feature is dropped, so a field
+  without <code>textAlign</code> keeps a paragraph and loses its alignment.</li>
+</ul>
+<p>A field configured without <code>features</code> is cleaned against every built-in extension, as
+before. The fields admin pages build through <code>TipTapModelAdminMixin</code> are cleaned the same
+way. What is <em>not</em> narrowed per field, and what narrowing does not do to rows already
+stored, is in <a href="../security/#what-is-not-narrowed-per-field">Security</a>.</p>
 <h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1043,7 +1295,7 @@ any omitted key.</p>
 </tr>
 </tbody>
 </table>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">TIPTAP_DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;450px&quot;</span><span class="p">,</span> <span class="s2">&quot;locale&quot;</span><span class="p">:</span> <span class="s2">&quot;sv&quot;</span><span class="p">}</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">TIPTAP_DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;450px&quot;</span><span class="p">,</span> <span class="s2">&quot;locale&quot;</span><span class="p">:</span> <span class="s2">&quot;sv&quot;</span><span class="p">}</span>
 </span></code></pre></div>
 <p>Settings are read lazily — importing the package never touches Django settings.</p>
 

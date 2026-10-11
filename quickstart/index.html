@@ -914,7 +914,10 @@ the same allowlist the form field applied on the way in:</p>
 </span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="k">pass</span>
 </span></code></pre></div>
 <p>Every <code>TextField</code> becomes a TipTap editor. To limit which fields, set
-<code>tiptap_fields = ["body"]</code>. The admin always uses the self-contained bundle.</p>
+<code>tiptap_fields = ["body"]</code>. To size or configure those editors, give the fields your own
+<code>AdminTipTapWidget(config={...})</code> in <code>formfield_overrides</code>; the mixin renders it as given
+(see <a href="../api/#tiptapmodeladminmixin">the mixin's reference</a>). The admin always uses the
+self-contained bundle.</p>
 <h2 id="dynamic-forms-htmx-turbo-admin-inlines">Dynamic forms (htmx, Turbo, admin inlines)<a class="headerlink" href="#dynamic-forms-htmx-turbo-admin-inlines" title="Permanent link">&para;</a></h2>
 <p>Auto-mount is <strong>framework-agnostic</strong>: the editor watches the DOM with a
 <code>MutationObserver</code>, so a widget added after page load mounts automatically no

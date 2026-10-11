@@ -1134,6 +1134,13 @@ cannot know what yours does, so tell it:</p>
 <p>Each tag maps to the attributes and the inline-style properties your extension puts on
 it. Style properties go under <code>styles</code>, never as a <code>style</code> entry in <code>attrs</code> — that is
 what keeps a declared extension from turning <code>style</code> into a passthrough.</p>
+<p>A field restricted with <a href="../configuration/#restricting-features"><code>features</code></a> keeps a
+declared vocabulary only when the field's own <code>extensions</code> names the extension: the field
+is cleaned against what its editor mounts, and an editor mounts a custom extension only
+when its config names it. A named extension's vocabulary is admitted as it is declared,
+whatever the field's <code>features</code> leave out: an extension declaring <code>h2</code> keeps <code>&lt;h2&gt;</code> on a
+field without <code>heading</code> that names it. Declare only the tags the extension itself
+renders.</p>
 <p>The plain list form still works and still passes config validation:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">TIPTAP_EXTRA_EXTENSIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;callout&quot;</span><span class="p">]</span>
 </span></code></pre></div>
@@ -1196,6 +1203,10 @@ cases fall through:</p>
 <p>Activate it like any custom extension — list <code>"shortcuts"</code> in <code>config.extensions</code> and add it
 to <code>TIPTAP_EXTRA_EXTENSIONS</code> (and, for a project-wide default, in <code>TIPTAP_DEFAULT_CONFIG</code>).
 A shortcut-only extension emits no markup, so declare it as <code>{"shortcuts": {}}</code>.</p>
+<p>A custom extension that builds on a built-in node (a content expression naming
+<code>listItem</code>, say) needs that built-in to be mounted. On a field restricted with
+<a href="../configuration/#restricting-features"><code>features</code></a>, list the built-ins it depends on
+there, or the editor fails to build.</p>
 <h2 id="toolbar-buttons">Toolbar buttons<a class="headerlink" href="#toolbar-buttons" title="Permanent link">&para;</a></h2>
 <div class="language-js highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">registerButton</span><span class="p">(</span><span class="s2">&quot;callout&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;▣&quot;</span><span class="p">,</span>
@@ -1208,6 +1219,11 @@ A shortcut-only extension emits no markup, so declare it as <code>{"shortcuts": 
 (<code>icon</code> + <code>onClick</code>, optional <code>isActive</code> / <code>isEnabled</code>) or a custom control
 (<code>render(editor) -&gt; { el, refresh? }</code>) that owns its DOM — that's how the built-in
 font/colour/table menus are built.</p>
+<p>A spec may also carry <code>requires</code>, the name of the built-in feature it cannot work
+without (for example <code>"image"</code>). A field restricted with
+<a href="../configuration/#restricting-features"><code>features</code></a> that leaves that feature out does not
+render the button. Leave it off for a button that needs no built-in feature. Registering
+a built-in key again replaces the spec, so the replacement carries its own <code>requires</code>.</p>
 <h2 id="load-order">Load order<a class="headerlink" href="#load-order" title="Permanent link">&para;</a></h2>
 <p>Registration must run before auto-mount. Load your registration script <strong>after</strong> the
 editor assets; auto-mount runs on <code>DOMContentLoaded</code>, so a normal script placed after the

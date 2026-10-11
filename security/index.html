@@ -537,6 +537,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="What survives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per field
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-narrowed-per-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not narrowed per field
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -868,6 +896,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="What survives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per field
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-narrowed-per-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not narrowed per field
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -949,13 +1005,19 @@ allowlist before it is stored, and again when it is displayed.</p>
   <a href="../api/"><code>sanitize_html</code></a>: anything outside the allowlist is unwrapped, unknown
   attributes are dropped, <code>script</code>/<code>style</code> bodies are discarded, link and image URLs
   are protocol-allowlisted, and inline styles keep only allowed properties with safe
-  values.</li>
+  values. The allowlist is the field's own: it is built from the field's resolved
+  <a href="../configuration/#restricting-features"><code>features</code></a>, so a field whose editor cannot
+  make a heading cannot store one either (see <a href="#per-field">Per field</a>).</li>
 <li><strong>Display.</strong> The <code>tiptap_html</code> filter sanitises again at render time, which is what
   makes it safe on rows stored before this boundary existed.</li>
 <li><strong>JSON storage.</strong> <code>TipTapJSONField</code> protocol-allowlists the <code>doc</code> on every save and
   re-derives the <code>html</code> mirror from it (<code>render_doc</code>); <code>TipTapValue</code> sanitises its
   mirror on construction, so no caller can hand a template markup the editor could
-  not have produced.</li>
+  not have produced. <code>TipTapJSONFormField</code> also narrows the submitted <code>doc</code> to the
+  field's features before it is stored.</li>
+<li><strong>Admin.</strong> <code>TipTapModelAdminMixin</code> gives every <code>TextField</code> a <code>TipTapFormField</code>, unless
+  the admin names its own form class for it, so an admin page is cleaned like any other
+  form.</li>
 </ul>
 <p>The browser-side controls below are still there, and still worth having — they are
 what makes the editor <em>behave</em> well. They are not the security boundary, because they
@@ -1014,6 +1076,90 @@ and every case in the fidelity corpus, and fails if anything lands outside this 
 deleted what it did not recognise could quietly empty half a document, so it never
 deletes visible text — the one exception is <code>script</code> and <code>style</code>, whose bodies are
 code rather than prose and are dropped whole.</p>
+<h3 id="per-field">Per field<a class="headerlink" href="#per-field" title="Permanent link">&para;</a></h3>
+<p>The table above is what a field configured without <code>features</code> keeps. A field with
+<a href="../configuration/#restricting-features"><code>features</code></a> keeps only the vocabularies of its
+resolved set (listed features, the always-on core, and their dependencies), plus the
+custom extensions its own <code>extensions</code> names. What it lacks is not deleted, because the
+rule above still holds:</p>
+<ul>
+<li><strong>A block becomes a paragraph.</strong> <code>h1</code>-<code>h6</code>, <code>blockquote</code>, <code>pre</code>, <code>li</code>, <code>td</code> and <code>th</code>
+  each keep their text as a paragraph boundary, and the <code>ul</code>, <code>ol</code> or table structure
+  around them is unwrapped. A paragraph the sanitiser opens is never nested inside
+  another it opened, and cleaning the result again changes nothing. Nesting the
+  submitted markup already had, such as a <code>&lt;p&gt;</code> inside a kept <code>&lt;blockquote&gt;</code> inside a
+  <code>&lt;p&gt;</code>, is cleaned as it would be on an unrestricted field rather than repaired.</li>
+<li><strong>A mark is unwrapped</strong>, as an unknown tag is. A mark that spans a converted block is
+  reopened in the paragraph that follows it. One that opens immediately before the block
+  is closed there empty, so <code>&lt;strong&gt;&lt;h2&gt;b&lt;/h2&gt;c&lt;/strong&gt;</code> on <code>["bold"]</code> keeps
+  <code>&lt;strong&gt;&lt;/strong&gt;&lt;p&gt;b&lt;/p&gt;&lt;strong&gt;c&lt;/strong&gt;</code>; the empty pair holds no text.</li>
+<li><strong>Attributes and style properties narrow with their feature.</strong> <code>text-align</code> goes with
+  <code>textAlign</code>, <code>color</code> with <code>color</code>, and so on. The text-style features decorate tags
+  other features admit; on their own they admit no tag.</li>
+</ul>
+<p>A stored JSON document narrows the same way: a node type the field lacks becomes a
+paragraph if it held text, or is replaced by its children, and a mark or attribute the
+field lacks is dropped. The <code>html</code> mirror rendered from the narrowed document is, for
+most content, the markup the HTML path keeps for the same document rendered as HTML. It
+differs where a tag is shared between features, because the HTML path judges the tag
+and the document path judges the node or mark:</p>
+<table>
+<thead>
+<tr>
+<th>Field <code>features</code></th>
+<th>Content</th>
+<th>HTML path keeps</th>
+<th>Document path keeps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>["codeBlock"]</code></td>
+<td>inline code</td>
+<td><code>&lt;p&gt;&lt;code&gt;b&lt;/code&gt;&lt;/p&gt;</code></td>
+<td><code>&lt;p&gt;b&lt;/p&gt;</code></td>
+</tr>
+<tr>
+<td><code>["code"]</code></td>
+<td>a code block</td>
+<td><code>&lt;p&gt;&lt;code&gt;x&lt;/code&gt;&lt;/p&gt;</code></td>
+<td><code>&lt;p&gt;x&lt;/p&gt;</code></td>
+</tr>
+<tr>
+<td><code>["textStyle"]</code></td>
+<td>coloured text</td>
+<td><code>&lt;p&gt;&lt;span&gt;a&lt;/span&gt;&lt;/p&gt;</code></td>
+<td><code>&lt;p&gt;a&lt;/p&gt;</code></td>
+</tr>
+<tr>
+<td><code>["color"]</code></td>
+<td>text with only a font size</td>
+<td><code>&lt;p&gt;&lt;span&gt;a&lt;/span&gt;&lt;/p&gt;</code></td>
+<td><code>&lt;p&gt;a&lt;/p&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>In each the HTML path keeps a tag the field admits for another feature, emptied of what
+the field lacks, and the document path drops the mark that carried it. Neither path keeps
+anything the field's allowlist does not.</p>
+<p>An image on a field without <code>image</code> goes whole on both paths, its <code>alt</code> text with it:
+the text lives in an attribute, not in content, so there is nothing to unwrap.</p>
+<h3 id="what-is-not-narrowed-per-field">What is not narrowed per field<a class="headerlink" href="#what-is-not-narrowed-per-field" title="Permanent link">&para;</a></h3>
+<p>Narrowing needs the field's config, and only a form field has it. So:</p>
+<ul>
+<li><strong>Writes that skip the form are not narrowed per field.</strong> A model save through the ORM
+  or an API serializer, and <code>loaddata</code>, are sanitised as before (against every built-in
+  extension on the JSON path, and not at all on a plain <code>TextField</code>), whatever the
+  editor for that column would allow.</li>
+<li><strong>The <code>tiptap_html</code> filter is not per field.</strong> It has no field to read, so it renders
+  against every built-in extension's vocabulary, even when <code>TIPTAP_DEFAULT_CONFIG</code> sets
+  <code>features</code>.</li>
+<li><strong>Changing a field's <code>features</code> does not rewrite stored rows.</strong> A heading saved before
+  the field lost <code>heading</code> stays in the column until that row is saved again through the
+  form.</li>
+<li><strong><code>linkProtocols</code> is project-wide on the server.</strong> A field's own <code>linkProtocols</code> limits
+  its editor; the server's allowlist reads the project default.</li>
+</ul>
 <p>A link that opens a new browsing context always carries <code>rel="noopener noreferrer"</code>,
 whatever the stored document asked for: <code>rel="opener"</code> re-enables the <code>window.opener</code>
 handle that <code>target="_blank"</code> otherwise implies away.</p>

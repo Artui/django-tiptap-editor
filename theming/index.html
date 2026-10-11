@@ -1071,7 +1071,11 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 <tbody>
 <tr>
 <td><code>--tiptap-height</code></td>
-<td>Editing-area min-height</td>
+<td>Editing-area min-height (default <code>360px</code>)</td>
+</tr>
+<tr>
+<td><code>--tiptap-max-height</code></td>
+<td>Editing-area max-height; the content scrolls past it (default <code>none</code>)</td>
 </tr>
 <tr>
 <td><code>--tiptap-font</code></td>
@@ -1115,12 +1119,32 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 </tr>
 </tbody>
 </table>
+<p>The defaults are declared on the document root with zero specificity
+(<code>:where(:root, :host)</code>), and every editor inherits them. So a token set anywhere above an
+editor reaches it, and any rule you write beats the default whichever stylesheet
+loads last. From strongest to weakest:</p>
+<ol>
+<li>a field's own <code>height</code> / <code>maxHeight</code> <a href="../configuration/#heights">config</a>, written
+   on that editor's shell;</li>
+<li>a token set on <code>.django-tiptap</code> or on an element around one editor;</li>
+<li>a token set on <code>:root</code> / <code>html</code>, in CSS or with <code>ui.setTokens</code>, which writes there;</li>
+<li>the built-in default.</li>
+</ol>
+<p>The defaults are declared on <code>:host</code> as well (<code>:where(:root, :host)</code>), for a page
+that loads the stylesheet inside a shadow root, as a web component wrapping the
+editor does: <code>:root</code> matches nothing there. Inside a shadow root the defaults sit on
+the host element, so a token set on the document's <code>:root</code> (including with
+<code>ui.setTokens</code>) stops at the host; set it on the host element instead.</p>
 <h3 id="in-css">In CSS<a class="headerlink" href="#in-css" title="Permanent link">&para;</a></h3>
-<div class="language-css highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">.</span><span class="nc">django-tiptap</span><span class="w"> </span><span class="p">{</span>
+<div class="language-css highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">:</span><span class="nd">root</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nv">--tiptap-accent</span><span class="p">:</span><span class="w"> </span><span class="mh">#0b7285</span><span class="p">;</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nv">--tiptap-radius</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="kt">px</span><span class="p">;</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nv">--tiptap-toolbar-bg</span><span class="p">:</span><span class="w"> </span><span class="mh">#f3f4f6</span><span class="p">;</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">}</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">}</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c">/* Or for the editors in one part of the page only. */</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">.</span><span class="nc">newsletter-form</span><span class="w"> </span><span class="p">.</span><span class="nc">django-tiptap</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nv">--tiptap-toolbar-bg</span><span class="p">:</span><span class="w"> </span><span class="mh">#f3f4f6</span><span class="p">;</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
 </span></code></pre></div>
 <h3 id="stacking-the-picker-over-host-modals">Stacking the picker over host modals<a class="headerlink" href="#stacking-the-picker-over-host-modals" title="Permanent link">&para;</a></h3>
 <p>The image-picker overlay is portaled to <code>&lt;body&gt;</code>, so it sits outside the editor's
@@ -1133,12 +1157,16 @@ stacks even higher, raise the knob — no <code>!important</code> needed:</p>
 </span></code></pre></div>
 <p>Set <code>--tiptap-modal-z</code> on <code>:root</code> (or <code>html</code>/<code>body</code>), <strong>not</strong> on <code>.django-tiptap</code>:
 because the overlay is appended to <code>&lt;body&gt;</code>, it does not inherit custom properties
-declared on the editor element. Every other token in the table above is read inside
-<code>.django-tiptap</code> and can be set there as usual.</p>
+declared on the editor element. The same holds for the overlay's colours, border and
+radius: a token set on <code>:root</code> themes the picker as well as the editors, one set on
+<code>.django-tiptap</code> only the editors.</p>
 <h3 id="in-js">In JS<a class="headerlink" href="#in-js" title="Permanent link">&para;</a></h3>
 <div class="language-js highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setTokens</span><span class="p">({</span><span class="w"> </span><span class="nx">accent</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#0b7285&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">radius</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;12px&quot;</span><span class="w"> </span><span class="p">});</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1">// bare keys are prefixed with --tiptap-; or pass full &quot;--tiptap-…&quot; names.</span>
 </span></code></pre></div>
+<p><code>setTokens</code> writes onto <code>document.documentElement</code>, so it is the page-wide layer (3
+above): every editor follows it, including ones mounted later, and a field's own
+<code>height</code> / <code>maxHeight</code> config still wins over a <code>height</code> / <code>max-height</code> token.</p>
 <h2 id="targeting-parts">Targeting parts<a class="headerlink" href="#targeting-parts" title="Permanent link">&para;</a></h2>
 <p>The shell uses stable, namespaced classes you can style directly: <code>.django-tiptap</code>
 (shell), <code>.django-tiptap__toolbar</code>, <code>.django-tiptap__group</code>, <code>.django-tiptap__btn</code>
