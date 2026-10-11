@@ -67,3 +67,10 @@ def test_tiptap_html_filter_output_is_safe_in_a_template() -> None:
         Context({"v": "<p>a &amp; b</p>"})
     )
     assert rendered == "<p>a &amp; b</p>"
+
+
+@override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
+def test_tiptap_html_filter_is_not_narrowed_by_features() -> None:
+    # The filter has no field to read features from, so even a project-wide
+    # list leaves it on the full built-in allowlist; docs/security.md says so.
+    assert tiptap_html("<h2>x</h2>") == "<h2>x</h2>"

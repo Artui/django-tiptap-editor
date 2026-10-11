@@ -14,6 +14,12 @@ export interface RenderedControl {
 export interface ButtonSpec {
   title: string;
   group?: string;
+  // The feature (a name from config.features) whose extension provides this
+  // control's command. On a field whose features leave it out, the command does
+  // not exist, so the toolbar does not render the control: silently in the
+  // default toolbar, with a console warning when config.toolbar names it.
+  // Omitted, the control renders on every field.
+  requires?: string;
   // Command-button form:
   icon?: string;
   isActive?: (editor: Editor) => boolean;

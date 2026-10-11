@@ -73,6 +73,14 @@ Each tag maps to the attributes and the inline-style properties your extension p
 it. Style properties go under `styles`, never as a `style` entry in `attrs` — that is
 what keeps a declared extension from turning `style` into a passthrough.
 
+A field restricted with [`features`](configuration.md#restricting-features) keeps a
+declared vocabulary only when the field's own `extensions` names the extension: the field
+is cleaned against what its editor mounts, and an editor mounts a custom extension only
+when its config names it. A named extension's vocabulary is admitted as it is declared,
+whatever the field's `features` leave out: an extension declaring `h2` keeps `<h2>` on a
+field without `heading` that names it. Declare only the tags the extension itself
+renders.
+
 The plain list form still works and still passes config validation:
 
 ```python
@@ -159,6 +167,11 @@ Activate it like any custom extension — list `"shortcuts"` in `config.extensio
 to `TIPTAP_EXTRA_EXTENSIONS` (and, for a project-wide default, in `TIPTAP_DEFAULT_CONFIG`).
 A shortcut-only extension emits no markup, so declare it as `{"shortcuts": {}}`.
 
+A custom extension that builds on a built-in node (a content expression naming
+`listItem`, say) needs that built-in to be mounted. On a field restricted with
+[`features`](configuration.md#restricting-features), list the built-ins it depends on
+there, or the editor fails to build.
+
 ## Toolbar buttons
 
 ```js
@@ -174,6 +187,12 @@ Then reference the key in `config.toolbar`. A button spec is either a command bu
 (`icon` + `onClick`, optional `isActive` / `isEnabled`) or a custom control
 (`render(editor) -> { el, refresh? }`) that owns its DOM — that's how the built-in
 font/colour/table menus are built.
+
+A spec may also carry `requires`, the name of the built-in feature it cannot work
+without (for example `"image"`). A field restricted with
+[`features`](configuration.md#restricting-features) that leaves that feature out does not
+render the button. Leave it off for a button that needs no built-in feature. Registering
+a built-in key again replaces the spec, so the replacement carries its own `requires`.
 
 ## Load order
 

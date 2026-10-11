@@ -494,3 +494,24 @@ def test_the_field_vocabulary_covers_everything_the_renderer_handles() -> None:
     assert handled - declared == set(), (
         f"the renderer handles {sorted(handled - declared)}, which the field rejects"
     )
+
+
+@pytest.mark.django_db
+@override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
+def test_an_orm_write_is_not_narrowed_by_features() -> None:
+    # Narrowing belongs to the form fields, which know their widget's config. A
+    # model save has no form, so a heading written through the ORM is kept even
+    # where every field's editor lacks headings; docs/security.md says so.
+    heading = {
+        "type": "heading",
+        "attrs": {"level": 2},
+        "content": [{"type": "text", "text": "x"}],
+    }
+    doc = {"type": "doc", "content": [heading]}
+    article = Article.objects.create(
+        title="t", body="<h2>x</h2>", document=TipTapValue.from_stored({"doc": doc, "html": ""})
+    )
+    reloaded = Article.objects.get(pk=article.pk)
+    assert reloaded.body == "<h2>x</h2>"
+    assert reloaded.document.doc["content"][0]["type"] == "heading"
+    assert reloaded.document.html.startswith("<h2>")

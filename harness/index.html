@@ -93,6 +93,26 @@
       </section>
 
       <section class="panel">
+        <h2>Restricted field</h2>
+        <p class="lede">
+          An email-style field: <code>features</code> lists bold, italic, link and the two lists,
+          and <code>toolbar</code> matches. Type <code>## </code> at the start of a line, press
+          Ctrl+Alt+2 (Cmd+Option+2 on a Mac), or paste a heading from another page into each editor: the full field
+          makes a heading every time, the restricted one never does, because it has no heading
+          node to make. The paste buttons drive the real clipboard path
+          (<code>view.pasteHTML</code>) for when a clipboard is awkward to reach.
+        </p>
+        <div class="label">Restricted (<code>features</code> set)</div>
+        <div id="restricted-slot"></div>
+        <p><button type="button" data-paste="harness-restricted">Paste a heading, table and colour</button></p>
+        <pre id="restricted-value"></pre>
+        <div class="label">Full (no <code>features</code> key)</div>
+        <div id="full-slot"></div>
+        <p><button type="button" data-paste="harness-full">Paste a heading, table and colour</button></p>
+        <pre id="full-value"></pre>
+      </section>
+
+      <section class="panel">
         <h2>Scenarios</h2>
         <p id="summary">Not run yet.</p>
         <button id="run" type="button">Run all scenarios</button>
@@ -316,6 +336,51 @@
         editor.commands.focus("end");
         sync();
       }
+
+      // --- restricted field -----------------------------------------------
+      // The config a Django field would carry for an email body. The server
+      // resolves `features` before writing it out; init() resolves the same list
+      // itself, so the harness can hand it over as written.
+      const EMAIL_FEATURES = ["bold", "italic", "link", "bulletList", "orderedList"];
+      const EMAIL_TOOLBAR = [
+        ["undo", "redo"],
+        ["bold", "italic"],
+        ["bulletList", "orderedList"],
+        ["link", "unlink"],
+      ];
+      const PASTED =
+        "<h2>Pasted heading</h2>"
+        + "<table><tbody><tr><td>Pasted cell</td></tr></tbody></table>"
+        + '<p><span style="color: #e03e2d; font-size: 24px">Pasted colour</span></p>';
+
+      function mountComparison(slotId, id, valueId, config) {
+        const { editor, textarea } = mount(
+          document.getElementById(slotId),
+          id,
+          Object.assign({ height: "140px" }, config),
+          "<p>Type here.</p>",
+        );
+        const value = document.getElementById(valueId);
+        const sync = () => {
+          value.textContent = textarea.value;
+        };
+        editor.on("update", sync);
+        sync();
+      }
+
+      mountComparison("restricted-slot", "harness-restricted", "restricted-value", {
+        features: EMAIL_FEATURES,
+        toolbar: EMAIL_TOOLBAR,
+      });
+      mountComparison("full-slot", "harness-full", "full-value", {});
+
+      document.querySelectorAll("[data-paste]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const editor = DjangoTipTap.get(button.dataset.paste);
+          editor.commands.focus("end");
+          editor.view.pasteHTML(PASTED);
+        });
+      });
 
       document.getElementById("modes").innerHTML = MODES.map(
         (mode, index) =>

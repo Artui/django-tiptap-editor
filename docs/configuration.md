@@ -9,12 +9,14 @@ any omitted key.
 
 | Key | Type | Notes |
 | --- | --- | --- |
-| `height` | str | Editor min-height, e.g. `"400px"`. |
+| `height` | str | Minimum height of the editing area, as a [CSS length](#heights): `"400px"`, `"30rem"`. Default `360px` (`500px` in the admin). The editor still grows with its content; cap it with `maxHeight`. |
+| `maxHeight` | str | Maximum height of the editing area, as a [CSS length](#heights): `"600px"`, `"calc(100vh - 12rem)"`. Past it the content scrolls inside the editor and the toolbar stays in view. Default: no cap. |
 | `locale` | str | `"en"` or `"sv"` built in; add more with `registerLocale`. |
 | `manualMount` | bool | Opt the field out of auto-mount (initial scan + observer); mount it yourself after registering renderers. See [Theming → Load order](theming.md#load-order). |
 | `enterKey` | str | Enter / Shift-Enter behaviour **outside lists**: `"paragraph"` (default — Enter splits into a new paragraph, Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"` (exchange the two). Inside a list item Enter always starts the next item and Shift-Enter always breaks the line — see [Extending → The Enter key](extending.md#the-enter-key-built-in). |
 | `toolbar` | list[list[str]] | Groups of [button keys](#toolbar-buttons). Omit for the default. |
-| `extensions` | list[str] | Extension names. Built-ins are always on; list custom ones (and add them to `TIPTAP_EXTRA_EXTENSIONS`). |
+| `features` | list[str] | Built-in extensions this field's editor may use; everything else is off, shortcuts and paste included. Omit for every built-in. See [Restricting features](#restricting-features). |
+| `extensions` | list[str] | Custom extension names (add them to `TIPTAP_EXTRA_EXTENSIONS`). Built-ins listed here change nothing; to turn built-ins off, use [`features`](#restricting-features). |
 | `linkProtocols` | list[str] | Allowed link protocols. Default `["http","https","mailto","tel"]`. |
 | `imageUploadUrl` | str | Enables image upload (see [Contracts](contracts.md)). |
 | `imageListUrl` | str | Enables the library picker. |
@@ -27,8 +29,9 @@ any omitted key.
 | `imageResize` | bool | Drag handles on a selected image, setting the width/height the document asks for. Default `True`; set `False` to pin images to their inserted size. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
 
-Unknown top-level keys, and extension names that are neither built in nor in
-`TIPTAP_EXTRA_EXTENSIONS`, raise `ImproperlyConfigured` — typos fail loudly.
+Unknown top-level keys, extension names that are neither built in nor in
+`TIPTAP_EXTRA_EXTENSIONS`, and feature names that are not built in raise
+`ImproperlyConfigured` — typos fail loudly.
 
 ```python
 TipTapWidget(
@@ -47,6 +50,50 @@ TipTapWidget(
 )
 ```
 
+### Heights
+
+`height` and `maxHeight` size the editing area, the part under the toolbar.
+`height` is a minimum and `maxHeight` a cap: with both set the editor starts at
+`height`, grows as you type, and from `maxHeight` on the content scrolls inside it
+while the toolbar stays put. Source view opens in the same area and keeps the same
+cap.
+
+```python
+TipTapWidget(config={"height": "200px", "maxHeight": "calc(100vh - 12rem)"})
+```
+
+Both take a **CSS length**, and anything else raises `ImproperlyConfigured`
+naming the key and the value:
+
+- a number and a unit, in any case: `px`, `rem`, `em`, `ch`, `ex`, `lh`, the viewport
+  units (`vh`, `vw`, `vmin`, `vmax`, `vi`, `vb` and their `s`/`l`/`d` forms such as
+  `dvh`), container units (`cqh`, `cqw`, ...) and the absolute ones (`cm`, `mm`,
+  `in`, `pt`, `pc`, `q`);
+- or `calc()`, `min()`, `max()` or `clamp()` over those lengths, plain numbers and
+  `+ - * /`, nested if you like: `"min(600px, 80vh)"`.
+
+**Refused**: a bare number (`500`, not a string), a unitless string (`"500"`),
+`"auto"`, `"none"`, keywords such as `"inherit"`, and **percentages**, inside
+`calc()` too. The numbers and keywords used to be written into the page and size
+the editor to a single line. A percentage resolves against the height of the
+element around the editor, so it did the same wherever that element has none, as in
+the admin and most forms; use a viewport unit (`"60vh"`) or `calc(100vh - ...)`
+instead. `var()`, `url()`, quotes, `;` and `!important` are refused as well: the
+value is only ever arithmetic on lengths. To size editors from a stylesheet
+instead, leave the key out and set the `--tiptap-height` / `--tiptap-max-height`
+[tokens](theming.md#tokens). The check is on the tokens, not the
+arithmetic, so a malformed expression such as `"calc(10px + * 2px)"` passes it and
+is ignored by the browser.
+
+Set `None` to drop a value a broader layer gave, for instance a project-wide
+`maxHeight` from `TIPTAP_DEFAULT_CONFIG` on a field that should grow freely. An
+empty string `""` reads as unset too, here and in the browser. Keep
+`maxHeight` at or above `height`.
+
+The same rule runs in the browser for a config passed to `DjangoTipTap.init()`:
+a value it refuses is reported with `console.error` and the default is kept,
+so one bad field does not stop the rest of the page mounting.
+
 ### Toolbar buttons
 
 `undo` `redo` · `bold` `italic` `underline` `strike` `code` · `fontSize` `fontFamily`
@@ -56,6 +103,106 @@ TipTapWidget(
 
 A group is an inner array; groups render with separators. Register your own buttons with
 [`ui.registerButton`](extending.md#toolbar-buttons).
+
+### Restricting features
+
+`toolbar` decides which buttons a field shows; `features` decides what its editor can do.
+Leaving the heading buttons out of the toolbar does not stop an author typing `## `,
+pressing Ctrl+Alt+2 or pasting an `<h2>`: each still reaches the heading extension. List
+`features` and an extension that is not listed is not mounted, so none of those paths
+produces its content.
+
+```python
+# An email body: inline formatting, links and lists, nothing else.
+TipTapWidget(
+    config={
+        "features": ["bold", "italic", "underline", "link", "bulletList", "orderedList"],
+        "toolbar": [["bold", "italic", "underline", "link"], ["bulletList", "orderedList"]],
+    }
+)
+```
+
+Omit `features` and every built-in is on, exactly as without the key. `[]` is valid and
+leaves paragraphs, text and line breaks. A name that is not a built-in extension raises
+`ImproperlyConfigured`; custom extensions are switched on through `extensions`, not here.
+A project-wide `features` in `TIPTAP_DEFAULT_CONFIG` applies to every field, a field's own
+list replaces it, and `"features": None` on one field gives that field every built-in again.
+
+What a restricted field does in the browser:
+
+- A built-in toolbar button whose feature is off is not rendered. An explicit `toolbar`
+  that names one still works for the rest: the button is left out and the console warns
+  once, naming the button and the missing feature. Groups left empty disappear, so no
+  stray separator renders.
+- A custom button declares what it needs with `requires` (see
+  [Extending](extending.md#toolbar-buttons)); one without it is always shown.
+- Image files dropped or pasted into a field without `image` are left alone: nothing is
+  inserted and nothing is uploaded.
+- JSON-stored content saved before a field was restricted still opens. If the field's
+  schema cannot build the stored document, the editor loads the HTML mirror instead, which
+  keeps the text and drops the unsupported markup, rather than opening empty.
+
+The feature names, grouped:
+
+<!-- features:groups -->
+| Group | Features |
+| --- | --- |
+| Inline marks | `bold` `italic` `underline` `strike` `code` `subscript` `superscript` |
+| Text style | `textStyle` `fontFamily` `fontSize` `color` `backgroundColor` `highlight` |
+| Blocks | `heading` `blockquote` `codeBlock` `horizontalRule` `textAlign` |
+| Lists | `bulletList` `orderedList` `listItem` |
+| Links and media | `link` `image` |
+| Tables | `table` `tableRow` `tableCell` `tableHeader` |
+| Editor | `characterCount` `sourceView` |
+<!-- /features:groups -->
+
+**Always on**, whatever the list says: <!-- features:core -->`document` `dropcursor`
+`gapcursor` `hardBreak` `history` `paragraph` `text`<!-- /features:core -->. Naming one of
+them is accepted and changes nothing. `hardBreak` is core rather than a feature because
+Shift-Enter inside a list item and a pasted `<br>` both need it: without it, lines an
+author kept apart would merge.
+
+**Dependencies are pulled in.** A feature that cannot work without another brings it
+along, so naming `table` alone gives a table with rows and cells, and naming a row, cell
+or header alone gives the whole table:
+
+<!-- features:dependencies -->
+| Listing | Also turns on |
+| --- | --- |
+| `backgroundColor` | `textStyle` |
+| `bulletList` | `listItem` |
+| `color` | `textStyle` |
+| `fontFamily` | `textStyle` |
+| `fontSize` | `textStyle` |
+| `highlight` | `backgroundColor` `textStyle` |
+| `orderedList` | `listItem` |
+| `table` | `tableCell` `tableHeader` `tableRow` |
+| `tableCell` | `table` |
+| `tableHeader` | `table` |
+| `tableRow` | `table` |
+<!-- /features:dependencies -->
+
+The widget writes the resolved set, listed features plus core plus dependencies, into
+`data-tiptap-config`, and `django_tiptap_editor.utils.resolve_features` returns the same
+set on the server.
+
+`features` restricts the server as well as the editor. `TipTapFormField` and
+`TipTapJSONFormField` clean a submitted value against the vocabularies of that resolved
+set, plus the custom extensions the field's own `extensions` names, so a client that posts
+the field directly, skipping the editor, cannot store what the editor could not have
+made:
+
+- a block the field lacks becomes a paragraph: a heading, quote, code block, list item or
+  table cell keeps its text and loses its tag, and the list or table around it is
+  unwrapped;
+- a mark the field lacks is unwrapped, keeping its text;
+- an attribute or style property that belongs to a missing feature is dropped, so a field
+  without `textAlign` keeps a paragraph and loses its alignment.
+
+A field configured without `features` is cleaned against every built-in extension, as
+before. The fields admin pages build through `TipTapModelAdminMixin` are cleaned the same
+way. What is *not* narrowed per field, and what narrowing does not do to rows already
+stored, is in [Security](security.md#what-is-not-narrowed-per-field).
 
 ## Settings
 

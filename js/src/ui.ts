@@ -14,6 +14,12 @@ import type { ButtonSpec } from "./toolbar/button-registry";
 
 // Design-token theming (the stable, default customization path). Sets
 // `--tiptap-*` custom properties on the document root; bare keys are prefixed.
+// That reaches every editor in the document because styles.css declares the
+// defaults on the root too (`:where(:root, :host)`), never on the shell: a
+// declaration on the shell would shadow the inherited value and make this a
+// no-op. An editor inside a shadow root takes its defaults from the host, so a
+// token for it goes on the host element instead. A field's own height /
+// maxHeight, written inline on its shell, still wins over a token set here.
 export function setTokens(tokens: Record<string, string>): void {
   const root = document.documentElement;
   for (const [key, value] of Object.entries(tokens)) {

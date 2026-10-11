@@ -15,6 +15,9 @@ Renders a `<textarea>` carrying `data-tiptap-config`. Config resolution (last wi
 (`get_config(self, attrs)`). `class Media` emits the committed bundle. `storage` is
 `"html"` (default) or `"json"`; when `None` it resolves from
 `settings.TIPTAP_STORAGE_FORMAT`. See [Storage format](storage.md).
+A `features` list in the merged config is written out resolved, with the core and
+every dependency included and sorted, whichever `get_config` produced it. See
+[Restricting features](configuration.md#restricting-features).
 
 ### `AdminTipTapWidget(TipTapWidget)`
 
@@ -24,16 +27,65 @@ Renders a `<textarea>` carrying `data-tiptap-config`. Config resolution (last wi
 ### `TipTapModelAdminMixin`
 
 `django_tiptap_editor.admin.mixin.TipTapModelAdminMixin` — mix in before
-`admin.ModelAdmin`. Swaps `AdminTipTapWidget` onto `TextField`s.
+`admin.ModelAdmin`. Swaps `AdminTipTapWidget` onto `TextField`s, and makes their form field a
+`TipTapFormField` so the admin cleans them, unless the admin names its own `form_class` for
+`TextField` in `formfield_overrides` or the field in `Meta.field_classes`.
 `tiptap_fields = "__all__"` (default) or an explicit list of field names. An explicit
 list is checked at startup: a name that is not a field on the model, or one naming a
 field the widget cannot apply to, is a system-check error
-(`django_tiptap_editor.E001`–`E003`) rather than a silent no-op.
+(`django_tiptap_editor.E001`–`E003`) rather than a silent no-op. The warning
+`django_tiptap_editor.W001` is described below.
+
+`AdminTipTapWidget` (in JSON storage mode for a `TipTapJSONField`) is only the
+default. A TipTap widget (a `TipTapWidget` subclass, or an instance of one) the
+project gives the field in `formfield_overrides` is rendered as given, config and
+all, so this is how to size or restrict the admin's editors:
+
+```python
+from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
+
+
+class ArticleAdmin(TipTapModelAdminMixin, admin.ModelAdmin):
+    formfield_overrides = {
+        models.TextField: {
+            "widget": AdminTipTapWidget(config={"height": "200px", "maxHeight": "600px"}),
+        },
+        TipTapJSONField: {
+            "widget": AdminTipTapWidget(storage=STORAGE_FORMAT_JSON, config={"height": "200px"}),
+        },
+    }
+```
+
+The entry is looked up the way Django applies it (the first class in the field's
+MRO that has one). An entry there is class-wide, so a widget in it that is not a
+TipTap widget, such as a smaller `Textarea` for every `TextField`, is taken to be for
+the fields the mixin leaves alone, and the editor still replaces it on the fields it
+applies to; the admin's own `AdminTextareaWidget` default for `TextField` is one of
+those. A form's `Meta.widgets` names a single field, so any widget given there is
+rendered, TipTap or not, and it wins over a `formfield_overrides` widget. A
+`TextField` keeps `TipTapFormField` whichever widget renders it, so what the admin
+saves is sanitised either way.
+
+For a `TipTapJSONField`, give the widget `storage=STORAGE_FORMAT_JSON` as above: the
+mixin uses the widget as given, and one that writes HTML into the field fails
+validation on every save. A TipTap widget from `formfield_overrides` that would do
+so is reported at startup, on the admin class, as the system-check **warning**
+`django_tiptap_editor.W001`. It skips a field the widget cannot reach: one with its
+own widget in the form's `Meta.widgets`, one the form declares itself, and one the
+admin leaves off its form through `readonly_fields`, `exclude`, `fields` or
+`fieldsets`. It is a warning rather than an error because `get_form`, `get_fields`,
+`get_exclude`, `get_readonly_fields` and `get_fieldsets` take a request and can
+change the answer, and no startup check can call them; silence it with
+`SILENCED_SYSTEM_CHECKS` where one of those keeps the widget off the field.
 
 ### `TipTapFormField(forms.CharField)`
 
 `django_tiptap_editor.forms.fields.TipTapFormField` — a `CharField` whose default widget
-is `TipTapWidget`.
+is `TipTapWidget`. It cleans with `sanitize_html` against `get_html_schema(config)`, where
+`config` is its widget's merged config, so a field restricted by `features` stores only what
+those features emit. A widget that is not a `TipTapWidget` gets the unrestricted allowlist.
+`TipTapJSONFormField` does the same for its mirror, and narrows the submitted `doc` with
+`narrow_doc`.
 
 ### `TipTapJSONField(models.JSONField)`
 
@@ -59,16 +111,46 @@ does not convert it.
 `django_tiptap_editor.utils.sanitize_html.sanitize_html(html, *, schema=None)` — reduces HTML to
 what the configured editor can emit and marks the result safe. Unknown tags are unwrapped (their
 text survives), unknown attributes dropped, `script`/`style` bodies discarded, link/image URLs
-protocol-allowlisted, inline styles filtered. Raises `ValidationError` past `MAX_DOCUMENT_DEPTH`.
+protocol-allowlisted, inline styles filtered. A tag in the schema's `paragraph_blocks` is
+converted rather than unwrapped: its text becomes a paragraph, and a paragraph the sanitiser
+opens is never nested inside another it opened. Raises `ValidationError` past `MAX_DOCUMENT_DEPTH`.
 `TipTapFormField` applies it on clean and the `tiptap_html` filter applies it on display; call it
 directly to clean a column in a data migration. See [Security](security.md).
 
 ### `get_html_schema` / `HtmlSchema`
 
-`django_tiptap_editor.utils.get_html_schema.get_html_schema()` returns the `HtmlSchema` the
-sanitiser enforces: the union of the HTML vocabularies of every extension the editor mounts, plus
-whatever `TIPTAP_EXTRA_EXTENSIONS` declares. Pass one to `sanitize_html(..., schema=...)` to
-sanitise against a different allowlist.
+`django_tiptap_editor.utils.get_html_schema.get_html_schema(config=None)` returns the `HtmlSchema`
+the sanitiser enforces. With no config, or a config without `features`, it is the union of the
+HTML vocabularies of every built-in extension, plus whatever `TIPTAP_EXTRA_EXTENSIONS` declares.
+With `features`, it is the union of the vocabularies of `resolve_features(config)`, plus only the
+extra extensions the config's own `extensions` names, and an undeclared extension warns only when
+the config names it. Link protocols come from the project default either way. Pass one to
+`sanitize_html(..., schema=...)` to sanitise against a different allowlist.
+
+`HtmlSchema.paragraph_blocks` is the set of built-in block tags (`h1`-`h6`, `blockquote`, `pre`,
+`li`, `td`, `th`) a restricted schema does not admit, which `sanitize_html` turns into paragraphs.
+It is empty by default, so a schema built by hand, and the unrestricted one, unwrap those tags as
+before.
+
+### `narrow_doc`
+
+`django_tiptap_editor.utils.narrow_doc.narrow_doc(doc, *, config)` returns a copy of a sanitised
+ProseMirror `doc` holding only what `resolve_features(config)` and the config's `extensions`
+allow. A heading or code block the config lacks becomes a paragraph; any other node it lacks is
+replaced by its children, with loose inline content wrapped in a paragraph; a mark or attribute it
+lacks is dropped, and a `textStyle` mark left with nothing in it goes too. With an unrestricted
+config it returns `doc` itself. Raises `ValidationError` past `MAX_DOCUMENT_DEPTH`. The table it
+reads, `DOCUMENT_FEATURES` in `constants`, maps each node type, mark type and feature-owned
+attribute to its feature.
+
+### `resolve_features`
+
+`django_tiptap_editor.utils.resolve_features.resolve_features(config)` returns the
+`frozenset` of built-in extensions a config's `features` list turns on: the list, plus
+`FEATURE_CORE`, plus each entry's dependencies (`FEATURE_DEPENDENCIES`). It returns `None`
+when the config has no `features` key, or it is `None`, which is the unrestricted editor.
+It assumes a config `validate_config` has accepted. See
+[Restricting features](configuration.md#restricting-features).
 
 ### `render_doc`
 

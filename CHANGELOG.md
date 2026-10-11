@@ -7,6 +7,147 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrade note — the admin renders a TipTap widget you configured
+
+`TipTapModelAdminMixin` now renders a TipTap widget a project gives a field, where it
+used to replace it with a bare `AdminTipTapWidget`. Three things can start failing,
+each of which was silently ignored before:
+
+- **A TipTap widget for `TipTapJSONField` in `formfield_overrides` must be in JSON
+  storage.** It used to be replaced, so its storage never mattered. Rendered as
+  given, one in HTML storage writes HTML into a field that parses a JSON envelope,
+  and every save fails. A new system-check warning, `django_tiptap_editor.W001`,
+  reports it on the admin class at startup; pass `storage="json"` to the widget. It
+  skips a field the widget cannot reach (one with its own widget in `Meta.widgets`,
+  one the form declares, one left off the form by `readonly_fields`, `exclude`,
+  `fields` or `fieldsets`), and it is a warning because the admin's request-taking
+  hooks (`get_form`, `get_fields` and the rest) can keep the widget off a field
+  where no startup check can see it.
+- **Only a TipTap widget in `formfield_overrides` is honoured.** An entry there is
+  class-wide, so a non-TipTap widget on `models.TextField` (a smaller `Textarea`
+  for the fields the mixin leaves alone, say) is still replaced by the editor on
+  the fields the mixin applies to, as before. A TipTap widget there, a
+  `TipTapWidget` subclass or an instance of one, now applies to every such field. A
+  form's `Meta.widgets` names one field, and any widget given there is rendered,
+  TipTap or not.
+- **`height` and `maxHeight` must be CSS lengths**, and a `height` that was accepted
+  before now raises `ImproperlyConfigured` when the widget renders: an integer
+  (`500`, which the editor read as no height at all), a `var()` reference, and a
+  percentage, whether plain or inside `calc()`. Write `"500px"`, set the
+  `--tiptap-height` token instead of a `var()`, and use a viewport unit (`"60vh"`)
+  or `calc(100vh - ...)` where a percentage was meant. `None` and `""` still read
+  as unset.
+
+### Added
+
+- **A field can restrict what its editor can do with the `features` config key.**
+  Hiding a button with `toolbar` left its feature reachable: an email field without
+  heading buttons still made headings from `## `, Ctrl+Alt+2 and a pasted `<h2>`, and
+  the same held for tables, images and colours. `features` lists the built-in
+  extensions a field may use. The widget writes the resolved set into
+  `data-tiptap-config`: the listed names, an always-on core (document, paragraph,
+  text, line breaks, undo and the two cursors), and what each name needs, so
+  `table` brings its rows and cells and `highlight` brings `textStyle`.
+  `resolve_features` in `django_tiptap_editor.utils` returns the same set. A name
+  that is not a built-in raises `ImproperlyConfigured`, `[]` leaves paragraphs and
+  text, and a config without the key behaves as before. `AdminTipTapWidget` and a
+  project-wide `TIPTAP_DEFAULT_CONFIG` resolve it the same way, and a field's own
+  list wins. The server narrows with it, as the next entry describes. `docs/configuration.md` lists the
+  names, the core and the dependency table, and `tests/test_configuration_documentation.py`
+  holds that page equal to `constants`. In the browser an excluded extension is not
+  mounted at all, so its input rules, shortcuts and paste handling do not exist;
+  built-in toolbar buttons for it are not rendered (an explicit `toolbar` naming one
+  logs a warning), image files dropped or pasted into a field without `image` are
+  ignored, and a custom button can declare the feature it needs with `requires`.
+  JSON-stored content that the restricted schema cannot build opens from its HTML
+  mirror rather than empty, and so does an unrestricted field whose stored document
+  names a node type nothing mounts (a removed custom extension, for example), where
+  the editor used to open empty and the next keystroke saved that over the stored
+  value. Naming a table row, cell or header alone gives the whole table.
+- **A field's server-side sanitisation follows that field's own `features`.**
+  Restricting the editor alone left the boundary where it was: a client posting the
+  field directly, skipping the editor, could still store a heading, a table or a
+  colour on a field whose editor could make none of them. `TipTapFormField` now
+  cleans against `get_html_schema(config)` for its widget's merged config, which
+  admits only the vocabularies of the resolved features plus the custom extensions
+  that config names; a config without `features` gets exactly the allowlist it had,
+  which `tests/fixtures/unrestricted_html_schema.json` holds. What the field lacks
+  is converted rather than deleted: a heading, quote, code block, list item or
+  table cell becomes a paragraph, with the list or table around it unwrapped, a
+  paragraph the sanitiser opens is never nested inside another it opened, and
+  cleaning twice changes nothing. An image goes whole, `alt` text included. An
+  attribute or style property goes with its feature, so `text-align` needs
+  `textAlign`, and the text-style features decorate tags without admitting any.
+  `TipTapJSONFormField` narrows the submitted `doc` the same way with the new
+  `narrow_doc` (in `django_tiptap_editor.utils`), driven by the
+  `DOCUMENT_FEATURES` table in `constants`, and its mirror is, for most content,
+  the markup the HTML path keeps for the same content; where a tag is shared
+  between features (inline code on a field with only code blocks, a code block on
+  one with only inline code, a style span whose feature is missing) the HTML path
+  keeps an emptied tag the field admits and the document path drops the mark, as
+  `docs/security.md` tabulates. A submitted value with an empty `doc` now has
+  its HTML cleaned against the field's schema too, rather than the global one.
+  `HtmlSchema` gains `paragraph_blocks`, empty by default, so a schema built by
+  hand behaves as before. ORM and API writes, `loaddata` and the `tiptap_html`
+  filter are not narrowed per field, a field's `linkProtocols` still limits only
+  its editor, and changing `features` does not rewrite stored rows;
+  `docs/security.md` lists each. The JS suite builds an editor for each built-in
+  feature alone and checks what it can emit and hold against the allowlist and
+  document table the server would clean that field against.
+- **A `maxHeight` config key caps the editor.** `height` is a minimum, so an editor
+  grew with its content for as long as anyone typed. With `maxHeight` set, the
+  editing area stops at that height and its content scrolls inside it, under a
+  toolbar that stays in view; source view is capped the same way. It takes the same
+  CSS lengths as `height`, is also the `--tiptap-max-height` token, and defaults to
+  no cap, so a field without it behaves as before.
+
+### Fixed
+
+- **A height configured for the admin's editors is the height they get.**
+  `TipTapModelAdminMixin` put a bare `AdminTipTapWidget` on every field it applied
+  to, replacing the widget a project gave the field in `formfield_overrides` or in
+  its form's `Meta.widgets`, so a `height` (or any other config) set there never
+  arrived. A TipTap widget from `formfield_overrides`, and any widget from
+  `Meta.widgets`, is now rendered as given, for `TextField`s and `TipTapJSONField`s
+  alike, and `AdminTipTapWidget` is only the default. The entry is found the way
+  Django applies it; a `formfield_overrides` widget that is not a TipTap widget,
+  the admin's own `AdminTextareaWidget` default included, is still replaced, since
+  an entry there is class-wide. A TipTap widget on a `TipTapJSONField` that would
+  write HTML is reported at startup with the warning `django_tiptap_editor.W001`
+  (see the upgrade note). A `TextField`
+  keeps `TipTapFormField` whichever widget renders it.
+- **A `height` that is not a CSS length is refused instead of collapsing the
+  editor.** A bare number or `"auto"` was written into the page as given and sized
+  the editing area to a single line. A percentage, plain or inside `calc()`,
+  resolves against the height of the element around the editor: where that element
+  has none, as in the admin and most forms, it collapsed the editor the same way,
+  and where it has one it rendered. `height` and `maxHeight` now take a number with
+  a CSS length unit, or `calc()` / `min()` / `max()` / `clamp()` over such lengths;
+  anything else raises `ImproperlyConfigured` naming the key and the value (the
+  upgrade note above lists what newly raises and what to write instead). The browser runs the same rule on a config passed to
+  `DjangoTipTap.init()`, reporting a refused value with `console.error` and keeping
+  the default. Both sides are held to one table of accepted and refused values,
+  and both read an empty string as unset.
+- **Design tokens set on `:root`, including through `ui.setTokens`, reach the
+  editor.** The defaults were declared on `.django-tiptap` itself, and an element's
+  own declaration beats an inherited one, so `setTokens`, which writes onto the
+  document root, changed nothing, and neither did a token in a `:root` rule. The
+  defaults now sit on `:where(:root, :host)`, so every editor inherits them and any
+  rule a project writes overrides them; a field's own `height` / `maxHeight` still
+  wins over a page-wide token. `:host` keeps the defaults for a stylesheet loaded
+  inside a shadow root, where `:root` matches nothing; there a token is set on the
+  host element. No default value changed.
+
+- **`TipTapModelAdminMixin` did not sanitise the fields it put an editor on.** It
+  swapped the widget onto every `TextField` and left the form field a plain
+  `CharField`, so an admin page stored whatever was posted, `<script>` included.
+  It now makes the form field a `TipTapFormField` as well, unless the admin names
+  its own `form_class` for `TextField` in `formfield_overrides` or the field in
+  `Meta.field_classes`, and options given there (`max_length`, `strip`,
+  `empty_value`) still reach the field. An empty submission is returned as the
+  field's `empty_value`, `None` included, rather than sanitised into `""`, which is
+  what `TipTapFormField` now does wherever it is used.
+
 ## [0.11.1] — 2026-10-06
 
 ### Changed

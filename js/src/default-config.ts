@@ -11,11 +11,21 @@ export interface MergeTag {
 export type EnterKeyMode = "paragraph" | "hardBreak" | "swap";
 
 export interface TipTapConfig {
+  // CSS lengths ("400px", "30rem", "calc(100vh - 12rem)"; no percentages). height
+  // is the editing area's minimum; maxHeight caps it, and the content scrolls
+  // inside the cap under the toolbar. Omit maxHeight to let the editor grow.
   height?: string;
+  maxHeight?: string;
   locale?: string;
   manualMount?: boolean;
   enterKey?: EnterKeyMode;
   extensions?: string[];
+  // The built-in features this field mounts (names from BUILTIN_NAMES). Omit for
+  // every built-in, as before. A list mounts only those, the core and what they
+  // depend on (see features.ts), so an excluded node or mark is absent from the
+  // schema: no input rule, shortcut or paste can create it, and no toolbar button
+  // for it renders. Consumer extensions named in `extensions` are unaffected.
+  features?: string[] | null;
   toolbar?: string[][];
   linkProtocols?: string[];
   imageUploadUrl?: string;

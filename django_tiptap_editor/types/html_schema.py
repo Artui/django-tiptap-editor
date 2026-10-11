@@ -16,12 +16,19 @@ class HtmlSchema:
     editor mounts, so it is a description of the editor's own output rather than
     a second allowlist maintained alongside it. ``sanitize_html`` accepts exactly
     what this describes and unwraps everything else.
+
+    ``paragraph_blocks`` names the built-in block tags a restricted field leaves
+    out (``PARAGRAPH_BLOCK_TAGS`` minus what its features keep). The sanitiser
+    turns each into a paragraph boundary instead of unwrapping it. Empty by
+    default, so a schema built by hand, and every unrestricted field, unwraps
+    an unknown tag exactly as it always has.
     """
 
     tags: Mapping[str, frozenset[str]]
     styles: Mapping[str, frozenset[str]]
     link_protocols: tuple[str, ...] = DEFAULT_LINK_PROTOCOLS
     image_protocols: tuple[str, ...] = DEFAULT_IMAGE_PROTOCOLS
+    paragraph_blocks: frozenset[str] = frozenset()
 
     def allows(self, tag: str) -> bool:
         """Return whether ``tag`` survives sanitisation at all."""

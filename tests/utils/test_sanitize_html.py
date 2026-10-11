@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -433,3 +434,31 @@ def test_an_unknown_void_element_leaves_nothing_open() -> None:
 
 def test_unclosed_unknown_and_known_tags_both_end_cleanly() -> None:
     assert str(sanitize_html("<div><p>x")) == "<p>x</p>"
+
+
+# Inputs a client can post to a restricted field, each built to make a walk over
+# the open elements pay for every unknown tag before it (which emits nothing, so
+# no depth limit stops them piling up) or for every boundary already passed. On
+# a sanitiser whose walks step over those, each of these takes many seconds at
+# this size; done in linear time, each takes a fraction of one. The bound is far
+# above the linear figure, so a slow runner does not fail it, and far below the
+# quadratic one. Closing tags are left out on purpose: matching one still scans
+# the open elements, on every field, which is a separate cost and not this one.
+_N = 40_000
+_SLOW_INPUTS = {
+    "text-in-unknown-tags": ("<div>x" * _N, ["bold"]),
+    "entities-after-unknown-tags": ("<div>" * _N + "&amp;" * _N, ["bold"]),
+    "charrefs-after-unknown-tags": ("<div>" * _N + "&#169;" * _N, ["bold"]),
+    "kept-inline-after-unknown-tags": ("<div>" * _N + "<br>" * _N, ["bold"]),
+    "kept-block-after-unknown-tags": ("<div>" * _N + "<hr>" * _N, ["horizontalRule"]),
+    "converted-items-in-unknown-tags": ("<div><li>x" * _N, ["bold"]),
+    "converted-headings": ("<h2>x" * _N, ["bold"]),
+}
+
+
+@pytest.mark.parametrize(("html", "features"), _SLOW_INPUTS.values(), ids=_SLOW_INPUTS.keys())
+def test_a_restricted_field_cleans_in_linear_time(html: str, features: list[str]) -> None:
+    schema = get_html_schema({"features": features})
+    start = time.perf_counter()
+    sanitize_html(html, schema=schema)
+    assert time.perf_counter() - start < 2.5
