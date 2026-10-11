@@ -65,7 +65,7 @@ TipTapWidget(config={"height": "200px", "maxHeight": "calc(100vh - 12rem)"})
 Both take a **CSS length**, and anything else raises `ImproperlyConfigured`
 naming the key and the value:
 
-- a number and a lowercase unit: `px`, `rem`, `em`, `ch`, `ex`, `lh`, the viewport
+- a number and a unit, in any case: `px`, `rem`, `em`, `ch`, `ex`, `lh`, the viewport
   units (`vh`, `vw`, `vmin`, `vmax`, `vi`, `vb` and their `s`/`l`/`d` forms such as
   `dvh`), container units (`cqh`, `cqw`, ...) and the absolute ones (`cm`, `mm`,
   `in`, `pt`, `pc`, `q`);
@@ -77,7 +77,9 @@ naming the key and the value:
 `calc()` too. Each of these used to be written into the page and size the editor
 to a single line, because a percentage resolves against a parent that usually has
 no height. `var()`, `url()`, quotes, `;` and `!important` are refused as well: the
-value is only ever arithmetic on lengths. The check is on the tokens, not the
+value is only ever arithmetic on lengths. To size editors from a stylesheet
+instead, leave the key out and set the `--tiptap-height` / `--tiptap-max-height`
+[tokens](theming.md#tokens). The check is on the tokens, not the
 arithmetic, so a malformed expression such as `"calc(10px + * 2px)"` passes it and
 is ignored by the browser.
 

@@ -85,11 +85,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   editor.** A bare number, `"auto"` or a percentage was written into the page as
   given and sized the editing area to a single line, because a percentage resolves
   against a parent with no height. `height` and `maxHeight` now take a number with
-  a lowercase CSS unit, or `calc()` / `min()` / `max()` / `clamp()` over such
+  a CSS length unit, or `calc()` / `min()` / `max()` / `clamp()` over such
   lengths; anything else raises `ImproperlyConfigured` naming the key and the value.
-  The browser runs the same rule on a config passed to `DjangoTipTap.init()`,
-  reporting a refused value with `console.error` and keeping the default. Both
-  sides are held to one table of accepted and refused values.
+  That includes a few values a browser did render, which now raise when the widget
+  renders: a `var()` reference (set the `--tiptap-height` token instead) and a
+  percentage inside `calc()`. The browser runs the same rule on a config passed to
+  `DjangoTipTap.init()`, reporting a refused value with `console.error` and keeping
+  the default. Both sides are held to one table of accepted and refused values.
 - **Design tokens set on `:root`, including through `ui.setTokens`, reach the
   editor.** The defaults were declared on `.django-tiptap` itself, and an element's
   own declaration beats an inherited one, so `setTokens`, which writes onto the

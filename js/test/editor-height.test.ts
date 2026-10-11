@@ -96,13 +96,28 @@ describe.each(Object.entries(PROPERTIES))("config.%s", (key, property) => {
   });
 });
 
+// Every style rule, including those nested in @media / @supports: a default
+// declared in, say, a dark-mode block would shadow :root just the same. (jsdom's
+// parser rejects @layer outright, so a stylesheet using it fails loudly below.)
+function styleRules(rules: CSSRuleList): CSSStyleRule[] {
+  return Array.from(rules).flatMap((rule) => {
+    if (rule instanceof CSSStyleRule) {
+      return [rule];
+    }
+    const nested = (rule as CSSRule & { cssRules?: CSSRuleList }).cssRules;
+    return nested ? styleRules(nested) : [];
+  });
+}
+
 function stylesheet(): CSSStyleRule[] {
   const style = document.createElement("style");
   style.textContent = STYLES;
   document.head.appendChild(style);
-  return Array.from(style.sheet?.cssRules ?? []).filter(
-    (rule): rule is CSSStyleRule => rule instanceof CSSStyleRule,
-  );
+  const sheet = style.sheet;
+  if (!sheet) {
+    throw new Error("styles.css did not parse");
+  }
+  return styleRules(sheet.cssRules);
 }
 
 function declared(rule: CSSStyleRule): string[] {

@@ -61,10 +61,11 @@ KNOWN_CONFIG_KEYS = frozenset(
 )
 
 # Units ``height`` and ``maxHeight`` accept (CSS Values 4 absolute, font-relative,
-# viewport and container lengths), lowercase as written. A percentage is left out
-# on purpose: it resolves against a parent that rarely has a height, and then
-# sizes the editor to nothing. Mirrored by js/src/css-length.ts and held equal to
-# it by the truth table in js/test/fixtures/css-lengths.json.
+# viewport and container lengths), listed lowercase and matched in any case, as
+# CSS does. A percentage is left out on purpose: it resolves against a parent
+# that rarely has a height, and then sizes the editor to nothing. Mirrored by
+# js/src/css-length.ts and held equal to it by the truth table in
+# js/test/fixtures/css-lengths.json.
 CSS_LENGTH_UNITS = frozenset(
     {
         # absolute

@@ -24,17 +24,26 @@ from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
 # length. That keeps out everything that is not arithmetic on lengths (var(),
 # url(), percentages, quotes, ``;``, ``!important``); whether the arithmetic is
 # well formed is left to the browser.
-_NUMBER = r"(?:\d+(?:\.\d+)?|\.\d+)"
-_PLAIN_LENGTH = re.compile(rf"{_NUMBER}(?P<unit>[a-z]+)")
-_MATH_START = re.compile(r"(?:calc|min|max|clamp)\(")
-_MATH_TOKEN = re.compile(rf"\s+|(?:calc|min|max|clamp)?\(|\)|[-+*/,]|{_NUMBER}(?P<unit>[a-z]+)?")
+#
+# Digits and whitespace are spelled out rather than ``\d`` / ``\s``: in Python
+# those match any Unicode digit or space, so 500px in Arabic-Indic digits passed
+# here while the JS side (ASCII ``\d``) and the browser refused it. Units and function names are
+# ASCII case-insensitive, as in CSS; ``re.ASCII`` keeps IGNORECASE from folding
+# a non-ASCII letter onto an ASCII one.
+_NUMBER = r"(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:e[-+]?[0-9]+)?"
+_FLAGS = re.ASCII | re.IGNORECASE
+_PLAIN_LENGTH = re.compile(rf"{_NUMBER}(?P<unit>[a-z]+)", _FLAGS)
+_MATH_START = re.compile(r"(?:calc|min|max|clamp)\(", _FLAGS)
+_MATH_TOKEN = re.compile(
+    rf"[ \t\n\r\f]+|(?:calc|min|max|clamp)?\(|\)|[-+*/,]|{_NUMBER}(?P<unit>[a-z]+)?", _FLAGS
+)
 _LENGTH_KEYS = ("height", "maxHeight")
 
 
 def _is_css_length(value: str) -> bool:
     plain = _PLAIN_LENGTH.fullmatch(value)
     if plain is not None:
-        return plain["unit"] in CSS_LENGTH_UNITS
+        return plain["unit"].lower() in CSS_LENGTH_UNITS
     if _MATH_START.match(value) is None:
         return False
     depth, has_length, pos = 0, False, 0
@@ -55,7 +64,7 @@ def _is_css_length(value: str) -> bool:
             if depth == 0 and pos < len(value):
                 return False
         elif token["unit"] is not None:
-            if token["unit"] not in CSS_LENGTH_UNITS:
+            if token["unit"].lower() not in CSS_LENGTH_UNITS:
                 return False
             has_length = True
     # "calc(10px" is refused by the depth check, "calc(1 + 2)" by the length one.
