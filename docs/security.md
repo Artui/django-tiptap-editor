@@ -50,6 +50,12 @@ allowlist cannot drift apart. The editor's half of that is tested rather than as
 `js/test/html-vocabulary.test.ts` renders every attribute the editor's schema defines,
 and every case in the fidelity corpus, and fails if anything lands outside this table.
 
+The filtering is checked against an independent sanitiser too. In the test suite,
+seeded fragments of hostile markup go through `sanitize_html`, and every element of the
+result is cleaned again by [nh3](https://pypi.org/project/nh3/) under the same allowlist.
+An attribute, style declaration or URL that nh3 would refuse fails the run. nh3 is a
+development dependency only; the package still depends on Django alone.
+
 | | Kept |
 | --- | --- |
 | Blocks | `p`, `h1`–`h6` (with `margin`, `margin-block-end`, `padding-left`, `text-align`), `blockquote`, `pre`/`code`, `hr`, `br`, `ul`, `ol` (`start`, `type`), `li` |

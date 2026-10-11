@@ -24,6 +24,19 @@ extensions, and when a `TipTapJSONField` validates a document. Have the extensio
 emit an ordinary element instead, such as a `span` or `div` with a class or data
 attribute. A name given in the list form declares no tags and is unaffected.
 
+### Added
+
+- **`sanitize_html` is held against nh3 in the test suite.** Seeded fragments of
+  hostile markup are sanitised, and every element of the result is cleaned again,
+  on its own, by nh3 under the same allowlist; an attribute, style declaration or
+  URL nh3 would refuse fails the run. Elements are compared one at a time because
+  the two parse malformed markup differently, and a whole-document comparison is
+  dominated by that difference. A pull request runs 10,000 fragments per field
+  shape and the weekly drift run 100,000 (`SANITIZE_ORACLE_CASES`). Against the
+  sanitiser before the duplicated-attribute fix above it fails, on an `href`
+  written twice; it now passes. nh3 joins the development group only, and the
+  package still depends on Django alone.
+
 ### Fixed
 
 - **On Python 3.14, an unfinished character reference no longer lets markup

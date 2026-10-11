@@ -118,6 +118,8 @@ jobs:
         id: test
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: uv run pytest
+        env:
+          SANITIZE_ORACLE_CASES: "100000"
 
       - name: Open or update an issue on failure
         # Main only. A dispatch on any other branch is a trial of that branch's

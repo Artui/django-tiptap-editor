@@ -67,6 +67,9 @@ dev = [
     # Django's YAML serializer imports it, and the fixture round-trip tests run
     # that format. It also arrives through mkdocs, which is not why it is here.
     "pyyaml>=6.0",
+    # An independent sanitiser the tests hold sanitize_html against
+    # (tests/utils/test_sanitize_html_against_nh3.py); never a runtime dependency.
+    "nh3>=0.3.7",
 ]
 docs = [
     "mkdocs>=1.6",
