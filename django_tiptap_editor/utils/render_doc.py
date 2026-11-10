@@ -105,7 +105,7 @@ def _image_style(attrs: dict[str, Any]) -> str:
 
 
 def _style_attr(pairs: list[tuple[str, object]]) -> str:
-    """Build a ``style="..."`` attribute from (prop, value) pairs, dropping empties and unsafe values."""
+    """Build ``style="..."`` from (prop, value) pairs, dropping empty and unsafe values."""
     decls = [f"{prop}: {safe}" for prop, value in pairs if (safe := get_css_value(value))]
     return f' style="{escape_html("; ".join(decls), quote=True)}"' if decls else ""
 
@@ -199,7 +199,7 @@ def _render_node(node: dict[str, Any]) -> str:
     if kind == "bulletList":
         return f"<ul>{_render_children(node)}</ul>"
     if kind == "orderedList":
-        # Tiptap writes ``start`` for any value but 1, so a stored ``2.0`` numbers the list from 2 there and has to here.
+        # Tiptap writes ``start`` unless it is 1: a stored ``2.0`` must be numbered from 2 here.
         start = _whole_number(attrs.get("start"))
         start_attr = _attr("start", start) if start != 1 else ""
         return f"<ol{start_attr}>{_render_children(node)}</ol>"

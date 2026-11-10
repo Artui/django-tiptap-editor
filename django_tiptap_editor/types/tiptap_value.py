@@ -23,7 +23,7 @@ class TipTapValue:
     html: SafeString
 
     def __post_init__(self) -> None:
-        # Local import: the sanitiser resolves its allowlist through ``utils.get_html_schema``, which needs ``HtmlSchema`` from this very package — importing it at module scope makes ``types`` and ``utils`` import each other.
+        # Local import: ``utils`` needs ``HtmlSchema`` from here; module scope makes them cycle.
         from django_tiptap_editor.utils.sanitize_html import sanitize_html
 
         if not isinstance(self.doc, dict):
@@ -32,7 +32,7 @@ class TipTapValue:
 
     @classmethod
     def from_stored(cls, data: Any) -> TipTapValue:
-        """Build a value from a stored mapping: a ``{doc, html}`` envelope or a bare ProseMirror doc (``{"type": "doc", …}``, no mirror yet)."""
+        """Build a value from a stored ``{doc, html}`` envelope or a bare doc (no mirror yet)."""
         if not isinstance(data, dict):
             raise ValidationError(_NOT_A_DOCUMENT.format(value=data))
         if "doc" in data or "html" in data:

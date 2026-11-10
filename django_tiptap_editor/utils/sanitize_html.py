@@ -114,7 +114,7 @@ class _Frame:
         self.source = source
         self.kind = kind
         self.start = start
-        # A converted block's open <p>, which sits directly inside it: closing the block closes the paragraph, and the paragraph closes first.
+        # A converted block's open <p> sits inside it: its close closes that <p> first.
         self.paragraph = False
 
     @property
@@ -130,7 +130,7 @@ class _Sanitizer(HTMLParser):
         self.schema = schema
         self.out: list[str] = []
         self.stack: list[_Frame] = []
-        # The frames of ``stack`` that are not UNWRAPPED, in the same order; see the module docstring.
+        # The ``stack`` frames not UNWRAPPED, in the same order; see the module docstring.
         self.chain: list[_Frame] = []
         self.open_tags: dict[str, int] = {}
         self.depth = 0
@@ -214,7 +214,7 @@ class _Sanitizer(HTMLParser):
     def _attributes(self, tag: str, attrs: list[tuple[str, str | None]]) -> str:
         allowed = self.schema.attributes(tag)
         properties = self.schema.style_properties(tag)
-        # A browser reads an attribute written twice from its first occurrence and ignores the rest, so only the first is checked and written.
+        # Browsers keep the first of a repeated attribute, so only it is checked and written.
         first: dict[str, str | None] = {}
         for raw_name, raw_value in attrs:
             first.setdefault(raw_name.lower(), raw_value)
@@ -319,7 +319,7 @@ class _Sanitizer(HTMLParser):
         self._close_from(index)
 
     def handle_data(self, data: str) -> None:
-        # The only guard the skip needs: a dropped element's body is CDATA to the parser, so everything inside it arrives here as data and no start tag, end tag or character reference is reported until it closes.
+        # A dropped element's body is CDATA: all of it arrives as data until it closes.
         if self.skipping:
             return
         if data.strip(_HTML_WHITESPACE):
@@ -338,7 +338,7 @@ class _Sanitizer(HTMLParser):
 
     def handle_entityref(self, name: str) -> None:
         self._ensure_paragraph()
-        # Whether the reference ended in a semicolon is not passed in, and it decides what the reference means, so it is written out by ``updatepos``, which the parser calls next with the reference's end.
+        # Whether a reference ended in ';' decides its meaning; ``updatepos`` writes it out.
         self.entity = name
 
     def updatepos(self, i: int, j: int) -> int:
@@ -352,7 +352,7 @@ class _Sanitizer(HTMLParser):
 
     def handle_charref(self, name: str) -> None:
         self._ensure_paragraph()
-        # From Python 3.14, a character reference left unfinished at the end of the input reaches here with everything after ``&#`` as its name, the rest of the document included, where earlier versions pass it to ``handle_data`` as text.
+        # Python 3.14+ sends an unfinished ``&#`` at input end here, with the rest as its name.
         if not _CHARACTER_REFERENCE_NAME.fullmatch(name):
             self.out.append(escape_html(f"&#{name}"))
             return
@@ -364,7 +364,7 @@ class _Sanitizer(HTMLParser):
         self.out.append(f"&#{name};")
 
     def close(self) -> None:
-        # Markup the input ends inside of (``<!-- x``, ``<![CDATA[ x``, ``<strong``, ``<a href="x``, ``</p``) is still unparsed here, and what the parser's own close does with it depends on its patch release: older ones pass it to ``handle_data`` as text, newer ones drop a tag and report a comment or a CDATA section, none of which is kept.
+        # Markup cut off at input end (``<!-- x``): older parsers pass it as text, newer drop it.
         tail = self.rawdata
         if tail.startswith("<") and self.cdata_elem is None:
             self.rawdata = ""

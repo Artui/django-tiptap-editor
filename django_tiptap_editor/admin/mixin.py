@@ -156,7 +156,7 @@ class TipTapModelAdminMixin:
 
     def formfield_for_dbfield(self, db_field: models.Field, request: Any, **kwargs: Any) -> Any:
         if self._tiptap_applies(db_field):
-            # A TipTap widget the project chose is the one rendered, config and all: one from ``formfield_overrides`` (see ``_overriding_widget``) or any widget from its form's ``Meta.widgets``, which names one field and reaches this method as ``kwargs["widget"]``, hence ``setdefault``.
+            # A project widget (``formfield_overrides``, ``Meta.widgets``) wins: ``setdefault``.
             own_widget = self._overriding_widget(db_field) is not None
             if isinstance(db_field, TipTapJSONField):
                 if not own_widget:
