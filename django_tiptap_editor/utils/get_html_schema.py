@@ -1,5 +1,3 @@
-"""Build the HTML allowlist from the extensions the editor mounts."""
-
 from __future__ import annotations
 
 import warnings
@@ -27,39 +25,11 @@ _UNDECLARED = (
 
 
 def get_html_schema(config: dict[str, Any] | None = None) -> HtmlSchema:
-    """Return the tag/attribute allowlist the editor's extensions can produce.
-
-    Without a ``features`` list in ``config`` (or with no config at all) the
-    vocabulary is the union of ``EXTENSION_HTML_VOCABULARY`` -- one entry per
-    built-in extension -- plus whatever ``TIPTAP_EXTRA_EXTENSIONS`` declares. The
-    built-ins are all part of it because the JS glue mounts the whole baseline on
-    an unrestricted editor; a per-widget ``extensions`` list only *adds* consumer
-    extensions, and ``validate_config`` already refuses a name that is neither
-    built in nor registered. So this is the complete set of markup any
-    unrestricted editor in the project can emit, which is what makes it the right
-    allowlist to enforce there.
-
-    A ``features`` list narrows it to what that field's editor mounts: the
-    vocabularies of ``resolve_features(config)``, and of the custom extensions the
-    config's own ``extensions`` list names (one it does not name is not mounted,
-    so its markup is not kept). A feature in ``DECORATING_FEATURES`` adds its
-    attributes and style properties to tags another feature admits, never a tag
-    of its own. Built-in blocks left out are listed in ``paragraph_blocks``, which
-    the sanitiser turns into paragraph boundaries.
-
-    A registered extension whose vocabulary is undeclared warns, naming it, when
-    it is part of the allowlist being built: the sanitiser cannot keep markup
-    nobody has described, and losing it silently is how a custom node disappears
-    from a document on its first save.
-    """
+    """Return the tag/attribute allowlist the editor's extensions can produce."""
     config = config or {}
     resolved = resolve_features(config)
     extras = get_extra_extensions()
     if resolved is not None:
-        # Each guard has a test that fails without it: "admit only the
-        # vocabularies of the resolved set" (the features filter) and "takes only
-        # the extensions its config names" (the extras filter), both in
-        # tests/utils/test_get_html_schema.py.
         named = set(config.get("extensions") or ())
         builtins = [(n, v) for n, v in EXTENSION_HTML_VOCABULARY.items() if n in resolved]
         extras = {name: declared for name, declared in extras.items() if name in named}
@@ -75,10 +45,6 @@ def get_html_schema(config: dict[str, Any] | None = None) -> HtmlSchema:
 
     tags: dict[str, set[str]] = {}
     styles: dict[str, set[str]] = {}
-    # Tags first, then the decorations onto the tags that made it: an attribute
-    # feature's vocabulary only ever narrows onto something already admitted.
-    # Unrestricted, every tag a decorating feature names is admitted by another
-    # built-in anyway, so the two passes build exactly the old union.
     for decorating in (False, True):
         for name, vocabulary in vocabularies:
             if (name in DECORATING_FEATURES) is not decorating:

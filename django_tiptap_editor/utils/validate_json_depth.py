@@ -1,5 +1,3 @@
-"""Refuse a JSON value nested deeper than ``MAX_JSON_DEPTH`` (internal helper)."""
-
 from __future__ import annotations
 
 from django.core.exceptions import ValidationError
@@ -8,14 +6,7 @@ from django_tiptap_editor.constants import MAX_JSON_DEPTH
 
 
 def validate_json_depth(value: object) -> None:
-    """Raise ``ValidationError`` if ``value`` nests deeper than ``MAX_JSON_DEPTH``.
-
-    Every object and array counts, wherever it sits. ``sanitize_doc`` bounds only
-    ``content``, so an array nested a few hundred levels inside a node's
-    ``attrs`` passed it, and ``json.dumps`` -- which Django's ``JSONField`` runs
-    in ``validate`` and again on save -- then raised RecursionError on it. The
-    walk is iterative, so the check cannot fail the way it guards against.
-    """
+    """Raise ``ValidationError`` if ``value`` nests deeper than ``MAX_JSON_DEPTH``."""
     stack: list[tuple[object, int]] = [(value, 1)]
     while stack:
         item, depth = stack.pop()

@@ -1,5 +1,3 @@
-"""Protocol allowlisting for a stored URL (internal helper)."""
-
 from __future__ import annotations
 
 import re
@@ -24,9 +22,6 @@ def _scheme(url: object) -> str:
 
 
 def is_allowed_url(url: object, protocols: tuple[str, ...]) -> bool:
-    """Return whether ``url``'s scheme is in ``protocols``.
-
-    Relative and anchor URLs, which carry no scheme, are always allowed.
-    """
+    """Return whether ``url``'s scheme is in ``protocols``."""
     scheme = _scheme(url)
     return scheme == "" or scheme in protocols

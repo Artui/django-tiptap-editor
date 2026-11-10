@@ -1,5 +1,3 @@
-"""Resolve consumer-registered extensions and the HTML vocabulary they emit."""
-
 from __future__ import annotations
 
 import re
@@ -71,22 +69,7 @@ def _vocabulary(name: str, declared: Any) -> Vocabulary:
 
 
 def get_extra_extensions() -> dict[str, Vocabulary | None]:
-    """Return ``settings.TIPTAP_EXTRA_EXTENSIONS`` as name -> HTML vocabulary.
-
-    These augment the built-in allowlist so consumer-registered extensions pass
-    Python validation. Two forms are accepted:
-
-    * a list of names -- the extension is recognised but its vocabulary is
-      undeclared (``None``), so ``get_html_schema`` warns and the sanitiser
-      unwraps its tags;
-    * a mapping of name to ``{tag: {"attrs": [...], "styles": [...]}}`` -- the
-      extension declares its own vocabulary, which joins the allowlist so its
-      markup survives sanitisation intact.
-
-    Raises ``ImproperlyConfigured`` for a malformed declaration, for a tag that
-    executes script, for one whose content a browser parses by its own rules
-    (``UNPARSEABLE_TAGS``), and for an ``on*`` attribute.
-    """
+    """Return ``settings.TIPTAP_EXTRA_EXTENSIONS`` as name -> HTML vocabulary."""
     extras: Any = getattr(settings, "TIPTAP_EXTRA_EXTENSIONS", [])
     if isinstance(extras, Mapping):
         return {str(name): _vocabulary(str(name), declared) for name, declared in extras.items()}
