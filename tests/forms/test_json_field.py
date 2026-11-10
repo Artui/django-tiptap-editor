@@ -100,8 +100,7 @@ PAYLOAD = "<img src=x onerror=alert(document.cookie)>"
 
 
 def test_a_plain_form_cannot_clean_a_hostile_mirror() -> None:
-    # The reproduction: a form with no model behind it reported success and left
-    # the client's markup on cleaned_data, marked safe.
+    # The reproduction: a form with no model behind it kept the client's markup, marked safe.
     form = DocumentForm(data={"document": json.dumps({"doc": {"type": "doc"}, "html": PAYLOAD})})
     assert form.is_valid()
     assert form.cleaned_data["document"].html == '<img src="x">'
@@ -159,9 +158,7 @@ def _text_in(node_type: str, attrs: object, marks: list) -> dict:
     ids=["heading-level", "mark-type", "link-target", "node-attrs", "mark-attrs"],
 )
 def test_a_value_of_the_wrong_type_is_skipped_rather_than_a_500(doc: dict, html: str) -> None:
-    # Each of these is a crafted POST the editor never sends, and each raised
-    # TypeError or AttributeError out of clean(): a 500 for the client rather
-    # than a value rendered the way the editor would render it.
+    # Each of these is a crafted POST the editor never sends.
     form = DocumentForm(data={"document": json.dumps({"doc": doc, "html": ""})})
     assert form.is_valid()
     assert form.cleaned_data["document"].html == html
@@ -169,8 +166,7 @@ def test_a_value_of_the_wrong_type_is_skipped_rather_than_a_500(doc: dict, html:
 
 @pytest.mark.parametrize("payload", ["[]", '"oops"', "42", "null"])
 def test_a_payload_that_is_not_a_document_is_a_field_error(payload: str) -> None:
-    # Each of these used to clean successfully into an empty document: the form
-    # reported success while discarding the submission.
+    # Each of these used to clean successfully into an empty document.
     form = DocumentForm(data={"document": payload})
     assert not form.is_valid()
     assert form.errors["document"] == ["Enter a valid TipTap document (JSON)."]
@@ -202,9 +198,7 @@ def _nested_in_attrs(depth: int) -> str:
 
 
 def test_a_body_nested_deep_inside_attrs_is_a_field_error() -> None:
-    # It decodes, so the parse guard is not what answers, and it is shallow in
-    # content, so neither is sanitize_doc's node limit: the depth is all inside
-    # one node's attrs, short of json.loads' own limit even on Python 3.10.
+    # It decodes, so the parse guard is not what answers, and it is shallow in content.
     body = _nested_in_attrs(MAX_JSON_DEPTH + 100)
     json.loads(body)
     form = DocumentForm(data={"document": body})
@@ -218,8 +212,7 @@ def test_a_body_nested_deep_inside_attrs_is_a_field_error() -> None:
 def test_a_body_json_cannot_decode_is_a_field_error_rather_than_a_500(
     body: str, raised: type[Exception]
 ) -> None:
-    # json.loads raises each of these itself, and neither is the JSONDecodeError
-    # the parse used to catch, so this is the guard that answers.
+    # json.loads raises each of these itself.
     with pytest.raises(raised) as excinfo:
         json.loads(body)
     assert not isinstance(excinfo.value, json.JSONDecodeError)
@@ -261,8 +254,7 @@ def _clean(features: list[str] | None, doc: dict[str, Any], **config: Any) -> Ti
 
 
 def test_a_restricted_field_narrows_the_document_it_stores() -> None:
-    # The document, not only the mirror: the model field re-derives the mirror
-    # from the document on every save, so a narrowed mirror alone would be undone.
+    # The document, not only the mirror.
     doc = _doc(
         _node("heading", _text("Title"), level=2),
         _node("bulletList", _node("listItem", _para(_text("a"))), _node("listItem", _para())),
@@ -296,8 +288,7 @@ def test_marks_and_attributes_narrow_with_their_feature() -> None:
 
 
 def test_a_mark_left_with_no_attributes_is_dropped() -> None:
-    # A textStyle mark that only coloured its text has nothing left to say on a
-    # field without colour; keeping it would store a span with no style.
+    # A textStyle mark that only coloured its text has nothing to say on a field without colour.
     doc = _doc(_para(_text("a", {"type": "textStyle", "attrs": {"color": "red"}})))
     assert _clean(["fontSize"], doc).doc == _doc(_para(_text("a")))
 
@@ -313,8 +304,7 @@ def test_a_custom_type_survives_only_on_a_field_that_names_it() -> None:
 
 
 def test_inline_content_freed_from_a_dropped_node_is_put_in_a_paragraph() -> None:
-    # An unknown block holding text directly would otherwise leave text at the
-    # top of the document, which no ProseMirror schema accepts.
+    # An unknown block holding text directly would otherwise leave text at the top of the document.
     doc = _doc(_node("aside", _text("a"), _node("hardBreak"), _text("b")), _para(_text("c")))
     assert _clean([], doc).doc == _doc(
         _para(_text("a"), _node("hardBreak"), _text("b")), _para(_text("c"))
@@ -327,9 +317,7 @@ def test_an_unrestricted_field_stores_the_document_as_before() -> None:
 
 
 def test_a_mirror_kept_for_an_empty_document_is_narrowed_too() -> None:
-    # The one case the mirror is kept rather than re-derived: a row seeded with
-    # legacy HTML. Sanitised only globally, it would carry a heading past the
-    # field's own features.
+    # The one case the mirror is kept rather than re-derived: a row seeded with legacy HTML.
     value = _restricted(["bold"]).clean(json.dumps({"doc": {}, "html": "<h2>x</h2>"}))
     assert value is not None
     assert value.html == "<p>x</p>"
@@ -341,9 +329,7 @@ def test_a_mirror_kept_for_an_empty_document_is_narrowed_too() -> None:
     ids=["rule", "image"],
 )
 def test_a_document_narrowed_to_nothing_renders_its_own_mirror(node: dict[str, Any]) -> None:
-    # The posted html is the client's claim. Only a document that arrived empty
-    # keeps a mirror; one this field narrowed to nothing gets the rendering of
-    # what is left, which is nothing, not the claim.
+    # The posted html is the client's claim.
     posted = {"doc": _doc(node), "html": "<p>planted</p>"}
     value = _restricted([]).clean(json.dumps(posted))
     assert value is not None
@@ -353,8 +339,7 @@ def test_a_document_narrowed_to_nothing_renders_its_own_mirror(node: dict[str, A
 
 @override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
 def test_a_widget_that_is_not_tiptap_leaves_the_document_unrestricted() -> None:
-    # A plain widget has no config to read features from, so even a project-wide
-    # list does not reach it, as for TipTapFormField.
+    # A plain widget has no config to read features from.
     doc = _doc(_node("heading", _text("Title"), level=2))
     field = TipTapJSONFormField(widget=forms.Textarea)
     value = field.clean(json.dumps({"doc": doc, "html": ""}))
@@ -363,8 +348,7 @@ def test_a_widget_that_is_not_tiptap_leaves_the_document_unrestricted() -> None:
 
 
 def test_a_restricted_document_survives_the_model_field_unchanged() -> None:
-    # get_prep_value renders the mirror again with global settings; from a
-    # narrowed document that rendering is the narrowed one.
+    # get_prep_value renders the mirror again with global settings.
     value = _clean(["bold"], _doc(_node("heading", _text("T"), level=1)))
     stored = TipTapJSONField().get_prep_value(value)
     assert stored == {"doc": _doc(_para(_text("T"))), "html": "<p>T</p>"}
@@ -420,14 +404,10 @@ _DOC_CONFIGS = [[], ["bold"], ["bulletList", "orderedList"], ["heading", "color"
 def test_the_document_and_the_html_paths_narrow_alike(
     features: list[str], doc: dict[str, Any]
 ) -> None:
-    # What a JSON field stores renders to exactly what an HTML field with the same
-    # features keeps of the same content, so the two storage formats cannot
-    # disagree about what a field allows. Narrowing is also a fixed point.
+    # What a JSON field stores renders to what an HTML field with the same features keeps.
     narrowed = _clean(features, doc)
     resolved = resolve_features({"features": features})
     assert resolved is not None
-    # Every type in the battery is named after the feature that owns it, but for
-    # the document node itself, whose feature is ``document``.
     assert _types(narrowed.doc) <= resolved | {"doc"}
     html_field = TipTapFormField(required=False, widget=TipTapWidget(config={"features": features}))
     assert narrowed.html == html_field.clean(str(render_doc(doc)))
@@ -474,9 +454,7 @@ _IMAGE = {"type": "image", "attrs": {"src": "https://example.test/i.png", "alt":
 def test_where_the_two_paths_differ_is_what_security_md_lists(
     features: list[str], doc: dict[str, Any], html_kept: str, doc_kept: str
 ) -> None:
-    # docs/security.md tabulates these: a tag shared between features is judged
-    # as a tag on the HTML path and as a node or mark on the document path. The
-    # image row is the same on both, and documented because its alt text goes.
+    # docs/security.md tabulates these.
     html_field = TipTapFormField(required=False, widget=TipTapWidget(config={"features": features}))
     assert html_field.clean(str(render_doc(doc))) == html_kept
     assert _clean(features, doc).html == doc_kept
