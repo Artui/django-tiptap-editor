@@ -58,7 +58,7 @@ class _Narrower:
                 narrowed.append(mark)
                 continue
             attrs, dropped = self.attrs(mark)
-            # Each conjunct has a test: without ``dropped`` a bare mark with empty attrs would go ("narrow with their feature" keeps one), and without the value check a textStyle that only coloured its text would stay ("a mark left with no attributes is dropped"), both in tests/utils/test_narrow_doc.py.
+            # Each conjunct is tested in test_narrow_doc: ``dropped``, and the value check.
             if dropped and not any(value not in (None, "") for value in attrs.values()):
                 continue
             narrowed.append({**mark, "attrs": attrs})
@@ -85,7 +85,7 @@ class _Narrower:
         return kept
 
     def content(self, children: list[Any], *, block: bool, depth: int) -> list[Any]:
-        # Every level of the walk, kept or freed, comes through here, so this is the one place the recursion is bounded.
+        # Every level of the walk passes here, so this is the one place recursion is bounded.
         if depth >= MAX_DOCUMENT_DEPTH and any(isinstance(child, dict) for child in children):
             raise ValidationError(
                 f"TipTap document nests deeper than the maximum of {MAX_DOCUMENT_DEPTH} nodes."

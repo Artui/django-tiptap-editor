@@ -77,7 +77,8 @@ SERIALIZED: dict[str, str] = {
         '<table style="width: 120px;"><colgroup><col style="width: 120px;"></colgroup>'
         '<tbody><tr><td colspan="1" rowspan="1" colwidth="120"><p>a</p></td></tr></tbody></table>'
     ),
-    "text and character references": "<p>a &amp; b &lt;c&gt; \"d\" 'e' &nbsp; caf&eacute; &#233;</p>",
+    "text and character references": "<p>a &amp; b &lt;c&gt; \"d\" 'e' &nbsp; "
+    "caf&eacute; &#233;</p>",
     "empty paragraph": "<p></p><p>x</p>",
 }
 SERIALIZED.update(

@@ -16,7 +16,7 @@ class TipTapFormField(forms.CharField):
 
     def to_python(self, value: Any) -> Any:
         value = super().to_python(value)
-        # An empty submission is CharField's ``empty_value``, which may be None for a nullable column; the sanitiser would turn that into "" and the column would store an empty string instead of NULL.
+        # Empty input is ``empty_value`` (None when nullable): sanitising would store "", not NULL.
         if value in self.empty_values:
             return value
         config = self.widget.get_config({}) if isinstance(self.widget, TipTapWidget) else None

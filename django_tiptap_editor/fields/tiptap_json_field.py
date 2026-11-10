@@ -99,7 +99,7 @@ class TipTapJSONField(models.JSONField):
         if value is None or isinstance(value, TipTapValue):
             return value
         if isinstance(value, str):
-            # ``models.JSONField`` defines no ``to_python``, so ``super()`` here is ``Field.to_python`` -- a no-op that returned the string unparsed.
+            # ``JSONField`` has no ``to_python``, so ``super()`` returns the string unparsed.
             try:
                 value = json.loads(value)
             except (ValueError, RecursionError) as exc:
@@ -158,5 +158,5 @@ class TipTapJSONField(models.JSONField):
 
     def formfield(self, **kwargs: Any) -> Any:
         kwargs.setdefault("form_class", TipTapJSONFormField)
-        # Skip JSONField.formfield (which forces forms.JSONField) — go to the generic field machinery so our CharField-based form class is used.
+        # Skip ``JSONField.formfield`` (it forces ``forms.JSONField``) for our CharField form.
         return models.Field.formfield(self, **kwargs)

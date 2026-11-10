@@ -137,7 +137,8 @@ def test_block_style_attrs() -> None:
         ],
     }
     assert render_doc(doc) == (
-        '<p style="margin: 10px; margin-block-end: 5px; padding-left: 40px; text-align: center">x</p>'
+        '<p style="margin: 10px; margin-block-end: 5px; padding-left: 40px; '
+        'text-align: center">x</p>'
     )
 
 
