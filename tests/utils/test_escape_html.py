@@ -16,6 +16,5 @@ def test_escapes_the_double_quote_in_an_attribute_value() -> None:
 
 
 def test_leaves_the_apostrophe_alone_in_an_attribute_value() -> None:
-    # Inert inside a double-quoted attribute, and rewriting it would change every
-    # apostrophe in an author's prose on every save.
+    # Inert inside a double-quoted attribute.
     assert escape_html("it's", quote=True) == "it's"

@@ -30,8 +30,7 @@ def test_an_unrestricted_config_returns_the_document_itself() -> None:
 
 
 def test_a_restricted_config_leaves_the_document_it_was_given_alone() -> None:
-    # docs/api.md says narrow_doc returns a copy: the form field narrows the
-    # value the caller posted, which the caller may still be holding.
+    # docs/api.md says narrow_doc returns a copy.
     color = {"type": "textStyle", "attrs": {"color": "red", "fontSize": "18px"}}
     doc = _doc(
         {"type": "heading", "attrs": {"level": 2, "textAlign": "center"}, "content": [_text("a")]},
@@ -54,8 +53,7 @@ def test_an_empty_text_block_becomes_an_empty_paragraph(kind: str) -> None:
 
 
 def test_an_image_freed_from_a_list_item_gets_a_paragraph() -> None:
-    # An image is inline content, so freed at block level it is wrapped in a
-    # paragraph, as the HTML path keeps <li><img></li> on a field without lists.
+    # An image is inline content, so freed at block level it is wrapped in a paragraph.
     image = {"type": "image", "attrs": {"src": "https://example.test/i.png"}}
     item = {"type": "listItem", "content": [image]}
     doc = _doc({"type": "bulletList", "content": [item]})
@@ -81,8 +79,7 @@ def test_a_child_that_is_not_a_node_is_left_for_the_renderer() -> None:
 
 
 def test_marks_narrow_with_their_feature() -> None:
-    # A mark that never carried a gated attribute is kept as it is, even with
-    # no attributes at all; one whose only attribute was gated goes.
+    # A mark that never carried a gated attribute is kept as it is, even with no attributes at all.
     bare = {"type": "textStyle", "attrs": {}}
     coloured = {"type": "textStyle", "attrs": {"color": "red", "fontSize": None}}
     odd = {"type": "link", "attrs": "https://example.test/"}
@@ -105,11 +102,7 @@ def _nested(levels: int, *content: Any) -> dict[str, Any]:
 
 
 def test_the_limit_is_sanitize_docs() -> None:
-    # The form field runs sanitize_doc first, so a document it accepts must not
-    # be refused here, and one it refuses must be refused here too when
-    # narrow_doc is called on its own. Text at the last accepted depth; then an
-    # empty content list one level further, which holds no node to refuse; then
-    # text there, which does.
+    # The form field runs sanitize_doc first, so a document it accepts must not be refused here.
     deepest = MAX_DOCUMENT_DEPTH - 3
     config = {"features": []}
     for accepted in (_nested(deepest, _text("x")), _nested(deepest + 1), _nested(deepest + 1, "x")):
@@ -123,16 +116,14 @@ def test_the_limit_is_sanitize_docs() -> None:
 
 
 def test_a_mark_whose_only_values_are_empty_is_dropped() -> None:
-    # An empty string is no more a value than null: a textStyle that kept only
-    # an empty fontFamily once its colour went carries nothing.
+    # An empty string is no more a value than null.
     style = {"type": "textStyle", "attrs": {"color": "red", "fontFamily": ""}}
     doc = _doc(_para(_text("a", style)))
     assert narrow_doc(doc, config={"features": ["fontFamily"]}) == _doc(_para(_text("a")))
 
 
 def test_content_freed_inside_a_paragraph_stays_inline() -> None:
-    # A custom inline node the field does not name gives up its text in place,
-    # inside the paragraph it was in, never as a paragraph nested in it.
+    # A custom inline node the field does not name gives up its text in place.
     mention = {"type": "mention", "content": [_text("b")]}
     doc = _doc(_para(_text("a"), mention, _text("c")))
     assert narrow_doc(doc, config={"features": []}) == _doc(
@@ -141,8 +132,7 @@ def test_content_freed_inside_a_paragraph_stays_inline() -> None:
 
 
 def test_freed_blocks_keep_their_order_and_their_runs_apart() -> None:
-    # Inline content either side of a block freed from the same node makes two
-    # paragraphs, not one ahead of the block; a non-node child is kept as is.
+    # Inline content either side of a block freed from the same node makes two paragraphs.
     quote = {"type": "blockquote", "content": [_text("a"), _para(_text("b")), "junk", _text("c")]}
     assert narrow_doc(_doc(quote), config={"features": []}) == _doc(
         _para(_text("a")), _para(_text("b")), "junk", _para(_text("c"))

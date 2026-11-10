@@ -69,21 +69,18 @@ def test_link_mark_with_and_without_rel_target() -> None:
             )
         )
     )
-    # A link that opens a new browsing context always carries the full
-    # noopener noreferrer pair, whatever rel the document asked for.
+    # A link that opens a new browsing context always carries the full noopener noreferrer pair.
     assert out == ('<p><a href="https://a" target="_blank" rel="noopener noreferrer">x</a></p>')
 
 
 def test_link_with_whitespace_hidden_scheme_is_dropped() -> None:
-    # ``java\nscript:`` resolves to the javascript scheme in a browser; the link
-    # mark must be stripped so no <a href> reaches the output at all.
+    # ``java\nscript:`` resolves to the javascript scheme in a browser.
     out = render_doc(_p(_text("x", [{"type": "link", "attrs": {"href": "java\nscript:alert(1)"}}])))
     assert out == "<p>x</p>"
 
 
 def test_entity_encoded_href_is_html_escaped_not_executable() -> None:
-    # Carries no literal scheme, so the mark survives — but the ``&`` is escaped,
-    # so the browser can't decode the attribute back into a javascript: scheme.
+    # Carries no literal scheme, so the mark survives — but the ``&`` is escaped.
     out = render_doc(
         _p(_text("x", [{"type": "link", "attrs": {"href": "&#106;avascript:alert(1)"}}]))
     )
@@ -161,12 +158,8 @@ def test_headings_levels_and_clamp() -> None:
         # Unhashable: a set membership test raised TypeError on both.
         ([2], "h1"),
         ({"level": 2}, "h1"),
-        # Equal to 1 in Python, so a membership test rendered <hTrue>; the
-        # editor compares numbers and does not take it.
         (True, "h1"),
-        # The number 2 to the editor, which renders h2; Python rendered <h2.0>.
         (2.0, "h2"),
-        # Not a whole number, so not a level, though int() would make it one.
         (2.5, "h1"),
         ("2", "h1"),
         (0, "h1"),
@@ -212,12 +205,7 @@ def test_lists() -> None:
     ],
 )
 def test_an_ordered_list_start_is_read_as_a_whole_json_number(start: object, expected: str) -> None:
-    # The editor numbers a list stored with 2.0 from 2, where an int-only check
-    # dropped it and numbered from 1; and false, being an int in Python, wrote
-    # start="False" where a 0 would have been read as a number. The last three
-    # are a known difference, pinned so that changing it is a decision: the
-    # editor writes start="2.5" or start="2", and the browser's integer parsing
-    # numbers each list from 2, where this writes no start.
+    # The editor numbers a list stored with 2.0 from 2.
     doc = {"type": "doc", "content": [{"type": "orderedList", "attrs": {"start": start}}]}
     assert render_doc(doc) == expected
 
@@ -260,11 +248,7 @@ def test_image_attrs_and_protocol() -> None:
 
 
 def test_image_unitless_size_emits_no_style() -> None:
-    """A resized image carries bare numbers, which are not CSS lengths.
-
-    Emitting them as a style produced ``style="width: 300"``, a declaration
-    every browser discards -- the width attribute was already doing the work.
-    """
+    """A resized image carries bare numbers, which are not CSS lengths."""
     doc = {
         "type": "doc",
         "content": [
@@ -340,9 +324,7 @@ def test_table_rendering() -> None:
 
 @pytest.mark.parametrize("align", [["left"], {"left": True}])
 def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> None:
-    # The stored JSON is untrusted, and the alignment is read straight out of
-    # it: a list or object there must be skipped like any other value Tiptap
-    # does not render, not raise while being looked up.
+    # The stored JSON is untrusted, and the alignment is read straight out of it.
     doc = {
         "type": "doc",
         "content": [
@@ -369,8 +351,6 @@ def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> 
 @pytest.mark.parametrize("kind", [["bold"], {"type": "bold"}])
 def test_a_mark_type_that_is_not_a_string_leaves_the_text_unwrapped(kind: object) -> None:
     # Looked up in a dict, a list or object raised TypeError while being hashed.
-    # The editor's JavaScript would read ["bold"] as bold and refuse the whole
-    # document over the object; the server guesses neither, and keeps the text.
     assert render_doc(_p(_text("x", [{"type": kind}]))) == "<p>x</p>"
 
 
@@ -393,8 +373,7 @@ def test_a_link_target_that_is_not_a_string_is_dropped(target: object) -> None:
 def test_node_attrs_that_are_not_a_mapping_read_as_none(
     attrs: object, kind: str, expected: str
 ) -> None:
-    # ProseMirror reads each attribute off attrs by name, so a list, string or
-    # number there gives every attribute its default; .get on it raised.
+    # ProseMirror reads each attribute off attrs by name, so a list.
     node = {"type": kind, "attrs": attrs, "content": [_text("x")]}
     assert render_doc({"type": "doc", "content": [node]}) == expected
 
@@ -437,11 +416,7 @@ def _image(**attrs: object) -> dict:
 
 
 def test_image_keeps_its_stored_layout_style() -> None:
-    """The editor round-trips an image's style, so this path must too.
-
-    Dropping it rendered a float-right image inline under JSON storage while
-    HTML storage kept the float -- one document, two renderings.
-    """
+    """The editor round-trips an image's style, so this path must too."""
     doc = _p(_image(src="https://i/x.png", style="float: right; margin: 8px;"))
     assert render_doc(doc) == '<p><img src="https://i/x.png" style="float: right; margin: 8px"></p>'
 
@@ -455,9 +430,9 @@ def test_image_style_drops_properties_outside_the_allowlist() -> None:
     "style",
     [
         'float: right" onload="alert(1)',  # quote/attribute injection
-        "background: url(javascript:alert(1))",  # a value carrying its own colon
+        "background: url(javascript:alert(1))",
         "float: expression(alert(1))",
-        "margin",  # no colon at all
+        "margin",
     ],
 )
 def test_image_style_rejects_unsafe_declarations(style: str) -> None:
@@ -471,11 +446,7 @@ def test_image_style_is_ignored_when_not_a_string() -> None:
 
 
 def test_image_size_attribute_wins_over_a_style_width() -> None:
-    """A style width outranks the attribute in the browser, so it cannot stay.
-
-    The editor clears these on resize for the same reason; a document written
-    by hand can still carry both, and the attribute is the canonical size.
-    """
+    """A style width outranks the attribute in the browser, so it cannot stay."""
     doc = _p(_image(src="https://i/x.png", width="300", style="float: left; width: 500px"))
     assert render_doc(doc) == '<p><img src="https://i/x.png" width="300" style="float: left"></p>'
 
@@ -486,13 +457,7 @@ def test_image_style_size_survives_without_a_matching_attribute() -> None:
 
 
 def test_image_style_parity_with_the_editor_for_a_stored_document() -> None:
-    """The attrs shape JSON storage actually holds, nulls and all.
-
-    Taken from the glue's own htmlToJSON of the corpus image; the editor
-    renders it as ``<img src="..." style="float: right; margin: 8px;">``, and
-    this path has to agree (bar the trailing semicolon, which this renderer
-    never emits -- it is faithful to that output, not byte-identical).
-    """
+    """The attrs shape JSON storage actually holds, nulls and all."""
     doc = _p(
         _image(
             src="https://placehold.co/120x60",
@@ -545,9 +510,7 @@ def test_renders_an_element_with_the_attributes_the_editor_gives_it(case: dict[s
 
 
 def test_the_editor_render_cases_cover_both_attributes_tiptap_3_added() -> None:
-    # The parametrized test passes vacuously for a case whose element carries
-    # nothing, so pin that the fixture really exercises a title and every cell
-    # alignment Tiptap renders, on both cell types.
+    # The parametrized test passes vacuously for a case whose element carries nothing.
     rendered = {(case["tag"], *pair) for case in _EDITOR_RENDER for pair in case["attributes"]}
     assert ("a", "title", 'Say "hi" & wave') in rendered
     for align in ("left", "center", "right"):

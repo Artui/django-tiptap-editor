@@ -39,16 +39,12 @@ def test_a_value_one_level_past_the_limit_is_refused(nest: Callable[[int], objec
 
 
 def test_the_bound_is_the_number_the_docs_state() -> None:
-    # Every other test here is written relative to the constant, so raising it
-    # toward the depth where json.dumps overflows on Python 3.10 (about 940
-    # levels under a test runner) would pass them all. The security page and the
-    # changelog both say 400.
+    # Every other test here is written relative to the constant.
     assert MAX_JSON_DEPTH == 400
 
 
 def test_a_scalar_is_not_a_level() -> None:
-    # Only objects and arrays nest. A number inside the innermost array leaves
-    # the value at the limit, not one past it.
+    # Only objects and arrays nest.
     validate_json_depth(_arrays(MAX_JSON_DEPTH, leaf=1))
 
 
@@ -57,18 +53,13 @@ def test_depth_is_measured_per_branch_not_summed() -> None:
 
 
 def test_a_value_far_past_the_stack_is_refused_rather_than_a_recursion_error() -> None:
-    # A recursive walk would raise RecursionError long before a million levels,
-    # which is the failure this check exists to turn into a field error.
+    # A recursive walk would raise RecursionError long before a million levels.
     with pytest.raises(ValidationError, match=_REFUSED):
         validate_json_depth(_arrays(1_000_000))
 
 
 def _at_the_node_limit(extra: int = 0) -> dict:
-    """The deepest document ``sanitize_doc`` accepts, plus ``extra`` levels.
-
-    Its innermost node carries a mark with attrs and its parent an array
-    attribute, the deepest shapes the editor writes.
-    """
+    """The deepest document ``sanitize_doc`` accepts, plus ``extra`` levels."""
     node: dict = {
         "type": "text",
         "text": "x",
@@ -85,8 +76,7 @@ def test_the_bound_leaves_room_above_the_deepest_document_the_node_limit_accepts
     with pytest.raises(ValidationError, match="nests deeper"):
         sanitize_doc(_at_the_node_limit(extra=1))
     validate_json_depth(deepest)
-    # A node costs two levels, so the deepest document is 2 * MAX_DOCUMENT_DEPTH
-    # + 2 deep, which leaves nearly as many levels again below the bound.
+    # A node costs two levels, so the deepest document is 2 * MAX_DOCUMENT_DEPTH + 2 deep.
     room = MAX_JSON_DEPTH - (2 * MAX_DOCUMENT_DEPTH + 2)
     validate_json_depth(_arrays(room, leaf=deepest))
     with pytest.raises(ValidationError, match=_REFUSED):

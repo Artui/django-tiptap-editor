@@ -31,9 +31,7 @@ def test_unknown_extension_raises() -> None:
 
 
 def test_undo_extension_keeps_its_tiptap_2_name() -> None:
-    # Tiptap 3 renamed the extension undoRedo, but config.extensions names
-    # built-ins by the vocabulary key, which stayed "history": a config written
-    # for 0.10 keeps validating, and the new name is not a second spelling.
+    # Tiptap 3 renamed the extension undoRedo.
     assert validate_config({"extensions": ["history"]})
     with pytest.raises(ImproperlyConfigured, match="Unknown TipTap extension"):
         validate_config({"extensions": ["undoRedo"]})
@@ -124,17 +122,14 @@ def test_features_none_passes_as_omitted() -> None:
 
 @pytest.mark.parametrize("value", ["heading", ("heading",), {"heading": True}])
 def test_features_not_a_list_raises(value: object) -> None:
-    # A bare string would otherwise pass the per-member check character by
-    # character; this is the test holding the ``isinstance(value, list)`` conjunct.
+    # A bare string would otherwise pass the per-member check character by character.
     with pytest.raises(ImproperlyConfigured, match="TipTap features must be a list of strings"):
         validate_config({"features": value})
 
 
 @pytest.mark.parametrize("member", [12, None, ["heading"]])
 def test_features_with_a_non_string_member_raises(member: object) -> None:
-    # ``["heading"]`` is unhashable: without the string check first, the name
-    # lookup would raise TypeError rather than ImproperlyConfigured. This is the
-    # test holding the per-member ``isinstance(item, str)`` conjunct.
+    # ``["heading"]`` is unhashable: without the string check first.
     with pytest.raises(ImproperlyConfigured, match="TipTap features must be a list of strings"):
         validate_config({"features": ["bold", member]})
 
@@ -204,18 +199,12 @@ def test_a_height_that_is_not_a_string_raises(key: str, value: object) -> None:
 @pytest.mark.parametrize("key", ["height", "maxHeight"])
 @pytest.mark.parametrize("value", [None, ""])
 def test_a_none_or_empty_height_reads_as_omitted(key: str, value: str | None) -> None:
-    # How a field drops a project-wide maxHeight: None over the default. An
-    # empty string has always meant the same in the browser (the glue skips a
-    # falsy value), and was accepted here before the length rule existed, so it
-    # stays a way of saying "unset" rather than becoming an error.
+    # How a field drops a project-wide maxHeight: None over the default.
     assert validate_config({key: value}) == {key: value}
 
 
 def test_the_ascii_flag_keeps_non_ascii_letters_out_of_function_names() -> None:
-    # Under a Unicode IGNORECASE, "i" also matches the dotless and dotted
-    # capital I, so these read as min() here while the browser and the JS side
-    # (whose /i flag never folds non-ASCII onto ASCII) refuse them. They are in
-    # the shared table too; this names the reason.
+    # Under a Unicode IGNORECASE, "i" also matches the dotless and dotted capital I.
     for value in ("mın(10px, 20px)", "MİN(10px, 20px)"):
         with pytest.raises(ImproperlyConfigured, match="must be a CSS length"):
             validate_config({"height": value})

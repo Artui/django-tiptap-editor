@@ -26,8 +26,7 @@ def test_the_schema_is_the_union_of_the_builtin_vocabularies() -> None:
 
 
 def test_extensions_contributing_to_one_tag_are_merged() -> None:
-    # color, fontSize, fontFamily and the highlight all write their own
-    # declaration onto the same <span>.
+    # color, fontSize, fontFamily and the highlight all write onto the same <span>.
     assert get_html_schema().style_properties("span") == frozenset(
         {"background-color", "color", "font-family", "font-size"}
     )
@@ -53,8 +52,7 @@ def test_a_declared_custom_extension_joins_the_allowlist() -> None:
 
 @override_settings(TIPTAP_EXTRA_EXTENSIONS={"shortcut": {}})
 def test_an_extension_that_declares_no_markup_is_silent() -> None:
-    # An extension can legitimately emit nothing (a keyboard shortcut, a
-    # counter). Declaring that explicitly is how a project says so.
+    # An extension can legitimately emit nothing (a keyboard shortcut, a counter).
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         get_html_schema()
@@ -142,7 +140,6 @@ def test_only_an_included_undeclared_extension_warns() -> None:
 
 @override_settings(TIPTAP_DEFAULT_CONFIG={"linkProtocols": ["https", "mailto"]})
 def test_link_protocols_come_from_the_project_not_the_field() -> None:
-    # docs/security.md states this as a limit: a field's own linkProtocols
-    # restricts its editor, and the server keeps reading the project default.
+    # docs/security.md states this as a limit: a field's own linkProtocols restricts its editor.
     schema = get_html_schema({"features": ["link"], "linkProtocols": ["https"]})
     assert schema.link_protocols == ("https", "mailto")

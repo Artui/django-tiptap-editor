@@ -345,16 +345,12 @@ def test_unknown_target_is_dropped() -> None:
     assert str(sanitize_html('<a href="/x" target="evilframe">x</a>')) == '<a href="/x">x</a>'
 
 
-# An attribute written twice is read by a browser from its first occurrence, and
-# the rest are ignored; the sanitiser reads it the same way and writes it once.
+# An attribute written twice is read by a browser from its first occurrence.
 @pytest.mark.parametrize(
     ("html", "expected"),
     [
         ('<a href="/a" HREF="/b">x</a>', '<a href="/a">x</a>'),
-        # The first is refused, so there is no href at all: the second is not a
-        # fallback a browser would ever have used.
         ('<a href="javascript:alert(1)" href="/ok">x</a>', "<a>x</a>"),
-        # target and rel are computed from the first occurrence too.
         ('<a href="/x" target="nope" target="_blank">x</a>', '<a href="/x">x</a>'),
         (
             '<p style="text-align: left" style="text-align: right">x</p>',
@@ -417,9 +413,7 @@ def _reports_a_reference_that_ends_the_input() -> bool:
     return parser.names == ["lt"]
 
 
-# The exception the security docs state: Python 3.10 to 3.13 pass a reference
-# that ends the input to handle_data, so it is written as text. Keyed on what
-# the parser does, not on its version number.
+# The exception the security docs state.
 @pytest.mark.parametrize(
     ("html", "as_a_reference", "as_text"),
     [
@@ -449,17 +443,7 @@ _ATTEMPTS = 3
 
 
 def _within_bound(run: Callable[[], _T], *, clock: Callable[[], float] = time.perf_counter) -> _T:
-    """Run ``run`` and fail unless it finishes within ``_BOUND`` seconds.
-
-    It retries, up to ``_ATTEMPTS`` runs, only a run that is over the bound and
-    under ``_STALL``, which is what a stall looks like; any run that passes ends
-    it. The retry cannot hide a quadratic sanitiser, for two reasons. A quadratic
-    run is over ``_STALL`` (the fastest of these inputs takes 15 seconds, on a
-    machine faster than a runner), so it fails on its first run, with no retry
-    and no wait of three runs. And one that came in under ``_STALL`` would be
-    over the bound on every run, where a stall is not, so it still fails.
-    ``test_a_timing_bound_retries_a_stall_and_never_a_quadratic`` holds each half.
-    """
+    """Run ``run`` and fail unless it finishes within ``_BOUND`` seconds."""
     for _ in range(_ATTEMPTS):
         started = clock()
         result = run()
@@ -482,7 +466,6 @@ class _Clock:
     def __call__(self) -> float:
         # Called once before a run and once after it.
         if self.reads % 2:
-            # The last duration repeats, so a run too many is counted, not raised.
             self.now += self.durations[min(self.reads // 2, len(self.durations) - 1)]
         self.reads += 1
         return self.now
@@ -566,8 +549,7 @@ def test_a_newline_that_becomes_first_in_a_pre_is_kept_visible(html: str, expect
     assert str(sanitize_html(html)) == expected
 
 
-# A browser drops a leading newline from a <listing> as from a <pre>. No
-# built-in extension emits one, but a custom extension may declare it.
+# A browser drops a leading newline from a <listing> as from a <pre>.
 @override_settings(TIPTAP_EXTRA_EXTENSIONS={"listing": {"listing": {}}})
 def test_a_newline_that_becomes_first_in_a_declared_listing_is_kept_visible() -> None:
     schema = get_html_schema()
@@ -595,8 +577,7 @@ def test_unbalanced_markup_is_closed() -> None:
     assert str(sanitize_html("<p><em>a<strong>b</p>")) == "<p><em>a<strong>b</strong></em></p>"
 
 
-# An end tag for an element already closed matches nothing still open. Each
-# case closes the element and then closes it again.
+# An end tag for an element already closed matches nothing still open.
 @pytest.mark.parametrize(
     ("html", "expected"),
     [
@@ -660,9 +641,7 @@ class _ReportingSanitizer(_Sanitizer):
         self.comments.append(data)
 
 
-# Once written as text, the tail is taken from the parser, so it is not also
-# handed over by the parser's own close: as text again by an older release, or
-# as a comment by a newer one.
+# Once written as text, the tail is taken from the parser.
 def test_markup_left_unfinished_at_the_end_is_written_once() -> None:
     sanitizer = _ReportingSanitizer()
     sanitizer.feed("<p>a<!-- b")
@@ -671,17 +650,13 @@ def test_markup_left_unfinished_at_the_end_is_written_once() -> None:
     assert sanitizer.comments == []
 
 
-# The tail goes through handle_data, like any other text, and not straight to the
-# output: after a block a restricted field converts, text needs the paragraph that
-# handle_data opens for it, and written bare it would sit outside any paragraph.
+# The tail goes through handle_data, like any other text, and not straight to the output.
 def test_markup_left_unfinished_after_a_converted_block_gets_its_paragraph() -> None:
     schema = get_html_schema({"features": ["bold"]})
     assert str(sanitize_html("<blockquote><!-- b", schema=schema)) == "<p>&lt;!-- b</p>"
 
 
-# What the input ends inside of a script or a textarea is that element's
-# content, and is read as the parser reads it: a script's is dropped with the
-# rest of the script, a textarea's written as its text.
+# What the input ends inside of a script or a textarea is that element's content.
 @pytest.mark.parametrize(
     ("html", "expected"),
     [
@@ -715,12 +690,7 @@ def _reads_as_raw_text(tag: str) -> bool:
     return parser.tags == [tag]
 
 
-# An end tag left unfinished inside a raw-text element. Where the parser reads
-# the element as raw text it drops the tag, as a browser does; earlier patch
-# releases read it as markup and pass the tag along as text. It is left to the
-# parser either way: written as text inside a kept <xmp>, whose content is not
-# unescaped, its "&lt;" would be escaped again by a second pass. Keyed on what
-# the parser does, not on its version number.
+# An end tag left unfinished inside a raw-text element.
 @pytest.mark.parametrize(
     ("tag", "kept", "as_raw_text", "as_markup"),
     [
@@ -789,10 +759,7 @@ def _reports_the_rest_as_a_reference() -> bool:
     return parser.names == ["1a<b>;"]
 
 
-# With a semicolon later in the input, Python 3.10 to 3.13 pass "&#" along as
-# text and parse what follows as markup, which is filtered as usual; a parser
-# that hands the rest over as the reference's name gets it written as text.
-# Keyed on what the parser does, not on its version number.
+# With a semicolon later in the input.
 def test_an_unfinished_character_reference_before_a_semicolon_lets_no_markup_through() -> None:
     cleaned = str(sanitize_html("<p>&#1a<strong onclick=x>x</strong>;</p>"))
     if _reports_the_rest_as_a_reference():
@@ -801,8 +768,7 @@ def test_an_unfinished_character_reference_before_a_semicolon_lets_no_markup_thr
         assert cleaned == "<p>&amp;#1a<strong>x</strong>;</p>"
 
 
-# The same rule at the handler, which no interpreter before 3.14 reaches
-# through the parser: a name that is not a reference's is written as text.
+# The same rule at the handler, which no interpreter before 3.14 reaches through the parser.
 @pytest.mark.parametrize(
     ("name", "expected"),
     [
@@ -823,8 +789,7 @@ def test_the_character_reference_handler_writes_any_other_name_as_text(
     assert sanitizer.result() == expected
 
 
-# html.parser only ever hands a named reference letters, digits, hyphens and
-# dots, on every version; markup in one must still come out as text.
+# html.parser only ever hands a named reference letters, digits, hyphens and dots, on every version.
 @pytest.mark.parametrize(
     ("name", "terminated", "expected"),
     [

@@ -40,9 +40,7 @@ def test_drops_disallowed_link_href() -> None:
 
 @pytest.mark.parametrize("attrs", [["href", "javascript:alert(1)"], "javascript:alert(1)", 1])
 def test_a_link_whose_attrs_are_not_a_mapping_is_kept_as_one_with_no_url(attrs: object) -> None:
-    # The editor reads such a link as one with no href, so there is no URL to
-    # refuse and the mark stays; reading .get off it raised AttributeError. The
-    # renderer emits it with no href either, so nothing in it reaches the page.
+    # The editor reads such a link as one with no href.
     node = {"type": "text", "text": "x", "marks": [{"type": "link", "attrs": attrs}]}
     assert sanitize_doc(node)["marks"] == node["marks"]
     doc = {"type": "doc", "content": [{"type": "paragraph", "content": [node]}]}
@@ -50,9 +48,7 @@ def test_a_link_whose_attrs_are_not_a_mapping_is_kept_as_one_with_no_url(attrs: 
 
 
 def test_only_a_link_is_dropped_for_its_href() -> None:
-    # The href is read only off a link: no other mark renders one, so dropping
-    # a bold mark that happens to carry a hostile href would lose the formatting
-    # and protect nothing.
+    # The href is read only off a link: no other mark renders one.
     node = {
         "type": "text",
         "text": "x",
@@ -69,7 +65,7 @@ def test_keeps_relative_link_and_other_marks() -> None:
             {"type": "bold"},
             {"type": "link", "attrs": {"href": "/relative"}},
             {"type": "link"},  # no attrs → no scheme → allowed
-            "not-a-dict",  # tolerated, kept
+            "not-a-dict",
         ],
     }
     assert sanitize_doc(node)["marks"] == node["marks"]
@@ -125,18 +121,17 @@ def test_custom_protocol_allowlist() -> None:
 @pytest.mark.parametrize(
     "href",
     [
-        "java\nscript:alert(1)",  # embedded newline
-        "java\tscript:alert(1)",  # embedded tab
-        "jav\rascript:alert(1)",  # embedded carriage return
-        "\x01javascript:alert(1)",  # leading C0 control
-        "  javascript:alert(1)",  # leading spaces
-        "JaVaScRiPt:alert(1)",  # mixed case
-        "\x0cJAVA\nSCRIPT:x",  # form-feed + newline, mixed case
+        "java\nscript:alert(1)",
+        "java\tscript:alert(1)",
+        "jav\rascript:alert(1)",
+        "\x01javascript:alert(1)",
+        "  javascript:alert(1)",
+        "JaVaScRiPt:alert(1)",
+        "\x0cJAVA\nSCRIPT:x",
     ],
 )
 def test_drops_javascript_href_hidden_by_whitespace_or_control_chars(href: str) -> None:
-    # A browser strips whitespace/control chars while resolving the URL, so these
-    # all execute as ``javascript:`` on click — the scheme must be seen and dropped.
+    # A browser strips whitespace/control chars while resolving the URL.
     assert sanitize_doc(_link(href))["marks"] == []
 
 
@@ -146,9 +141,7 @@ def test_blanks_image_src_scheme_hidden_by_whitespace() -> None:
 
 
 def test_keeps_entity_and_percent_encoded_forms_verbatim() -> None:
-    # These carry no literal scheme (``&``/``%`` prefix), so sanitize keeps them;
-    # render_doc's HTML-escaping is what neutralizes them on output — the browser
-    # never re-decodes an escaped attribute into an executable scheme.
+    # These carry no literal scheme (``&``/``%`` prefix), so sanitize keeps them.
     for href in ["&#106;avascript:alert(1)", "%6aavascript:alert(1)"]:
         assert sanitize_doc(_link(href))["marks"] == _link(href)["marks"]
 
@@ -165,8 +158,7 @@ def test_a_document_at_the_depth_limit_is_accepted() -> None:
 
 
 def test_a_deeper_document_is_refused_before_it_costs_the_stack() -> None:
-    # A few kilobytes of nesting used to reach the renderer and raise
-    # RecursionError out of a save: a 500 rather than a field error.
+    # A few kilobytes of nesting used to reach the renderer and raise RecursionError out of a save.
     with pytest.raises(ValidationError, match="nests deeper"):
         sanitize_doc(_nest(MAX_DOCUMENT_DEPTH + 1))
 
@@ -177,11 +169,7 @@ def test_the_renderer_refuses_it_too() -> None:
 
 
 def test_attributes_that_carry_no_url_pass_through_for_the_renderer_to_gate() -> None:
-    # sanitize_doc secures URL-bearing attributes and nesting depth, nothing
-    # else; render_doc decides what every other stored attribute becomes. So a
-    # link title and a cell alignment, including one Tiptap would not render,
-    # are stored as the editor wrote them, and test_render_doc holds the
-    # renderer to the editor's output for each.
+    # sanitize_doc secures URL-bearing attributes and nesting depth, nothing else.
     cases = json.loads(
         (Path(__file__).parent / "fixtures" / "editor_render.json").read_text(encoding="utf-8")
     )["cases"]
