@@ -1,5 +1,3 @@
-"""Abstract upload endpoint documenting the editor's upload contract."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -12,13 +10,7 @@ from django_tiptap_editor.views.image_upload_error import ImageUploadError
 
 
 class BaseImageUploadView(View):
-    """Subclass and implement ``save()`` to wire your own storage.
-
-    Contract (matches ``config.imageUploadUrl``): ``POST`` ``multipart/form-data``
-    with a ``file`` field → ``200 {"location": "<url>"}`` on success, or
-    ``400 {"error": "<msg>"}`` (no file, or ``save()`` raises ``ImageUploadError``).
-    The package owns the contract; the consumer owns storage and access control.
-    """
+    """Subclass and implement ``save()`` to wire your own storage."""
 
     http_method_names = ["post"]
 

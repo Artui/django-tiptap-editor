@@ -1,5 +1,3 @@
-"""Views."""
-
 from __future__ import annotations
 
 from django_tiptap_editor.views.base_image_upload_view import BaseImageUploadView
