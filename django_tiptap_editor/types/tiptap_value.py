@@ -1,5 +1,3 @@
-"""The Python value of a JSON-stored TipTap field: canonical doc + HTML mirror."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,32 +17,13 @@ _NOT_A_DOCUMENT = (
 
 @dataclass(frozen=True)
 class TipTapValue:
-    """A JSON-stored editor value: the ProseMirror ``doc`` plus an HTML mirror.
-
-    ``doc`` is the canonical, lossless representation (use it for programmatic
-    work). ``html`` is a rendering of ``doc``, marked safe so templates can render
-    it directly: ``{{ obj.body }}`` or ``{{ obj.body.html }}``, no ``|safe``
-    needed. What makes that safe is an invariant this class enforces on every
-    instance, however it was built: the mirror is put through ``sanitize_html``
-    in ``__post_init__``, so no caller — a form, an import, a hand-written
-    ``TipTapValue(...)`` — can hand a template markup the editor could not have
-    produced. ``TipTapJSONField`` additionally re-derives the mirror from the
-    sanitized ``doc`` on save. Mutating ``doc`` out of band leaves ``html`` stale
-    until re-rendered.
-
-    Raises ``ValidationError`` when ``doc`` is not a mapping, rather than
-    substituting an empty document: silently emptying a document is the failure
-    mode a rich-text field can least afford.
-    """
+    """A JSON-stored editor value: the ProseMirror ``doc`` plus an HTML mirror."""
 
     doc: dict[str, Any]
     html: SafeString
 
     def __post_init__(self) -> None:
-        # Local import: the sanitiser resolves its allowlist through
-        # ``utils.get_html_schema``, which needs ``HtmlSchema`` from this very
-        # package — importing it at module scope makes ``types`` and ``utils``
-        # import each other. The types package stays free of utils imports.
+        # Local import: the sanitiser resolves its allowlist through ``utils.get_html_schema``, which needs ``HtmlSchema`` from this very package — importing it at module scope makes ``types`` and ``utils`` import each other.
         from django_tiptap_editor.utils.sanitize_html import sanitize_html
 
         if not isinstance(self.doc, dict):
@@ -53,11 +32,7 @@ class TipTapValue:
 
     @classmethod
     def from_stored(cls, data: Any) -> TipTapValue:
-        """Build a value from a stored mapping: a ``{doc, html}`` envelope or a
-        bare ProseMirror doc (``{"type": "doc", …}``, no mirror yet).
-
-        Raises ``ValidationError`` for anything that is not one of those shapes.
-        """
+        """Build a value from a stored mapping: a ``{doc, html}`` envelope or a bare ProseMirror doc (``{"type": "doc", …}``, no mirror yet)."""
         if not isinstance(data, dict):
             raise ValidationError(_NOT_A_DOCUMENT.format(value=data))
         if "doc" in data or "html" in data:
@@ -73,9 +48,6 @@ class TipTapValue:
 
     def to_stored(self) -> dict[str, Any]:
         """Return the plain ``{doc, html}`` mapping persisted in the JSON column."""
-        # ``str()`` of a ``SafeString`` returns the same ``SafeString``; the base
-        # method copies it out as a plain ``str``. A YAML dumper refuses a ``str``
-        # subclass, so a fixture written with ``dumpdata --format yaml`` needs it.
         return {"doc": self.doc, "html": str.__str__(self.html)}
 
     def __str__(self) -> str:

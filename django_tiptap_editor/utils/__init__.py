@@ -1,5 +1,3 @@
-"""Config / settings readers, validation, rendering and sanitisation helpers."""
-
 from __future__ import annotations
 
 from django_tiptap_editor.utils.get_asset_mode import get_asset_mode

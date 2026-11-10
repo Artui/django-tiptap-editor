@@ -1,5 +1,3 @@
-"""The upload endpoint's failure signal."""
-
 from __future__ import annotations
 
 

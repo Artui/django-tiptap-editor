@@ -1,5 +1,3 @@
-"""Drop-in TipTap (ProseMirror) rich-text editor widget for Django forms and admin."""
-
 from __future__ import annotations
 
 from django_tiptap_editor.admin.mixin import TipTapModelAdminMixin

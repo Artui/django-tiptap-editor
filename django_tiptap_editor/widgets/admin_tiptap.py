@@ -1,5 +1,3 @@
-"""Admin-sized variant of the TipTap widget."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -10,13 +8,7 @@ from django_tiptap_editor.widgets.tiptap_widget import TipTapWidget
 
 
 class AdminTipTapWidget(TipTapWidget):
-    """``TipTapWidget`` tuned for the Django admin (taller by default).
-
-    Config resolution: ``get_default_config()`` → ``admin_defaults`` →
-    per-instance ``config=``. A ``features`` list from any of the three layers is
-    resolved where ``TipTapWidget.get_context`` writes the config, so this override
-    of ``get_config`` does not have to repeat it.
-    """
+    """``TipTapWidget`` tuned for the Django admin (taller by default)."""
 
     admin_defaults: dict[str, Any] = {"height": "500px"}
 

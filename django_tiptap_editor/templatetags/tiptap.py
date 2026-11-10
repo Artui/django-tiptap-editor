@@ -1,8 +1,3 @@
-"""Template tags: ``{% tiptap_media %}``, ``{% tiptap_config %}``, and the
-``tiptap_html`` filter — several exports in one file because Django resolves a
-tag library by module name.
-"""
-
 from __future__ import annotations
 
 import json
@@ -32,12 +27,7 @@ register = template.Library()
 
 @register.simple_tag
 def tiptap_media() -> SafeString:
-    """Emit the editor's static assets for the active ``TIPTAP_ASSET_MODE``.
-
-    Bundle mode: the self-contained IIFE bundle + CSS. External mode: an
-    ``importmap`` (from ``TIPTAP_IMPORT_MAP``) followed by the glue ESM module +
-    CSS, for consumers bringing their own TipTap via CDN.
-    """
+    """Emit the editor's static assets for the active ``TIPTAP_ASSET_MODE``."""
     if get_asset_mode() == ASSET_MODE_EXTERNAL:
         import_map = mark_safe(json.dumps({"imports": get_import_map()}))
         return format_html(
@@ -57,27 +47,13 @@ def tiptap_media() -> SafeString:
 
 @register.simple_tag
 def tiptap_config() -> SafeString:
-    """Return the project default config as a JSON string.
-
-    Useful for hand-authored textareas:
-    ``<textarea data-tiptap-config='{% tiptap_config %}'>``.
-    """
+    """Return the project default config as a JSON string."""
     return mark_safe(json.dumps(get_default_config()))
 
 
 @register.filter
 def tiptap_html(value: Any) -> SafeString:
-    """Render any stored TipTap value to safe HTML — the way to display content.
-
-    ``{{ article.body|tiptap_html }}`` works for all three storage shapes and
-    ends at the same guarantee, so a template never needs ``|safe``:
-
-    * a ``str`` (HTML storage) is put through ``sanitize_html``, which is what
-      makes the filter safe on content stored before the field sanitized it;
-    * a ``TipTapValue`` (JSON storage) uses its mirror, already sanitized by the
-      value's own invariant and re-derived from the sanitized ``doc`` on save;
-    * a bare ``doc`` mapping is rendered server-side by ``render_doc``.
-    """
+    """Render any stored TipTap value to safe HTML — the way to display content."""
     if isinstance(value, TipTapValue):
         return mark_safe(str(value.html))
     if isinstance(value, str):

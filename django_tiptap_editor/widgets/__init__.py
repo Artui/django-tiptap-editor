@@ -1,5 +1,3 @@
-"""Form widgets."""
-
 from __future__ import annotations
 
 from django_tiptap_editor.widgets.admin_tiptap import AdminTipTapWidget

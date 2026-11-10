@@ -1,5 +1,3 @@
-"""Package-wide constants (the single multi-export module)."""
-
 from __future__ import annotations
 
 # data-* attribute carrying the per-field config JSON the JS glue reads.

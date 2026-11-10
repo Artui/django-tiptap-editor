@@ -1,5 +1,3 @@
-"""Model field storing TipTap content as a JSON ``{doc, html}`` envelope."""
-
 from __future__ import annotations
 
 import json
@@ -58,11 +56,7 @@ _RENDERABLE_MARK_TYPES = frozenset(
 
 
 def _unknown_types(doc: Any, node_types: frozenset[str], mark_types: frozenset[str]) -> set[str]:
-    """Return the ``type`` names in ``doc`` outside the given vocabularies.
-
-    Iterative rather than recursive: a document deep enough to exhaust the
-    interpreter's stack must fail validation, not raise ``RecursionError``.
-    """
+    """Return the ``type`` names in ``doc`` outside the given vocabularies."""
     unknown: set[str] = set()
     stack: list[tuple[Any, frozenset[str]]] = [(doc, node_types)]
     while stack:
@@ -82,21 +76,7 @@ def _unknown_types(doc: Any, node_types: frozenset[str], mark_types: frozenset[s
 
 
 class TipTapJSONField(models.JSONField):
-    """A ``JSONField`` storing ``{doc, html}`` and exposing a ``TipTapValue``.
-
-    The Python value on a model instance is a ``TipTapValue`` (``.doc`` is the
-    canonical ProseMirror JSON; ``.html`` a safe, server-derived mirror). On save
-    the ``doc`` is protocol-allowlisted (``sanitize_doc``) and the ``html`` mirror
-    is re-derived from it (``render_doc``), so both the canonical value and the
-    rendered surface are always safe regardless of who wrote them — any
-    caller-supplied ``html`` is discarded. The default form field renders the
-    editor in JSON storage mode.
-
-    Validation (``full_clean``, a ``ModelForm``, the admin) checks the stored
-    mapping is JSON-serializable and that every node and mark type is one the
-    HTML mirror can render — see ``TIPTAP_EXTRA_EXTENSIONS`` to declare the types
-    a project's own extensions add.
-    """
+    """A ``JSONField`` storing ``{doc, html}`` and exposing a ``TipTapValue``."""
 
     def __init__(
         self,
@@ -119,15 +99,9 @@ class TipTapJSONField(models.JSONField):
         if value is None or isinstance(value, TipTapValue):
             return value
         if isinstance(value, str):
-            # ``models.JSONField`` defines no ``to_python``, so ``super()`` here is
-            # ``Field.to_python`` -- a no-op that returned the string unparsed. Parse
-            # it, so a JSON string from a fixture or a deserializer reaches
-            # ``from_stored`` as the mapping it represents rather than being refused.
+            # ``models.JSONField`` defines no ``to_python``, so ``super()`` here is ``Field.to_python`` -- a no-op that returned the string unparsed.
             try:
                 value = json.loads(value)
-            # As in the form field: too deep to decode is a RecursionError, and
-            # an integer too long to convert a ValueError, which JSONDecodeError
-            # subclasses.
             except (ValueError, RecursionError) as exc:
                 raise ValidationError(
                     "Value must be valid JSON.", code="invalid", params={"value": value}
@@ -135,28 +109,13 @@ class TipTapJSONField(models.JSONField):
         return TipTapValue.from_stored(value)
 
     def validate(self, value: Any, model_instance: Any) -> None:
-        """Validate a ``TipTapValue`` the way ``JSONField`` validates a mapping.
-
-        ``JSONField.validate`` runs ``json.dumps`` over the value, which a
-        ``TipTapValue`` dataclass is not — so every ``ModelForm``, ``full_clean``
-        and admin save failed with "Value must be valid JSON" while the plain ORM
-        path accepted the same value. The stored mapping is what actually reaches
-        the column, so that is what gets checked. On top of the JSON check, the
-        document's node and mark types must be ones the HTML mirror can render.
-        """
+        """Validate a ``TipTapValue`` the way ``JSONField`` validates a mapping."""
         if value is None:
             super().validate(value, model_instance)
             return
         coerced = value if isinstance(value, TipTapValue) else TipTapValue.from_stored(value)
-        # ``JSONField.validate`` is a ``json.dumps``, which recurses per level, so
-        # the depth is bounded first; ``full_clean`` on a value an API assigned
-        # reaches here without passing through the form field's check.
         validate_json_depth(coerced.doc)
         super().validate(coerced.to_stored(), model_instance)
-        # ``get_extra_extensions`` returns a mapping of name to the HTML vocabulary
-        # the extension emits (``None`` when the project declared only the name), so
-        # take its keys -- the declared type names are what the document is walked
-        # against. The vocabulary itself is what the sanitiser consumes, not this.
         extras = set(get_extra_extensions())
         unknown = _unknown_types(
             coerced.doc, _RENDERABLE_NODE_TYPES | extras, _RENDERABLE_MARK_TYPES | extras
@@ -182,18 +141,6 @@ class TipTapJSONField(models.JSONField):
             link_protocols=self.link_protocols,
             image_protocols=self.image_protocols,
         )
-        # Always re-derive the HTML mirror from the sanitized doc — never trust a
-        # caller-supplied `html`. A write can set `{doc, html}` directly (API /
-        # import / hand-edit) with a benign `doc` but a hostile `html`, so
-        # deriving it here is what makes the rendered surface reflect only the
-        # sanitized doc.
-        # A doc with no content is the one case where the mirror is the only copy of
-        # the content: the documented HTML-to-JSON migration seeds rows as
-        # ``{"doc": {}, "html": "<p>legacy</p>"}``, and deriving from an empty doc
-        # would render "" and destroy every one of them on the next save. Keeping it
-        # is safe because ``TipTapValue`` sanitises ``html`` on construction, so the
-        # mirror here has already been through the allowlist. This matches what
-        # ``TipTapJSONFormField`` does with the same shape.
         html = (
             render_doc(
                 doc, link_protocols=self.link_protocols, image_protocols=self.image_protocols
@@ -205,19 +152,11 @@ class TipTapJSONField(models.JSONField):
         return super().get_prep_value(clean.to_stored())
 
     def value_to_string(self, obj: Any) -> Any:
-        """The stored ``{doc, html}`` mapping, for the serialization framework.
-
-        ``JSONField.value_to_string`` hands the attribute on unchanged for the
-        serializer to encode, and on an instance loaded from the database that is a
-        ``TipTapValue``, which no serializer can encode -- so ``dumpdata`` raised on
-        the first such row and the whole dump failed with it. The mapping is the
-        column's own shape, which ``to_python`` reads back on ``loaddata``.
-        """
+        """The stored ``{doc, html}`` mapping, for the serialization framework."""
         value = self.value_from_object(obj)
         return value.to_stored() if isinstance(value, TipTapValue) else value
 
     def formfield(self, **kwargs: Any) -> Any:
         kwargs.setdefault("form_class", TipTapJSONFormField)
-        # Skip JSONField.formfield (which forces forms.JSONField) — go to the
-        # generic field machinery so our CharField-based form class is used.
+        # Skip JSONField.formfield (which forces forms.JSONField) — go to the generic field machinery so our CharField-based form class is used.
         return models.Field.formfield(self, **kwargs)

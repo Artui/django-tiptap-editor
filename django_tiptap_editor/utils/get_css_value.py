@@ -1,5 +1,3 @@
-"""The conservative CSS value gate shared by the renderer and the sanitiser."""
-
 from __future__ import annotations
 
 import re

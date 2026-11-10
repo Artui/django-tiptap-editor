@@ -1,19 +1,3 @@
-"""Pure-Python ProseMirror-JSON → HTML renderer for the package's schema.
-
-Renders a stored document to HTML **server-side, with no Node and no editor** —
-the zero-JS display path for JSON storage, especially programmatically-authored
-documents that have no editor-produced mirror. It covers exactly the package's
-node/mark set; unknown nodes/marks degrade to their text content rather than
-raising, so it never loses content silently. Faithful to, but not byte-identical
-with, the JS ``getHTML()`` output.
-
-**Safety, relied on wherever this output is marked safe:** the document is
-protocol-allowlisted first (``sanitize_doc``), text and attribute values are
-HTML-escaped, inline ``style`` values pass a conservative CSS allowlist, and a
-link's ``target`` / ``rel`` are reduced to safe values — so the result is safe
-for ``|safe`` even for untrusted JSON.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -53,25 +37,13 @@ _CELL_ALIGNMENTS = ("left", "center", "right")
 
 
 def _attrs(item: dict[str, Any]) -> dict[str, Any]:
-    """Return a node's or mark's ``attrs``, or ``{}`` when it is not a mapping.
-
-    ProseMirror reads each attribute off ``attrs`` by name, so a list or string
-    there gives every attribute its default -- the same as no ``attrs`` at all.
-    Calling ``.get`` on it raised AttributeError instead, a 500 through the form
-    field for a document the editor would have opened.
-    """
+    """Return a node's or mark's ``attrs``, or ``{}`` when it is not a mapping."""
     attrs = item.get("attrs")
     return attrs if isinstance(attrs, dict) else {}
 
 
 def _whole_number(value: object) -> int | None:
-    """Return ``value`` as an int when the editor reads it as a whole number.
-
-    JSON's ``2.0`` is the number 2 to the editor, so it is 2 here too. ``true``
-    is not a number there, but ``bool`` is an ``int`` in Python and would pass
-    as 1 (or ``false`` as 0), so it is refused by name. Anything else is
-    ``None``.
-    """
+    """Return ``value`` as an int when the editor reads it as a whole number."""
     if isinstance(value, float) and value.is_integer():
         return int(value)
     if isinstance(value, int) and not isinstance(value, bool):
@@ -80,25 +52,13 @@ def _whole_number(value: object) -> int | None:
 
 
 def _heading_level(value: object) -> int:
-    """Return the level a heading renders at: 1 to 6, else 1.
-
-    Tiptap renders a stored level only when it is one of its levels, compared as
-    numbers, and otherwise its first. A membership test let ``true`` through as
-    ``<hTrue>``, while a list or object raised TypeError while being hashed.
-    """
+    """Return the level a heading renders at: 1 to 6, else 1."""
     level = _whole_number(value)
     return level if level is not None and 1 <= level <= 6 else 1
 
 
 def _css_length(value: object) -> str:
-    """Return ``value`` if it is a CSS length, else ``""``.
-
-    The editor writes a resized image's size as the bare-number ``width`` /
-    ``height`` attributes, and a bare number is not a CSS length -- emitting it
-    as one produced ``style="width: 300"``, which every browser discards. A
-    value that carries a unit (``50%``, ``300px``) is the case where the style
-    declaration is the only one that can express the size, so that one is kept.
-    """
+    """Return ``value`` if it is a CSS length, else ``""``."""
     token = get_css_value(value)
     return "" if token.replace(".", "", 1).isdigit() else token
 
@@ -117,13 +77,7 @@ _SIZE_PROPERTIES = ("width", "height")
 
 
 def _style_declarations(style: object, allowed: frozenset[str]) -> list[tuple[str, str]]:
-    """Split a stored ``style`` string into safe (property, value) pairs.
-
-    Splitting on ``;`` and ``:`` and re-checking each half is what keeps the
-    conservative guarantee: the property must be one this renderer emits, and
-    the value still has to pass ``get_css_value``, which rejects anything carrying
-    its own ``;``/``:`` (so ``url(...:...)`` never survives).
-    """
+    """Split a stored ``style`` string into safe (property, value) pairs."""
     if not isinstance(style, str):
         return []
     pairs: list[tuple[str, str]] = []
@@ -151,8 +105,7 @@ def _image_style(attrs: dict[str, Any]) -> str:
 
 
 def _style_attr(pairs: list[tuple[str, object]]) -> str:
-    """Build a ``style="..."`` attribute from (prop, value) pairs, dropping
-    empties and unsafe values. Returns ``""`` when nothing survives."""
+    """Build a ``style="..."`` attribute from (prop, value) pairs, dropping empties and unsafe values."""
     decls = [f"{prop}: {safe}" for prop, value in pairs if (safe := get_css_value(value))]
     return f' style="{escape_html("; ".join(decls), quote=True)}"' if decls else ""
 
@@ -191,7 +144,6 @@ def _wrap_marks(text: str, marks: list[Any]) -> str:
             href = _attr("href", attrs.get("href"))
             target = _attr("target", safe_target)
             rel = _attr("rel", safe_rel)
-            # Last, where the editor's link renders it.
             title = _attr("title", attrs.get("title"))
             out = f"<a{href}{target}{rel}{title}>{out}</a>"
         elif kind == "textStyle":
@@ -205,7 +157,6 @@ def _wrap_marks(text: str, marks: list[Any]) -> str:
             )
             if style:
                 out = f"<span{style}>{out}</span>"
-        # Unknown marks: leave the text unwrapped.
     return out
 
 
@@ -248,9 +199,7 @@ def _render_node(node: dict[str, Any]) -> str:
     if kind == "bulletList":
         return f"<ul>{_render_children(node)}</ul>"
     if kind == "orderedList":
-        # Tiptap writes ``start`` for any value but 1, so a stored ``2.0`` numbers
-        # the list from 2 there and has to here. The ``start="true"`` it writes
-        # for a boolean is one the browser ignores, so writing none renders alike.
+        # Tiptap writes ``start`` for any value but 1, so a stored ``2.0`` numbers the list from 2 there and has to here.
         start = _whole_number(attrs.get("start"))
         start_attr = _attr("start", start) if start != 1 else ""
         return f"<ol{start_attr}>{_render_children(node)}</ol>"
@@ -284,7 +233,6 @@ def _render_node(node: dict[str, Any]) -> str:
         return _cell("td", node)
     if kind == "doc":
         return _render_children(node)
-    # Unknown node: keep its content, drop the wrapper.
     return _render_children(node)
 
 
@@ -294,10 +242,7 @@ def render_doc(
     link_protocols: tuple[str, ...] = DEFAULT_LINK_PROTOCOLS,
     image_protocols: tuple[str, ...] = DEFAULT_IMAGE_PROTOCOLS,
 ) -> SafeString:
-    """Render a ProseMirror document (dict) to a safe HTML string.
-
-    Non-dict / empty input renders as an empty string.
-    """
+    """Render a ProseMirror document (dict) to a safe HTML string."""
     if not isinstance(doc, dict):
         return mark_safe("")
     clean = sanitize_doc(doc, link_protocols=link_protocols, image_protocols=image_protocols)

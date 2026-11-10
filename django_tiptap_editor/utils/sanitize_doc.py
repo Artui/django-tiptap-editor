@@ -1,16 +1,3 @@
-"""Pure-Python protocol allowlisting for a stored ProseMirror document.
-
-JSON storage means a document can be written by something other than the editor
-(an API, an import, a hand-edit). ProseMirror's schema only allowlists protocols
-on *parse*, which a stored-JSON path never runs — so a doc could carry a
-``javascript:`` link ``href`` or image ``src``. This walks the tree and strips
-any URL whose scheme is outside the allowlist (relative / anchor URLs, having no
-scheme, are always kept), before the value is persisted.
-
-Deliberately narrow: it secures the URL-bearing attributes and bounds the
-nesting, not the full schema. Structural validation is the editor's job.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -31,28 +18,12 @@ def sanitize_doc(
     link_protocols: tuple[str, ...] = DEFAULT_LINK_PROTOCOLS,
     image_protocols: tuple[str, ...] = DEFAULT_IMAGE_PROTOCOLS,
 ) -> Any:
-    """Return a copy of ``doc`` with disallowed link/image URLs stripped.
-
-    A node's ``image`` ``src`` outside ``image_protocols`` is blanked; a ``link``
-    mark whose ``href`` is outside ``link_protocols`` is dropped. Non-dict input
-    is returned unchanged (the field validates structure separately).
-
-    Raises ``ValidationError`` for a document nested deeper than
-    ``MAX_DOCUMENT_DEPTH``. Both this walk and the renderer's recurse per level,
-    so an unbounded document is a few kilobytes that costs the process its
-    stack; refusing it here turns a 500 into a field error.
-    """
+    """Return a copy of ``doc`` with disallowed link/image URLs stripped."""
     return _sanitize(doc, link_protocols, image_protocols, 0)
 
 
 def _is_disallowed_link(mark: object, link_protocols: tuple[str, ...]) -> bool:
-    """Return whether ``mark`` is a link whose ``href`` is outside ``link_protocols``.
-
-    ``attrs`` is read only when it is a mapping. A list or string there raised
-    AttributeError, a 500 through the form field, where the editor reads it as
-    a link with no ``href`` -- which carries no URL to refuse, so it is kept, and
-    the renderer emits it without one.
-    """
+    """Return whether ``mark`` is a link whose ``href`` is outside ``link_protocols``."""
     if not isinstance(mark, dict) or mark.get("type") != "link":
         return False
     attrs = mark.get("attrs")

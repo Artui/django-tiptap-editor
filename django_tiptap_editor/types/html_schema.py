@@ -1,5 +1,3 @@
-"""The tag/attribute allowlist the server-side HTML sanitiser enforces."""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -10,19 +8,7 @@ from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK
 
 @dataclass(frozen=True)
 class HtmlSchema:
-    """What the editor may emit: tags, their attributes, their style properties.
-
-    Built by ``get_html_schema`` from the vocabularies of the extensions the
-    editor mounts, so it is a description of the editor's own output rather than
-    a second allowlist maintained alongside it. ``sanitize_html`` accepts exactly
-    what this describes and unwraps everything else.
-
-    ``paragraph_blocks`` names the built-in block tags a restricted field leaves
-    out (``PARAGRAPH_BLOCK_TAGS`` minus what its features keep). The sanitiser
-    turns each into a paragraph boundary instead of unwrapping it. Empty by
-    default, so a schema built by hand, and every unrestricted field, unwraps
-    an unknown tag exactly as it always has.
-    """
+    """What the editor may emit: tags, their attributes, their style properties."""
 
     tags: Mapping[str, frozenset[str]]
     styles: Mapping[str, frozenset[str]]

@@ -1,5 +1,3 @@
-"""Resolve the import map used by external asset mode."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -15,13 +13,7 @@ def default_import_map() -> dict[str, str]:
 
 
 def get_import_map() -> dict[str, Any]:
-    """Return ``settings.TIPTAP_IMPORT_MAP``, or a known-good default.
-
-    In external asset mode this maps bare ``@tiptap/*`` specifiers to URLs,
-    emitted as an ``importmap`` script before the glue module loads. The default
-    pins each specifier to the validated TipTap version on a CDN; the consumer
-    overrides deliberately (e.g. to self-host or use a different TipTap build).
-    """
+    """Return ``settings.TIPTAP_IMPORT_MAP``, or a known-good default."""
     configured = getattr(settings, "TIPTAP_IMPORT_MAP", None)
     if configured is not None:
         return configured
