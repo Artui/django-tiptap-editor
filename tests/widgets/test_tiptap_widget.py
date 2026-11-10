@@ -62,8 +62,7 @@ def test_media_emits_bundle() -> None:
 
 
 def test_a_per_instance_config_beats_a_subclass_default() -> None:
-    # The precedence the base docstring used to claim (subclass overrides last)
-    # is the opposite of what the only shipped subclass does.
+    # The base docstring once claimed subclass overrides win; the shipped subclass does not.
     assert AdminTipTapWidget(config={"height": "300px"}).get_config({})["height"] == "300px"
 
 
@@ -86,8 +85,7 @@ def test_emitted_features_carry_core_even_when_the_list_is_empty() -> None:
 
 
 def test_emitted_features_close_over_chained_dependencies() -> None:
-    # highlight -> backgroundColor -> textStyle: the browser receives all three,
-    # so it needs no closure of its own on the Django path.
+    # highlight -> backgroundColor -> textStyle: the browser receives all three.
     features = _emitted(TipTapWidget(config={"features": ["highlight", "bulletList"]}))["features"]
     assert {"highlight", "backgroundColor", "textStyle", "bulletList", "listItem"} <= set(features)
     assert "heading" not in features
@@ -110,8 +108,7 @@ def test_no_features_key_leaves_the_emitted_config_untouched() -> None:
 
 @override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
 def test_a_per_instance_none_lifts_a_project_wide_restriction() -> None:
-    # ``None`` reads as omitted, so it is how one field opts back into the full
-    # editor; the key is dropped rather than sent as ``null``.
+    # ``None`` reads as omitted, so it is how one field opts back into the full editor.
     emitted = _emitted(TipTapWidget(config={"features": None, "height": "300px"}))
     assert emitted == {"height": "300px"}
 
@@ -163,6 +160,5 @@ def test_a_subclass_overriding_get_config_still_has_its_features_resolved() -> N
 
 
 def test_the_base_docstring_does_not_claim_subclass_overrides_win() -> None:
-    # A docs-drift guard, not a behaviour test: the sentence was wrong for every
-    # subclass in the package, and prose is where a reader takes the rule from.
+    # A docs-drift guard, not a behaviour test.
     assert "subclass overrides" not in (TipTapWidget.__doc__ or "")
