@@ -123,32 +123,23 @@ def _admin_form(model_admin: admin.ModelAdmin, **data: str) -> forms.ModelForm:
 
 
 def test_an_admin_textfield_is_sanitised_on_save() -> None:
-    # The widget alone was swapped, so the form field stayed a plain CharField
-    # and the admin stored a direct POST exactly as sent.
+    # The widget alone was swapped.
     form = _admin_form(_register(), body=HOSTILE)
     assert form.is_valid(), form.errors
     assert form.cleaned_data["body"] == "<p>x</p><img>"
 
 
 def test_the_admin_textfield_keeps_the_options_a_project_sets() -> None:
-    # TipTapFormField is a CharField, so the options a project already passes to
-    # an admin text field reach it unchanged, and still count the stored value.
-    # Each option is checked by cleaning a value through it, not by reading the
-    # attribute back: the sanitiser runs after CharField's own conversion, and
-    # an option it undid would still read back as set.
+    # TipTapFormField is a CharField.
     overrides = {models.TextField: {"max_length": 5, "strip": False, "empty_value": None}}
     fields = _register(formfield_overrides=overrides).get_form(None).base_fields
     form_field = fields["body"]
     assert isinstance(form_field, TipTapFormField)
     assert isinstance(form_field.widget, AdminTipTapWidget)
-    # max_length counts what is stored, so markup the sanitiser removes is free.
     assert form_field.clean("<div>short</div>") == "short"
     with pytest.raises(ValidationError):
         form_field.clean("<div>toolong</div>")
-    # strip=False keeps the whitespace a stripping CharField would remove.
     assert form_field.clean(" ab ") == " ab "
-    # empty_value=None is what a nullable column relies on to store NULL; the
-    # summary column is optional, so an empty submission reaches it.
     optional = fields["summary"]
     assert isinstance(optional, TipTapFormField)
     assert optional.clean("") is None
@@ -176,10 +167,7 @@ def test_a_projects_own_form_class_wins() -> None:
 
 
 def test_a_form_class_django_would_not_apply_does_not_stop_the_editors() -> None:
-    # Django applies the overrides of the first class in a field's MRO that has
-    # an entry, and TextField always has one (the admin's own textarea), so a
-    # form class given for Field never reaches a TextField and must not stop
-    # this mixin's from reaching it either.
+    # Django applies the overrides of the first class in a field's MRO that has an entry.
     overrides = {models.Field: {"form_class": forms.CharField}}
     form_field = _register(formfield_overrides=overrides).get_form(None).base_fields["body"]
     assert isinstance(form_field, TipTapFormField)
@@ -244,8 +232,7 @@ def test_check_flags_an_ineligible_field_type() -> None:
 
 
 def test_check_flags_a_bare_string() -> None:
-    # `db_field.name in "somebody"` is a substring test, so this silently matched
-    # fields nobody named.
+    # `db_field.name in "somebody"` is a substring test.
     assert _check_ids(tiptap_fields="somebody") == ["django_tiptap_editor.E001"]
 
 
@@ -314,16 +301,13 @@ def test_a_class_wide_widget_that_is_not_tiptap_does_not_replace_the_editor(
     assert isinstance(fields["body"], TipTapFormField)
     assert type(fields["document"].widget) is AdminTipTapWidget
     assert fields["document"].widget.storage == STORAGE_FORMAT_JSON
-    # A field the mixin does not apply to gets the project's widget as Django
-    # would give it.
+    # A field the mixin does not apply to gets the project's widget as Django would give it.
     if tiptap_fields != "__all__":
         assert type(fields["summary"].widget) is forms.Textarea
 
 
 def test_the_admins_own_textarea_default_does_not_stop_the_editor() -> None:
-    # ModelAdmin merges its defaults into formfield_overrides, so TextField always
-    # has an entry naming AdminTextareaWidget. That entry is Django's, not the
-    # project's: read as an override, it would take the editor off every admin.
+    # ModelAdmin merges its defaults into formfield_overrides.
     model_admin = _register()
     assert model_admin.formfield_overrides[models.TextField]["widget"] is AdminTextareaWidget
     assert isinstance(model_admin.get_form(None).base_fields["body"].widget, AdminTipTapWidget)
@@ -338,9 +322,7 @@ def test_a_projects_own_json_field_widget_wins() -> None:
 
 
 def test_a_json_field_widget_without_json_storage_fails_loudly() -> None:
-    # The mixin uses the project's widget as given, so one left in HTML storage
-    # makes the glue write HTML into a JSON field. docs/api.md says that fails
-    # validation on save rather than storing something else; this holds it.
+    # The mixin uses the project's widget as given.
     overrides = {TipTapJSONField: {"widget": AdminTipTapWidget(config={"height": "200px"})}}
     model_admin = _register(formfield_overrides=overrides)
     rendered = model_admin.get_form(None)()["document"].as_widget()
@@ -351,9 +333,7 @@ def test_a_json_field_widget_without_json_storage_fails_loudly() -> None:
 
 
 def test_a_widget_override_follows_djangos_mro_lookup() -> None:
-    # Django applies the entry of the first class in the field's MRO that has
-    # one. TextField's first entry is the admin's own, so an entry for Field
-    # never reaches it; a TipTapJSONField has no entry of its own, so it does.
+    # Django applies the entry of the first class in the field's MRO that has one.
     widget = AdminTipTapWidget(storage=STORAGE_FORMAT_JSON, config={"height": "200px"})
     fields = (
         _register(formfield_overrides={models.Field: {"widget": widget}}).get_form(None).base_fields
@@ -433,14 +413,12 @@ def test_check_passes_a_widget_that_takes_json_storage_from_settings() -> None:
 
 
 def test_check_passes_an_html_widget_on_a_text_field() -> None:
-    # HTML storage is right for a TextField, which is what a TipTap widget on
-    # one usually is: only the JSON field is held to the envelope.
+    # HTML storage is right for a TextField, which is what a TipTap widget on one usually is.
     assert _messages(formfield_overrides={models.TextField: {"widget": _TallerWidget}}) == []
 
 
 def test_check_ignores_widgets_the_mixin_does_not_use() -> None:
-    # A non-TipTap widget is replaced by the mixin's own, and a field the mixin
-    # does not apply to is Django's business, not this check's.
+    # A non-TipTap widget is replaced by the mixin's own.
     assert _messages(formfield_overrides={TipTapJSONField: {"widget": forms.Textarea}}) == []
     assert _messages(formfield_overrides=_HTML_WIDGET_ON_JSON, tiptap_fields=["body"]) == []
 
@@ -479,8 +457,7 @@ def test_check_skips_a_field_whose_override_widget_never_renders(attrs: dict[str
 
 
 def test_a_meta_widget_wins_over_an_override_widget() -> None:
-    # Why the Meta.widgets row above is right to skip: the HTML-storage override
-    # is not what renders.
+    # Why the Meta.widgets row above is right to skip.
     model_admin = _register(formfield_overrides=_HTML_WIDGET_ON_JSON, form=_MetaWidgetForm)
     widget = model_admin.get_form(None).base_fields["document"].widget
     assert widget.storage == STORAGE_FORMAT_JSON
@@ -538,8 +515,7 @@ def test_check_still_warns_when_the_field_renders(attrs: dict[str, Any]) -> None
 def test_a_malformed_admin_gets_djangos_error_not_a_traceback(
     attrs: dict[str, Any], expected: str, overrides: dict[Any, Any]
 ) -> None:
-    # Django's own checks report a malformed attribute and carry on, so this
-    # check runs on it too, and must not raise reading it.
+    # Django's own checks report a malformed attribute and carry on, so this check runs on it too.
     ids = [e.id for e in _register(formfield_overrides=overrides, **attrs).check()]
     assert expected in ids
 
@@ -551,7 +527,6 @@ class _NeedsAnArgument(AdminTipTapWidget):
 
 
 def test_check_skips_a_widget_class_it_cannot_build() -> None:
-    # Django would build it with no arguments too, and fail on that admin page;
-    # the check is not the place to raise that TypeError, and has nothing to read.
+    # Django would build it with no arguments too, and fail on that admin page.
     overrides = {TipTapJSONField: {"widget": _NeedsAnArgument}}
     assert _messages(formfield_overrides=overrides) == []

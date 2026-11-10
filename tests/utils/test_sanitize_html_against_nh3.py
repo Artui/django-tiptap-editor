@@ -1,23 +1,3 @@
-"""nh3 as an outside opinion on what ``sanitize_html`` lets through.
-
-nh3 (the Rust ammonia sanitiser) is a development dependency only: the package
-itself depends on Django alone. Seeded fragments of hostile markup are cleaned by
-``sanitize_html``, and every element in the result is then cleaned again, on its
-own, by nh3 configured with the same allowlist. Every attribute we kept must
-survive nh3, every style declaration we kept must be one nh3 keeps, and every URL
-we kept must come back from nh3 unchanged. A failure means our filtering let
-through something an independent sanitiser with the same rules would not.
-
-Elements are compared one at a time, not documents, because the two parse
-malformed markup differently (nh3 builds an HTML5 tree, ``sanitize_html`` reads
-tokens) and a document comparison is dominated by that difference, which says
-nothing about what either lets through.
-
-``SANITIZE_ORACLE_CASES`` sets how many fragments a run generates (10,000 by
-default, a couple of seconds), and ``SANITIZE_ORACLE_SEED`` the seed, so a
-scheduled run can go wider than a pull request does.
-"""
-
 from __future__ import annotations
 
 import os
@@ -224,15 +204,13 @@ def _nh3(schema: HtmlSchema) -> Callable[[str, str], str]:
     properties = set().union(*schema.styles.values())
 
     def clean(tag: str, html: str) -> str:
-        # The image protocols govern src and the link ones href; nh3 takes one
-        # list per call, so each element gets the list for the URL it carries.
+        # The image protocols govern src and the link ones href; nh3 takes one list per call.
         schemes = schema.image_protocols if tag == "img" else schema.link_protocols
         return nh3.clean(
             html,
             tags=tags,
             attributes=attributes,
             url_schemes=set(schemes),
-            # The sanitiser writes the rel it computes, so nh3 must not add one.
             link_rel=None,
             filter_style_properties=properties,
             clean_content_tags={"script", "style"},
@@ -285,8 +263,7 @@ def test_nothing_sanitize_html_keeps_is_refused_by_nh3(schema_name: str) -> None
     assert not failures, f"{len(failures)} of {_CASES}; first: {failures[:3]}"
 
 
-# The oracle is only evidence if it can fail: markup no sanitiser touched, fed
-# straight to the comparison, must be refused for each kind of thing it checks.
+# The oracle is only evidence if it can fail: markup no sanitiser touched.
 @pytest.mark.parametrize(
     ("markup", "refused"),
     [

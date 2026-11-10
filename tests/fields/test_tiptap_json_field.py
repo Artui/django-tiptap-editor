@@ -61,12 +61,7 @@ _UNDECODABLE = [
 
 
 def test_to_python_parses_a_json_string() -> None:
-    """A JSON string is legitimate input -- a fixture, a deserializer -- and is parsed.
-
-    ``models.JSONField`` defines no ``to_python``, so this field's ``super()`` call
-    was ``Field.to_python``, a no-op: the string arrived at ``from_stored`` unparsed
-    and silently became an empty document.
-    """
+    """A JSON string is legitimate input -- a fixture, a deserializer -- and is parsed."""
     value = TipTapJSONField().to_python(json.dumps({"doc": DOC, "html": "<p>hi</p>"}))
     assert value.doc == DOC
 
@@ -78,8 +73,7 @@ def test_to_python_refuses_a_string_that_is_not_json() -> None:
 
 @pytest.mark.parametrize(("body", "raised"), _UNDECODABLE)
 def test_to_python_refuses_a_string_json_cannot_decode(body: str, raised: type[Exception]) -> None:
-    # A fixture or a deserializer hands the string in; only a syntax error was
-    # caught, so these escaped as RecursionError and ValueError.
+    # A fixture or a deserializer hands the string in; only a syntax error was caught.
     with pytest.raises(raised) as excinfo:
         json.loads(body)
     assert not isinstance(excinfo.value, json.JSONDecodeError)
@@ -93,12 +87,7 @@ def test_to_python_refuses_json_that_is_not_a_document() -> None:
 
 
 def test_a_legacy_mirror_survives_a_save_when_the_doc_is_empty() -> None:
-    """The documented HTML-to-JSON migration seeds rows as ``{"doc": {}, "html": ...}``.
-
-    Deriving the mirror from an empty doc renders "" and destroys the content on the
-    next save, so the seeded mirror is kept -- already sanitised, because
-    ``TipTapValue`` runs it through the allowlist on construction.
-    """
+    """The documented HTML-to-JSON migration seeds rows as ``{"doc": {}, "html": ...}``."""
     stored = TipTapJSONField().get_prep_value({"doc": {}, "html": "<p>legacy</p>"})
     assert stored["html"] == "<p>legacy</p>"
 
@@ -159,9 +148,7 @@ def _documents() -> dict[int, TipTapValue | None]:
     return {article.pk: article.document for article in Article.objects.all()}
 
 
-# ``dumpdata`` and ``loaddata`` go through these serializers. A loaded instance
-# holds a ``TipTapValue``, which none of them can encode, so serializing raised a
-# ``TypeError`` and ``dumpdata`` lost the whole dump to one field.
+# ``dumpdata`` and ``loaddata`` go through these serializers.
 @pytest.mark.django_db
 @pytest.mark.parametrize("fmt", ["json", "jsonl", "yaml"])
 def test_a_fixture_round_trips_the_document(fmt: str) -> None:
@@ -196,8 +183,7 @@ def test_dumpdata_and_loaddata_round_trip_the_document(tmp_path: Path) -> None:
 
 @pytest.mark.django_db
 def test_loaddata_sanitizes_the_doc_and_rederives_the_mirror(tmp_path: Path) -> None:
-    # A fixture is somebody else's write, so it takes the same save path as any
-    # other: a dumped row is already clean and would prove nothing here.
+    # A fixture is somebody else's write, so it takes the same save path as any other.
     link = {"type": "link", "attrs": {"href": "javascript:alert(1)"}}
     text = {"type": "text", "text": "x", "marks": [link]}
     doc = {"type": "doc", "content": [{"type": "paragraph", "content": [text]}]}
@@ -234,10 +220,7 @@ def test_value_to_string_hands_an_unsaved_mapping_on_unchanged() -> None:
 
 @pytest.mark.django_db
 def test_an_xml_fixture_is_written_but_does_not_load() -> None:
-    # Django's XML deserializer runs ``json.loads`` over what ``to_python``
-    # returns, assuming a ``JSONField`` hands the string back unparsed. This field
-    # parses it into a ``TipTapValue``, as Django documents ``to_python`` should,
-    # so the load fails loudly instead. Pinned so a change on either side shows.
+    # Django's XML deserializer runs ``json.loads`` over what ``to_python`` returns.
     Article.objects.create(title="a", body="", document={"doc": DOC, "html": ""})
     fixture = serializers.serialize("xml", Article.objects.all())
     assert "&lt;p&gt;hi&lt;/p&gt;" in fixture
@@ -260,8 +243,7 @@ def test_get_prep_value_rederives_mirror_ignoring_caller_html() -> None:
 
 
 def test_get_prep_value_discards_hostile_caller_html() -> None:
-    # Benign doc, hostile html mirror (an API / import / hand-edit write). The
-    # stored mirror must reflect only the sanitized doc, never the caller markup.
+    # Benign doc, hostile html mirror (an API / import / hand-edit write).
     prepared = TipTapJSONField().get_prep_value(
         TipTapValue.from_stored({"doc": DOC, "html": '<img src=x onerror="alert(1)">'})
     )
@@ -306,8 +288,7 @@ def _unknown_node_doc(kind: str) -> dict[str, object]:
 
 @pytest.mark.django_db
 def test_full_clean_accepts_a_document() -> None:
-    # JSONField.validate json.dumps()es the value, and a TipTapValue is not
-    # JSON-serializable — every non-empty document used to fail here.
+    # JSONField.validate json.dumps()es the value.
     article = Article(title="t", body="b", document=TipTapValue.from_stored({"doc": DOC}))
     article.full_clean()
 
@@ -319,8 +300,7 @@ def test_full_clean_accepts_none_and_empty() -> None:
 
 
 def test_validate_leaves_an_unset_value_to_django() -> None:
-    # An unset value is null/blank handling, not document validation — full_clean
-    # skips a blank field entirely, so this is checked at the field.
+    # An unset value is null/blank handling.
     TipTapJSONField(null=True, blank=True).validate(None, None)
     with pytest.raises(ValidationError):
         TipTapJSONField().validate(None, None)
@@ -354,10 +334,7 @@ _TOO_DEEP = f"TipTap document nests values deeper than the maximum of {MAX_JSON_
 
 @pytest.mark.django_db
 def test_model_form_refuses_a_value_nested_deep_inside_attrs() -> None:
-    # The admin's path. The form field answers before the model field's
-    # validate re-encodes the value with json.dumps, which recurses per level:
-    # on Python 3.10 a body some 950 levels deep parsed and then raised
-    # RecursionError there, a 500 from a 2 KB POST.
+    # The admin's path.
     body = json.dumps(_attrs_nested(MAX_JSON_DEPTH + 100))
     form = ArticleForm(data={"title": "t", "body": "b", "document": body})
     assert not form.is_valid()
@@ -377,8 +354,6 @@ def test_get_prep_value_refuses_a_value_nested_past_the_bound() -> None:
     # save() runs no validate, and get_prep_value is its json.dumps.
     with pytest.raises(ValidationError, match="nests values deeper"):
         TipTapJSONField().get_prep_value(_attrs_nested(MAX_JSON_DEPTH + 1))
-    # The document, its content array and the paragraph are the other three
-    # levels, so this one sits exactly at the bound, which is inclusive.
     TipTapJSONField().get_prep_value(_attrs_nested(MAX_JSON_DEPTH - 3))
 
 
@@ -394,8 +369,7 @@ def test_model_form_round_trips_a_document() -> None:
 
 @pytest.mark.django_db
 def test_model_form_rejects_an_unknown_node_type() -> None:
-    # The renderer would flatten the wrapper into its text content on save, so
-    # the document is refused rather than silently stripped.
+    # The renderer would flatten the wrapper into its text content on save.
     data = json.dumps({"doc": _unknown_node_doc("youtubeEmbed")})
     form = ArticleForm(data={"title": "t", "body": "b", "document": data})
     assert not form.is_valid()
@@ -422,8 +396,7 @@ def test_full_clean_rejects_an_unknown_mark_type() -> None:
 @pytest.mark.django_db
 @override_settings(TIPTAP_EXTRA_EXTENSIONS=["callout"])
 def test_full_clean_accepts_a_declared_extension_type() -> None:
-    # The documented custom-extension recipe: register it in JS, declare the name
-    # in TIPTAP_EXTRA_EXTENSIONS. Declared types are the project's to render.
+    # The documented custom-extension recipe: register it in JS.
     article = Article(
         title="t", body="b", document=TipTapValue.from_stored({"doc": _unknown_node_doc("callout")})
     )
@@ -432,8 +405,7 @@ def test_full_clean_accepts_a_declared_extension_type() -> None:
 
 @pytest.mark.django_db
 def test_full_clean_tolerates_malformed_document_members() -> None:
-    # Structural junk is the renderer's problem (it degrades to text); the
-    # vocabulary check must not trip over it or mistake it for an unknown type.
+    # Structural junk is the renderer's problem (it degrades to text).
     doc = {
         "type": "doc",
         "content": ["oops", {"marks": "not-a-list"}, {"marks": ["x", {"type": 7}], "type": 7}],
@@ -442,8 +414,7 @@ def test_full_clean_tolerates_malformed_document_members() -> None:
 
 
 def test_vocabulary_walk_survives_a_document_deeper_than_the_stack() -> None:
-    # Far past sys.getrecursionlimit(): the walk is iterative, so a deep document
-    # reports its unknown type instead of raising RecursionError.
+    # Far past sys.getrecursionlimit(): the walk is iterative.
     doc: dict[str, object] = {"type": "sparkle"}
     for _ in range(5000):
         doc = {"type": "blockquote", "content": [doc]}
@@ -451,8 +422,7 @@ def test_vocabulary_walk_survives_a_document_deeper_than_the_stack() -> None:
 
 
 def test_renderable_vocabulary_matches_the_renderer() -> None:
-    # Drift guard: every declared node type must survive render_doc as a wrapper
-    # of its own (doc is the exception — it renders as its children by design).
+    # Drift guard: every declared node type must survive render_doc as a wrapper of its own.
     for kind in _RENDERABLE_NODE_TYPES - {"doc", "text"}:
         node = {"type": kind, "content": [{"type": "text", "text": "x"}]}
         assert render_doc({"type": "doc", "content": [node]}) != "x", kind
@@ -462,16 +432,7 @@ def test_renderable_vocabulary_matches_the_renderer() -> None:
 
 
 def test_the_field_vocabulary_covers_everything_the_renderer_handles() -> None:
-    """The reverse of the drift guard above: a type the renderer gains, this set lacks.
-
-    The field cannot import the renderer's vocabulary -- ``render_doc`` dispatches
-    through an ``if kind == ...`` chain rather than a table -- so the two lists are
-    maintained separately. The sibling guard renders every *declared* type and proves
-    it survives, which catches a name typed into this set wrongly. It cannot catch the
-    other direction: a node the renderer learns to render, that this set still rejects,
-    would fail every save of a document containing it. This reads the comparisons out
-    of the renderer's source and asserts nothing is missing here.
-    """
+    """The reverse of the drift guard above: a type the renderer gains, this set lacks."""
     import ast
     import importlib
     import inspect
@@ -499,9 +460,7 @@ def test_the_field_vocabulary_covers_everything_the_renderer_handles() -> None:
 @pytest.mark.django_db
 @override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
 def test_an_orm_write_is_not_narrowed_by_features() -> None:
-    # Narrowing belongs to the form fields, which know their widget's config. A
-    # model save has no form, so a heading written through the ORM is kept even
-    # where every field's editor lacks headings; docs/security.md says so.
+    # Narrowing belongs to the form fields, which know their widget's config.
     heading = {
         "type": "heading",
         "attrs": {"level": 2},

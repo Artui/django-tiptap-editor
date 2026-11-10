@@ -1,12 +1,3 @@
-"""The feature model is consistent with the vocabulary it restricts.
-
-``FEATURE_CORE`` and ``FEATURE_DEPENDENCIES`` are hand-written beside
-``EXTENSION_HTML_VOCABULARY``, and nothing else would notice them drifting: a
-renamed extension leaves a dependency naming nothing, and a new ``span`` mark
-added without its ``textStyle`` dependency mounts a mark whose wrapper is not
-in the schema. Each check here is one of those silent failures.
-"""
-
 from __future__ import annotations
 
 import pytest
@@ -58,8 +49,7 @@ def test_every_dependency_key_and_value_is_built_in() -> None:
 
 
 def test_no_dependency_key_or_value_is_core() -> None:
-    # A core key would never be walked (the resolver starts from core and skips
-    # what it has seen), so its dependencies would silently never be pulled in.
+    # A core key would never be walked (the resolver starts from core and skips what it has seen).
     for name, deps in FEATURE_DEPENDENCIES.items():
         assert name not in FEATURE_CORE, name
         assert not set(deps) & FEATURE_CORE, (name, deps)
@@ -77,8 +67,7 @@ def test_every_closure_stays_inside_the_built_ins(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(_emitters("span") - {"textStyle"}))
 def test_every_span_mark_pulls_text_style(name: str) -> None:
-    # Derived from the vocabulary, so a new span mark is checked the day it is
-    # added: textStyle is the mark the others render through.
+    # Derived from the vocabulary, so a new span mark is checked the day it is added.
     assert "textStyle" in _closure(name)
 
 
@@ -99,10 +88,7 @@ def test_the_paragraph_blocks_are_built_in_tags() -> None:
 
 
 def test_the_document_table_names_exactly_the_types_the_renderer_draws() -> None:
-    # The renderer and the model field's validation already enumerate the node
-    # and mark types a stored document may carry; narrowing has to place each of
-    # them, and must not invent one. The editor's own schema is held to the same
-    # table in js/test/html-vocabulary.test.ts.
+    # The renderer and the field's validation enumerate every type a stored document may carry.
     types = {key for key in DOCUMENT_FEATURES if "." not in key}
     assert types == _RENDERABLE_NODE_TYPES | _RENDERABLE_MARK_TYPES
 

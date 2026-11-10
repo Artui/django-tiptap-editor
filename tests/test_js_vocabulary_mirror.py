@@ -1,16 +1,3 @@
-"""The JS tests read the current HTML vocabulary and feature model, not stale copies.
-
-js/test/html-vocabulary.test.ts checks that everything the editor can emit is
-something EXTENSION_HTML_VOCABULARY keeps. It reads the vocabulary from a JSON
-fixture, because the JS suite cannot import Python. That check is only as good
-as the fixture is current, so this compares the committed file with a fresh
-dump on every pull request. The feature model (FEATURE_CORE and
-FEATURE_DEPENDENCIES) reaches the JS suite the same way, as
-js/test/fixtures/feature-model.json, and is checked the same way. The dump is
-loaded from the script rather than restated, so there is one definition of each
-fixture's shape.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -47,13 +34,10 @@ def test_the_committed_js_vocabulary_fixture_is_a_fresh_dump() -> None:
 
 
 def test_the_dump_carries_every_built_in_tag_attribute_and_style() -> None:
-    # A dump that read nothing would compare equal to a fixture that holds
-    # nothing, so pin it to the table it is built from.
+    # A dump that read nothing would compare equal to a fixture that holds nothing.
     dumped = json.loads(_dump_html_vocabulary().render())
     assert dumped["extensions"] == sorted(EXTENSION_HTML_VOCABULARY)
     for name, vocabulary in EXTENSION_HTML_VOCABULARY.items():
-        # The per-extension copy is the table itself, not a union, because the
-        # JS suite checks each feature's editor against its own entry.
         assert set(dumped["byExtension"][name]) == set(vocabulary)
         for tag, entry in vocabulary.items():
             assert set(entry.get("attrs", ())) <= set(dumped["tags"][tag]["attributes"])
@@ -85,12 +69,7 @@ def test_the_feature_model_dump_carries_the_core_and_every_dependency() -> None:
 
 
 def _redirected(tmp_path: Path) -> ModuleType:
-    """Load the script with both fixture paths pointed into ``tmp_path``.
-
-    ``main([])`` writes both files, so a test that redirected only one would
-    rewrite the committed copy of the other on every run, and the freshness test
-    above would then pass whatever the committed file held.
-    """
+    """Load the script with both fixture paths pointed into ``tmp_path``."""
     script = _dump_html_vocabulary()
     script.FIXTURE = tmp_path / "html-vocabulary.json"
     script.FEATURES_FIXTURE = tmp_path / "feature-model.json"
@@ -107,8 +86,7 @@ def test_the_check_flag_reports_a_stale_vocabulary_fixture(tmp_path: Path) -> No
 
 
 def test_the_check_flag_reports_a_stale_feature_model_fixture(tmp_path: Path) -> None:
-    # The vocabulary fixture is fresh here, so only the feature-model half of
-    # the check can be the one answering.
+    # The vocabulary fixture is fresh here.
     script = _redirected(tmp_path)
     script.FIXTURE.write_text(script.render(), encoding="utf-8")
     script.FEATURES_FIXTURE.write_text("{}\n", encoding="utf-8")

@@ -1,16 +1,3 @@
-"""Every job in upstream-drift.yml that opens an issue also closes it.
-
-The workflow runs only on its weekly schedule, never on a pull request, so a job
-that opens an issue and has no way to close it merges green and is found months
-later as an issue nobody can tell is current. Three of the four jobs shipped that
-way. The opening and the closing step find the issue by exact title, so each job
-names it once in ``ISSUE_TITLE``, and two jobs sharing a title would close each
-other's issues.
-
-The workflow is read as text rather than parsed: the checks are about which
-strings a job's block contains, and PyYAML is not a dependency of this repo.
-"""
-
 from __future__ import annotations
 
 import re
@@ -89,8 +76,7 @@ def test_every_step_that_touches_an_issue_runs_only_on_main() -> None:
         for step in _steps(block)
         if "issues.create(" in step or 'state: "closed"' in step
     ]
-    # One opening and one closing step per job, js-next-line's being the same
-    # step; a count that fell would mean the split stopped finding them.
+    # One opening and one closing step per job, js-next-line's being the same step.
     assert len(touching) == 7
     for name, step in touching:
         condition = _condition(step) or ""
@@ -104,7 +90,6 @@ def test_every_job_names_its_issue_once() -> None:
         assert "process.env.ISSUE_TITLE" in block, name
         assert 'const title = "' not in block, f"{name} restates its title in a script"
         assert 'issue.title === "' not in block, f"{name} restates its title in a script"
-        # A step-level env would shadow the job's title for that step alone.
         assert not re.search(r"^ {8,}ISSUE_TITLE:", block, re.MULTILINE), name
 
 

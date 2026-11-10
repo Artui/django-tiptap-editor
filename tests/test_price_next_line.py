@@ -1,37 +1,3 @@
-"""The weekly next-major report says what blocked it, and stops once there is no next major.
-
-scripts/price_next_line.py runs only inside the scheduled upstream-drift
-workflow, so nothing on a pull request ever exercised it, and two of its answers
-had gone wrong without anything failing:
-
-- When the newer line failed to load, the report said "the run's own log names"
-  the error. The workflow ran vitest with the JSON reporter alone, which records
-  a suite whose setup threw as 48 skipped cases and an empty message, so the log
-  never had it. The issue priced the migration as blocked and could not say by
-  what.
-- Once the pins cross a major, ``latest`` is the pinned line again, and the job
-  would go on reporting a corpus run under a heading about crossing a major.
-
-The files under ``fixtures/next_line`` come from the producers rather than from
-memory: vitest 4.1.11's default and JSON reporters, and npm 11's
-``npm ls --depth 0 --json``, all run against Tiptap 3.31.4 installed over the
-committed 2.x manifest the way the job installs it.
-
-- ``blocked.txt`` and ``blocked.json`` are one run, uncoloured.
-- ``blocked-ci.txt`` is the same run under ``CI=true GITHUB_ACTIONS=true`` in an
-  otherwise empty environment, which is what turns vitest's colours on; it
-  turns them off when it detects a coding agent, which is why the first
-  capture is plain.
-- ``startup-error-ci.txt`` is the same command pointed at a config that throws,
-  so vitest dies before collecting anything and writes no JSON.
-
-The only edits are that absolute paths were cut back to repo-relative ones, or
-to ``<repo>`` and ``<scratch>`` where the path was outside the repository, and
-that the end-of-file hook trimmed the blank lines vitest printed last. The
-reporter output is ``.txt`` rather than ``.log`` because the repository ignores
-``*.log``.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -90,9 +56,7 @@ def _passing_report() -> Any:
 
 
 def test_the_json_report_alone_does_not_name_what_blocked_the_suite() -> None:
-    # The premise of the fix, checked against the producer's own output: every
-    # case skipped, the suite failed with an empty message, and nowhere in the
-    # document the error the default reporter prints.
+    # The premise of the fix, checked against the producer's own output: every case skipped.
     report = _json("blocked.json")
     (suite,) = report["testResults"]
     assert suite["status"] == "failed"
@@ -108,12 +72,9 @@ def test_a_blocked_run_quotes_the_error_that_blocked_it() -> None:
     assert "## Blocked before anything could be measured" in body
     assert "What stopped it, from vitest's 'Failed Suites 1' section:" in body
     quoted = _quoted(body)
-    # Quoted as printed, indentation included, since the code frame below it
-    # lines up a caret under the failing column.
+    # Quoted as printed, indentation included.
     assert quoted.splitlines()[0] == " FAIL  test/fidelity.test.ts > fidelity corpus round-trip"
     assert "TypeError: Cannot read properties of undefined (reading 'configure')" in quoted
-    # The frame in our own code is what makes the report actionable without
-    # opening the run; the divider that closes the section is not quoted.
     assert "src/build-extensions.ts:102:11" in quoted
     assert quoted.endswith(" \u276f test/fidelity.test.ts:39:19")
     assert "\u23af" not in quoted
@@ -122,9 +83,7 @@ def test_a_blocked_run_quotes_the_error_that_blocked_it() -> None:
 
 
 def test_the_error_is_found_through_the_colours_ci_turns_on() -> None:
-    # On a runner vitest colours the dividers themselves as well as the titles,
-    # so both the section header and the divider that ends it start with an
-    # escape rather than with U+23AF.
+    # On a runner vitest colours the dividers themselves as well as the titles.
     coloured = _text("blocked-ci.txt")
     assert "\x1b[31m\u23af" in coloured
     assert "\x1b[31m\x1b[2m\u23af" in coloured
@@ -143,8 +102,6 @@ def test_a_vitest_that_cannot_start_quotes_its_startup_error() -> None:
     assert "## Blocked before anything could be measured" in body
     assert "What stopped it, from vitest's 'Startup Error' section:" in body
     quoted = _quoted(body)
-    # The section runs to the end of the output rather than to a closing
-    # divider, and the line before it is not part of it.
     assert quoted.splitlines()[0] == "Error: config-broke-here"
     assert "loadConfigFromFile" in quoted
     assert "failed to load config" not in quoted
@@ -167,8 +124,7 @@ def test_a_vitest_step_with_no_output_says_there_is_nothing_to_quote() -> None:
     assert "## Blocked before anything could be measured" in body
     assert "```" not in body
     assert "left no output" in body
-    # The install step cannot be where it is: a failed install stops the job
-    # before the report is written.
+    # The install step cannot be where it is.
     assert "install" not in body
 
 
@@ -185,8 +141,7 @@ def test_the_quoted_error_is_capped() -> None:
 
 
 def test_a_closing_divider_is_not_taken_for_a_section() -> None:
-    # It carries a counter, "[1/1]", with no spaces around it; read as a
-    # header, the output's ending would be quoted under the title "[1/1]".
+    # It carries a counter, "[1/1]", with no spaces around it; read as a header.
     script = _script()
     log = "\n".join(["before", "\u23af" * 20 + "[1/1]" + "\u23af", "after"])
     assert script._error_section(log) == ("", ["before", "\u23af" * 20 + "[1/1]\u23af", "after"])
@@ -194,8 +149,7 @@ def test_a_closing_divider_is_not_taken_for_a_section() -> None:
 
 @pytest.mark.parametrize("pinned_core", ["3.31.4", "3.0.0", "^3.31.4", "~3.31.4", "4.0.0"])
 def test_no_newer_major_is_reported_as_such_and_not_priced(pinned_core: str) -> None:
-    # 4.0.0 is the pins having moved past what `latest` resolved, which the
-    # registry should never produce but which is still not a major to price.
+    # 4.0.0 is the pins having moved past what `latest` resolved.
     script = _script()
     pinned = {"dependencies": {"@tiptap/core": pinned_core}}
     body = script.render(_json("blocked.json"), _log(), _json("npm-ls.json"), pinned)
@@ -205,9 +159,6 @@ def test_no_newer_major_is_reported_as_such_and_not_priced(pinned_core: str) -> 
     assert script.NOTHING_TO_PRICE in body
     assert "Blocked" not in body
     assert "round-trip" not in body
-    # The fingerprint is what the workflow compares to decide whether to
-    # comment; a closing report carries none, so it can never be mistaken for
-    # an unchanged price.
     assert "<!-- js-next-line: " not in body
 
 
@@ -216,9 +167,7 @@ def test_no_newer_major_is_reported_as_such_and_not_priced(pinned_core: str) -> 
     [
         _PINNED_2X,
         {"dependencies": {"@tiptap/core": "~2.27.3"}},
-        # A manifest the step failed to save, or one that no longer names the
-        # core package, keeps reporting rather than closing the issue on a
-        # guess.
+        # A manifest the step failed to save, or one that no longer names the core package.
         {},
         {"dependencies": {}},
         {"dependencies": {"@tiptap/core": "latest"}},
@@ -235,17 +184,12 @@ def test_a_newer_major_is_still_priced(pinned: dict[str, object]) -> None:
 
 
 def test_a_corpus_that_holds_on_the_pinned_line_is_not_priced() -> None:
-    # The case the check exists for. Once the pins cross, `latest` is the line
-    # already pinned and the corpus passes on it, which without the check
-    # reads "48 of 48 documents still round-trip" under a heading about
-    # crossing a major.
+    # The case the check exists for.
     script = _script()
     body = script.render(_passing_report(), "", _json("npm-ls.json"), _PINNED_3X)
 
     assert script.NOTHING_TO_PRICE in body
     assert "round-trip" not in body
-    # And the same report under a 2.x pin is priced, so the fixture is one the
-    # pricing branch accepts.
     priced = script.render(_passing_report(), "", _json("npm-ls.json"), _PINNED_2X)
     assert "## 48 of 48 documents still round-trip" in priced
 
@@ -260,9 +204,7 @@ def test_an_unresolved_core_is_priced_rather_than_closed() -> None:
 
 
 def test_the_workflow_closes_on_the_marker_the_script_writes() -> None:
-    # The two halves agree on one literal string across a language boundary,
-    # and a mismatch fails silently: the issue would be updated with "no newer
-    # major" every week instead of closed.
+    # The two halves agree on one literal string across a language boundary.
     assert _script().NOTHING_TO_PRICE in _WORKFLOW.read_text(encoding="utf-8")
 
 

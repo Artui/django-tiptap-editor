@@ -47,8 +47,7 @@ def test_tiptap_html_filter_renders_bare_doc() -> None:
 
 
 def test_tiptap_html_filter_sanitizes_a_stored_html_string() -> None:
-    # HTML storage: the column holds a plain str, and content stored before the
-    # field sanitized it is only made safe here.
+    # HTML storage: the column holds a plain str.
     assert tiptap_html("<img src=x onerror=alert(1)>") == '<img src="x">'
 
 
@@ -71,6 +70,5 @@ def test_tiptap_html_filter_output_is_safe_in_a_template() -> None:
 
 @override_settings(TIPTAP_DEFAULT_CONFIG={"features": ["bold"]})
 def test_tiptap_html_filter_is_not_narrowed_by_features() -> None:
-    # The filter has no field to read features from, so even a project-wide
-    # list leaves it on the full built-in allowlist; docs/security.md says so.
+    # The filter has no field to read features from.
     assert tiptap_html("<h2>x</h2>") == "<h2>x</h2>"

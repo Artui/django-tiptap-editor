@@ -1,19 +1,3 @@
-"""The custom-extension example in docs/extending.md is checked, not trusted.
-
-The page shows the same "callout" extension twice: once as the JavaScript that
-renders it, once as the ``TIPTAP_EXTRA_EXTENSIONS`` that declares what it
-renders. The two halves are written apart and nothing in the package connects
-them, so they drifted: the JavaScript emitted a ``div`` while every settings
-block declared an ``aside``, and a reader who followed the page exactly had the
-callout's wrapper stripped by the sanitiser on the first save, with no warning,
-because the extension *had* declared a vocabulary, just not the one it used.
-
-So this reads both halves out of the page itself and runs the sanitiser over
-what the one emits under what the other declares. Neither half is restated
-here, which is what keeps the test from agreeing with a copy instead of the
-document.
-"""
-
 from __future__ import annotations
 
 import ast
@@ -69,9 +53,7 @@ def _rendered_markup() -> tuple[str, str]:
 
 
 def test_the_page_still_carries_what_this_test_reads() -> None:
-    # Without this the parametrised tests below pass by finding nothing, which is
-    # the failure mode of every test that discovers its own inputs. The page has
-    # two declared forms and two plain-list forms naming the callout.
+    # Without this the parametrised tests below pass by finding nothing.
     settings = _declared_settings()
 
     assert sum(isinstance(value, dict) for value in settings) == 2
@@ -79,9 +61,7 @@ def test_the_page_still_carries_what_this_test_reads() -> None:
 
 
 def test_the_callout_parses_back_what_it_renders() -> None:
-    # The editor reloads stored markup through parseHTML, so a selector that does
-    # not match the rendered element loses the callout in the browser even when
-    # the sanitiser kept it.
+    # The editor reloads stored markup through parseHTML.
     source = _callout_source()
     rendered = _RENDER.search(source)
     parsed = _PARSE.search(source)
@@ -110,10 +90,7 @@ def test_a_declared_callout_survives_the_sanitiser(declared: dict[str, object]) 
     ids=lambda value: "+".join(value),
 )
 def test_a_listed_callout_loses_its_wrapper_and_keeps_its_text(listed: list[str]) -> None:
-    # The page says the plain-list form warns, naming the extension, and drops
-    # the wrapper on save while keeping the text inside it; this holds both
-    # sentences to the markup the page renders. Every listed name warns, so the
-    # warnings are collected rather than matched one at a time.
+    # The page says the plain-list form warns, naming the extension.
     markup, inner = _rendered_markup()
 
     with override_settings(TIPTAP_EXTRA_EXTENSIONS=listed):

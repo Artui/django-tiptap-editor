@@ -30,8 +30,7 @@ def test_from_stored_rejects_a_non_mapping() -> None:
 
 
 def test_from_stored_rejects_html_assigned_as_a_string() -> None:
-    # The migration case: assigning a legacy HTML column to a JSON field used to
-    # persist an empty document for every row without a word of complaint.
+    # The migration case: assigning legacy HTML to a JSON field once persisted an empty document.
     with pytest.raises(ValidationError, match="HTML is not converted on assignment"):
         TipTapValue.from_stored("<p>my content</p>")
 
@@ -57,8 +56,7 @@ def test_to_stored_roundtrips() -> None:
 
 
 def test_to_stored_html_is_a_plain_string() -> None:
-    # ``str()`` of a ``SafeString`` is the same ``SafeString``, and a YAML dumper
-    # refuses a ``str`` subclass, so a fixture in YAML could not be written.
+    # ``str()`` of a ``SafeString`` is the same ``SafeString``.
     html = TipTapValue.from_stored({"doc": DOC, "html": "<p>x</p>"}).to_stored()["html"]
     assert type(html) is str
 
@@ -76,8 +74,6 @@ def test_from_stored_sanitizes_the_caller_supplied_mirror() -> None:
 
 
 def test_direct_construction_sanitizes_the_mirror_too() -> None:
-    # The invariant is on the class, not on one entry point: a value built by
-    # hand (or left on form.instance by a ModelForm that failed validation) is
-    # marked safe, so it has to be safe however it was built.
+    # The invariant is on the class, not on one entry point.
     value = TipTapValue(doc=DOC, html=SafeString(PAYLOAD))
     assert value.html == '<img src="x">'

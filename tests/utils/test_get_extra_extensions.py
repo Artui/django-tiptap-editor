@@ -60,9 +60,7 @@ def test_rejects_a_tag_that_executes_script() -> None:
         get_extra_extensions()
 
 
-# A browser reads the content of each of these by rules of its own (raw text,
-# escapable raw text, or MathML's namespace) where html.parser reads markup, so a
-# kept one would be stored as one thing and rendered as another.
+# A browser reads the content of each of these by rules of its own (raw text, escapable raw text.
 @pytest.mark.parametrize(
     "tag", ["math", "noembed", "noframes", "plaintext", "textarea", "title", "xmp"]
 )

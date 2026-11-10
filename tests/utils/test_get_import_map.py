@@ -29,10 +29,6 @@ _GLUE = (
 
 def test_the_default_map_resolves_exactly_what_the_built_glue_imports() -> None:
     # GLUE_IMPORT_SPECIFIERS is a hand-kept list of what the build externalises.
-    # Read the specifiers out of the committed glue instead, so moving an import
-    # to another package (as CharacterCount moved to @tiptap/extensions) cannot
-    # leave the default map resolving a module the glue no longer asks for while
-    # missing the one it does.
     imported = set(re.findall(r'(?:from|import)\s*"(@tiptap/[^"]+)"', _GLUE.read_text("utf-8")))
     assert imported == set(GLUE_IMPORT_SPECIFIERS)
 
