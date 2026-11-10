@@ -1,12 +1,3 @@
-"""The ``features`` section of docs/configuration.md is checked, not trusted.
-
-The page restates the feature model for a reader: which names exist, which are
-always on, and what each one pulls in. Every one of those is a copy of
-``constants``, and a copy is what drifts. So this reads each marked region out of
-the page and compares it with the table it describes, and runs the page's own
-example through the validator and the resolver.
-"""
-
 from __future__ import annotations
 
 import ast

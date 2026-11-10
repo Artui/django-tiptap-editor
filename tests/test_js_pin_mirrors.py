@@ -1,17 +1,3 @@
-"""Every hand-written restatement of the TipTap pin agrees with js/package.json.
-
-scripts/check_js_pins.py already compares them, but only inside the scheduled
-upstream-drift workflow, which never runs on a pull request. So a release that
-moved the pin and missed a restatement could merge green and be reported a day
-later, after it had published. Meanwhile the per-PR test of the import map,
-``test_get_import_map``, builds its expected URL from ``TIPTAP_VERSION`` itself
-and so can only ever agree with it.
-
-The mirror half of the script needs no network, so it runs here on every pull
-request. It is loaded from the script rather than restated, so the list of
-places it checks stays one list.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -34,9 +20,7 @@ def test_every_restatement_of_the_tiptap_pin_agrees_with_package_json() -> None:
     pins, _ = script.read_pins()
     mirrors = script.read_mirrors()
 
-    # Without this the comparison below passes by reading nothing, should the
-    # list be emptied or a file stop matching its pattern (which reads as None,
-    # not as an exception, by design).
+    # Without this the comparison below passes by reading nothing.
     assert {path for path, _ in mirrors} == {
         "django_tiptap_editor/constants.py",
         "js/vitest.config.ts",
