@@ -35,7 +35,7 @@ In Python, work with the canonical document:
 
 ```python
 article.body.doc  # the ProseMirror JSON (dict) — canonical, lossless
-article.body.html  # the HTML mirror, re-derived from doc on save (SafeString)
+article.body.html  # the HTML mirror (SafeString), re-derived on save if doc has content
 ```
 
 `article.body` is a `TipTapValue` (`.doc` + `.html`). Assign one when writing programmatically:
