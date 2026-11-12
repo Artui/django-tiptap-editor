@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Docs
+
+- **Storage and the API reference say when the `html` mirror is re-derived.** A `doc` with no
+  content keeps its stored `html` on save, and an in-place edit to `TipTapValue.doc` does not
+  refresh `.html`.
+
 ## [0.13.0] — 2026-10-11
 
 ### Upgrade note — a custom extension may not declare a raw-text or MathML tag

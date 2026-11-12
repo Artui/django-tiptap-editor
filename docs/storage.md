@@ -35,7 +35,7 @@ In Python, work with the canonical document:
 
 ```python
 article.body.doc  # the ProseMirror JSON (dict) — canonical, lossless
-article.body.html  # the HTML mirror, re-derived from doc on save (SafeString)
+article.body.html  # the HTML mirror (SafeString), re-derived on save if doc has content
 ```
 
 `article.body` is a `TipTapValue` (`.doc` + `.html`). Assign one when writing programmatically:
@@ -43,7 +43,7 @@ article.body.html  # the HTML mirror, re-derived from doc on save (SafeString)
 ```python
 from django_tiptap_editor import TipTapValue
 
-article.body = TipTapValue.from_stored({"doc": some_doc})  # html is re-derived on save
+article.body = TipTapValue.from_stored({"doc": some_doc})  # html re-derived if doc has content
 article.save()
 ```
 
@@ -57,7 +57,7 @@ HTML-to-JSON path.
 
 In JSON mode the editor writes both sides on every change — `editor.getJSON()` → `doc` and
 `editor.getHTML()` → `html` — into one JSON column. On save the field **re-derives the `html`
-mirror from the sanitized `doc`** with the built-in [server-side renderer](#server-side-rendering-python),
+mirror from the sanitized `doc`** (when the doc has content) with the built-in [server-side renderer](#server-side-rendering-python),
 so the stored mirror always reflects the canonical (and sanitized) document — whether the write
 came from the editor, an API, or a hand-edit. Server-side display reads that stored `html`; no
 JavaScript and no Node are required.
@@ -67,9 +67,11 @@ save ──▶ sanitize(doc) ──┬─▶ doc  (canonical, stored)
                          └─▶ render_doc(doc) ──▶ html (mirror, stored, safe to render)
 ```
 
-Because the mirror is re-derived server-side, any caller-supplied `html` is discarded — a benign
-`doc` can never ship hostile markup through the mirror. `{{ obj.body }}` works with no JavaScript
+Because the mirror is re-derived server-side, a caller-supplied `html` is replaced whenever the doc
+has content — a benign `doc` can never ship hostile markup through the mirror. `{{ obj.body }}` works with no JavaScript
 even for a doc written purely from Python.
+
+The one exception is a `doc` with no content. Then the stored `html` is kept on save, sanitised but not re-rendered, so a row that holds only markup (the shape the [migration recipe](recipes/migrating-from-another-editor.md) seeds) survives an unrelated save. Once the doc has content, the mirror is re-derived as above.
 
 ### Fixtures
 

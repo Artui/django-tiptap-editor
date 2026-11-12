@@ -100,11 +100,13 @@ See [Storage format](storage.md).
 ### `TipTapValue`
 
 `django_tiptap_editor.types.tiptap_value.TipTapValue` — frozen value with `.doc` (canonical
-ProseMirror JSON) and `.html` (the safe HTML mirror, re-derived from `doc` on save and sanitised
+ProseMirror JSON) and `.html` (the safe HTML mirror, re-derived from a non-empty `doc` on save and sanitised
 on construction, so it is safe on every instance however it was built). `str(value)` /
 `{{ value }}` render the mirror. `TipTapValue.from_stored({...})` builds one from a `{doc, html}`
 mapping or a bare doc, and raises `ValidationError` for anything else — assigning an HTML string
 does not convert it.
+
+`doc` is a plain dict, and an edit made to it in place does not refresh `.html`. The mirror stays as it was until the row is saved with a doc that has content.
 
 ### `sanitize_html`
 
