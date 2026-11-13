@@ -17,7 +17,7 @@ import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
 import { flushSourceView } from "./toolbar/source-view";
-import { Editor, Extension, Mark, Node, getSchema, mergeAttributes } from "./tiptap-runtime";
+import { Editor, getSchema, tiptap } from "./tiptap-runtime";
 import { ui } from "./ui";
 import { checkTipTapVersion, SUPPORTED_TIPTAP_VERSION } from "./version-check";
 import "./styles.css";
@@ -31,7 +31,6 @@ const STORAGE_ATTR = "data-tiptap-storage";
 const SHELL_ATTR = "data-tiptap-shell";
 
 // Re-exported primitives for extension authors (no bundler of their own needed).
-const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
 
 interface Instance {
   editor: Editor;

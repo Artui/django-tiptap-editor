@@ -9,7 +9,12 @@
 // identical, and our custom extensions import their primitives from here.
 
 // Primitives (for custom-extension authors).
-export { Editor, Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
+import { Editor, Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
+export { Editor, Extension, Mark, Node, mergeAttributes };
+
+// The one `ctx.tiptap` / `DjangoTipTap.tiptap` namespace: the editor and the
+// conversion helpers both pass this object, so they cannot drift apart.
+export const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
 
 // HTML <-> ProseMirror-JSON converters (browser; the bundle runs in the browser
 // and the glue resolves @tiptap/core via the consumer's import map). Power the

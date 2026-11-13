@@ -57,4 +57,38 @@ describe("html <-> json conversion", () => {
       expect(htmlToStored(html, config).html).toBe(html);
     });
   });
+
+  describe("the extending guide's Node factory", () => {
+    const config = { extensions: ["ctx-callout"] };
+    registerExtension("ctx-callout", (_cfg, ctx) => {
+      const { Node, mergeAttributes } = ctx.tiptap as {
+        Node: { create: (o: object) => never };
+        mergeAttributes: (...a: object[]) => object;
+      };
+      return Node.create({
+        name: "callout",
+        group: "block",
+        content: "block+",
+        parseHTML: () => [{ tag: "aside.callout" }],
+        renderHTML: ({ HTMLAttributes }: { HTMLAttributes: object }) => [
+          "aside",
+          mergeAttributes(HTMLAttributes, { class: "callout" }),
+          0,
+        ],
+      });
+    });
+    const html = '<aside class="callout"><p>x</p></aside>';
+
+    it("htmlToJSON builds the extension", () => {
+      expect(JSON.stringify(htmlToJSON(html, config))).toContain('"callout"');
+    });
+
+    it("renderHTML builds the extension", () => {
+      expect(renderHTML(htmlToJSON(html, config), config)).toBe(html);
+    });
+
+    it("htmlToStored builds the extension", () => {
+      expect(htmlToStored(html, config).html).toBe(html);
+    });
+  });
 });

@@ -5,17 +5,7 @@
 import { buildExtensions } from "./build-extensions";
 import type { TipTapConfig } from "./default-config";
 import { getTranslator } from "./i18n";
-import {
-  Editor,
-  Extension,
-  Mark,
-  Node,
-  generateHTML,
-  generateJSON,
-  mergeAttributes,
-} from "./tiptap-runtime";
-
-const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
+import { generateHTML, generateJSON, tiptap } from "./tiptap-runtime";
 
 function extensionsFor(config: TipTapConfig) {
   const locale = config.locale ?? "en";
