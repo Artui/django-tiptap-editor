@@ -226,14 +226,15 @@ keeps it when it sanitises the field. Any other node type or attribute name rais
 - **Values are kept as written.** Nothing checks which classes an author uses, so a stored
   class can match any selector your site's CSS or scripts bind to. Grant it only where the
   authors may choose those.
-- **Per field or project-wide.** A widget's own `extraAttributes` replaces the project's
-  for that field's editor and, in HTML storage, its sanitiser; `{}` turns it off.
+- **The project grants, a field narrows.** `TIPTAP_DEFAULT_CONFIG["extraAttributes"]` is
+  the ceiling. A widget's own `extraAttributes` may grant less (`{}` turns it off for that
+  field's editor and sanitiser) but not more: a grant beyond the project's raises
+  `ImproperlyConfigured`, because the `tiptap_html` filter and the JSON mirror render with
+  no field config, and would drop what only one field granted.
 - **JSON storage renders the project grant.** A [`TipTapJSONField`](storage.md) keeps a
-  granted `class` in its `doc`, and its `html` mirror renders the attributes that
-  `TIPTAP_DEFAULT_CONFIG["extraAttributes"]` grants, on every path that derives it (the
-  form, the model's save, the `tiptap_html` filter on a raw document). The model field has
-  no widget config to read, so a grant made on one field alone stays out of the stored
-  mirror: put a JSON-storage grant in `TIPTAP_DEFAULT_CONFIG`.
+  granted `class` in its `doc`, and its `html` mirror renders what the project grants, on
+  every path that derives it (the form, the model's save, the `tiptap_html` filter on a raw
+  document). A field that narrows the grant narrows its editor, not its stored mirror.
 
 ## Settings
 

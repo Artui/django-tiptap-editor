@@ -121,5 +121,17 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
                 f"Unknown TipTap extension(s): {unknown_ext}. Register them in JS and "
                 f"add their names to TIPTAP_EXTRA_EXTENSIONS."
             )
-    get_extra_attributes(config)
+    ceiling = get_extra_attributes()
+    wider = [
+        f"{node_type}.{name}"
+        for node_type, names in get_extra_attributes(config).items()
+        for name in names
+        if name not in ceiling.get(node_type, ())
+    ]
+    if wider:
+        raise ImproperlyConfigured(
+            f"TipTap extraAttributes grants {wider} beyond TIPTAP_DEFAULT_CONFIG's "
+            f"extraAttributes. A field may narrow the project grant, not widen it: the "
+            f"html mirror and the tiptap_html filter render without a field config."
+        )
     return config
