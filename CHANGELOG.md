@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`extraAttributes` keeps a `class` on paragraphs and headings.** The config key, per field
+  or in `TIPTAP_DEFAULT_CONFIG`, takes `{"paragraph": ["class"], "heading": ["class"]}`. The
+  editor parses the attribute, so it survives the source view, and the HTML sanitiser keeps
+  it without admitting a tag the field's `features` leave out. In JSON storage the `doc`
+  keeps it and the `html` mirror renders what `TIPTAP_DEFAULT_CONFIG` grants. Other node
+  types and attribute names raise `ImproperlyConfigured`. `render_doc` gains an
+  `extra_attributes` keyword, and `get_extra_attributes` reads a grant.
+
 ### Docs
 
 - **Storage and the API reference say when the `html` mirror is re-derived.** A `doc` with no

@@ -11,6 +11,7 @@ from django_tiptap_editor.constants import (
     ENTER_KEY_MODES,
     KNOWN_CONFIG_KEYS,
 )
+from django_tiptap_editor.utils.get_extra_attributes import get_extra_attributes
 from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
 
 # The length rule for ``height`` / ``maxHeight``, mirrored by js/src/css-length.ts
@@ -120,4 +121,5 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
                 f"Unknown TipTap extension(s): {unknown_ext}. Register them in JS and "
                 f"add their names to TIPTAP_EXTRA_EXTENSIONS."
             )
+    get_extra_attributes(config)
     return config

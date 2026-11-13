@@ -30,6 +30,8 @@ from django_tiptap_editor.constants import (
     DECORATING_FEATURES,
     DOCUMENT_FEATURES,
     EXTENSION_HTML_VOCABULARY,
+    EXTRA_ATTRIBUTE_NAMES,
+    EXTRA_ATTRIBUTE_TAGS,
     FEATURE_CORE,
     FEATURE_DEPENDENCIES,
 )
@@ -75,6 +77,10 @@ def build() -> dict[str, object]:
         },
         "decorating": sorted(DECORATING_FEATURES),
         "documentFeatures": dict(sorted(DOCUMENT_FEATURES.items())),
+        "extraAttributes": {
+            "names": sorted(EXTRA_ATTRIBUTE_NAMES),
+            "tags": {name: list(tags) for name, tags in sorted(EXTRA_ATTRIBUTE_TAGS.items())},
+        },
     }
 
 

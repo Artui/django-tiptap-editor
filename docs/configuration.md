@@ -28,6 +28,7 @@ any omitted key.
 | `colorPicker` | bool | Adds a native color picker under both color swatch grids, for colors the palettes don't carry. Default `False`. |
 | `imageResize` | bool | Drag handles on a selected image, setting the width/height the document asks for. Default `True`; set `False` to pin images to their inserted size. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
+| `extraAttributes` | dict[str, list[str]] | Attributes kept on built-in blocks, by node type: `{"paragraph": ["class"], "heading": ["class"]}`. Only `class`, on `paragraph` and `heading`. See [Extra attributes](#extra-attributes). |
 
 Unknown top-level keys, extension names that are neither built in nor in
 `TIPTAP_EXTRA_EXTENSIONS`, and feature names that are not built in raise
@@ -203,6 +204,36 @@ A field configured without `features` is cleaned against every built-in extensio
 before. The fields admin pages build through `TipTapModelAdminMixin` are cleaned the same
 way. What is *not* narrowed per field, and what narrowing does not do to rows already
 stored, is in [Security](security.md#what-is-not-narrowed-per-field).
+
+### Extra attributes
+
+`extraAttributes` keeps an attribute on the built-in blocks the editor otherwise strips it
+from. Today it grants `class`, on `paragraph` (`<p>`) and `heading` (`<h1>` to `<h6>`):
+
+```python
+TIPTAP_DEFAULT_CONFIG = {
+    "extraAttributes": {"paragraph": ["class"], "heading": ["class"]},
+}
+```
+
+A granted `class` is parsed by the editor, so it survives the source view, and the server
+keeps it when it sanitises the field. Any other node type or attribute name raises
+`ImproperlyConfigured`; `id` and `data-*` are not offered.
+
+- **It never admits a tag.** A field whose `features` leave out `heading` still turns a
+  posted `<h2 class="title">` into a plain `<p>`; the grant only decorates tags the field
+  already keeps.
+- **Values are kept as written.** Nothing checks which classes an author uses, so a stored
+  class can match any selector your site's CSS or scripts bind to. Grant it only where the
+  authors may choose those.
+- **Per field or project-wide.** A widget's own `extraAttributes` replaces the project's
+  for that field's editor and, in HTML storage, its sanitiser; `{}` turns it off.
+- **JSON storage renders the project grant.** A [`TipTapJSONField`](storage.md) keeps a
+  granted `class` in its `doc`, and its `html` mirror renders the attributes that
+  `TIPTAP_DEFAULT_CONFIG["extraAttributes"]` grants, on every path that derives it (the
+  form, the model's save, the `tiptap_html` filter on a raw document). The model field has
+  no widget config to read, so a grant made on one field alone stays out of the stored
+  mirror: put a JSON-storage grant in `TIPTAP_DEFAULT_CONFIG`.
 
 ## Settings
 
