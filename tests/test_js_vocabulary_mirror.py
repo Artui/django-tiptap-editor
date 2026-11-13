@@ -10,6 +10,8 @@ from django_tiptap_editor.constants import (
     DECORATING_FEATURES,
     DOCUMENT_FEATURES,
     EXTENSION_HTML_VOCABULARY,
+    EXTRA_ATTRIBUTE_NAMES,
+    EXTRA_ATTRIBUTE_TAGS,
     FEATURE_CORE,
     FEATURE_DEPENDENCIES,
 )
@@ -48,6 +50,10 @@ def test_the_dump_carries_every_built_in_tag_attribute_and_style() -> None:
             }
     assert dumped["decorating"] == sorted(DECORATING_FEATURES)
     assert dumped["documentFeatures"] == DOCUMENT_FEATURES
+    assert dumped["extraAttributes"] == {
+        "names": sorted(EXTRA_ATTRIBUTE_NAMES),
+        "tags": {name: list(tags) for name, tags in EXTRA_ATTRIBUTE_TAGS.items()},
+    }
 
 
 def test_the_committed_js_feature_model_fixture_is_a_fresh_dump() -> None:

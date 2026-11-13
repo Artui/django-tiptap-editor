@@ -126,13 +126,23 @@ the sanitiser enforces. With no config, or a config without `features`, it is th
 HTML vocabularies of every built-in extension, plus whatever `TIPTAP_EXTRA_EXTENSIONS` declares.
 With `features`, it is the union of the vocabularies of `resolve_features(config)`, plus only the
 extra extensions the config's own `extensions` names, and an undeclared extension warns only when
-the config names it. Link protocols come from the project default either way. Pass one to
+the config names it. Link protocols come from the project default either way. The `extraAttributes` grant
+(the config's, or the project default's when no config is given) adds its attributes to tags
+the schema already admits, never a tag. Pass one to
 `sanitize_html(..., schema=...)` to sanitise against a different allowlist.
 
 `HtmlSchema.paragraph_blocks` is the set of built-in block tags (`h1`-`h6`, `blockquote`, `pre`,
 `li`, `td`, `th`) a restricted schema does not admit, which `sanitize_html` turns into paragraphs.
 It is empty by default, so a schema built by hand, and the unrestricted one, unwrap those tags as
 before.
+
+### `get_extra_attributes`
+
+`django_tiptap_editor.utils.get_extra_attributes.get_extra_attributes(config=None)` returns the
+[`extraAttributes`](configuration.md#extra-attributes) grant as `{node_type: (name, ...)}`, read
+from `config`, or from the project default config when `config` is `None`. Raises
+`ImproperlyConfigured` on a node type outside `EXTRA_ATTRIBUTE_TAGS` or a name outside
+`EXTRA_ATTRIBUTE_NAMES` (both in `constants`).
 
 ### `narrow_doc`
 
@@ -156,9 +166,11 @@ It assumes a config `validate_config` has accepted. See
 
 ### `render_doc`
 
-`django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…)`
+`django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…, extra_attributes=None)`
 — renders a ProseMirror `doc` dict to a safe HTML string in pure Python (no Node), covering the
-package's node/mark set with protocol allowlisting + CSS validation. The
+package's node/mark set with protocol allowlisting + CSS validation. `extra_attributes`, a grant
+as `get_extra_attributes` returns it, renders those string attributes on paragraphs and
+headings; without it none is rendered. The
 `{{ value|tiptap_html }}` filter wraps it (and uses a `TipTapValue`'s mirror when given one). See
 [Storage format](storage.md#server-side-rendering-python).
 

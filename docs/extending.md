@@ -108,6 +108,14 @@ value, when the `tiptap_html` filter renders one, when a widget's config names c
 extensions, and when a `TipTapJSONField` validates a document.
 
 
+### Attributes on built-in blocks
+
+To keep a `class` on paragraphs or headings, use the
+[`extraAttributes`](configuration.md#extra-attributes) config key rather than a custom
+extension. Declaring `p` or `h2` in `TIPTAP_EXTRA_EXTENSIONS` to grant it also admits the
+tag itself on a field that names the extension, and a JSON-storage mirror never renders
+it; `extraAttributes` does neither.
+
 ### Custom nodes and JSON storage
 
 `TIPTAP_EXTRA_EXTENSIONS` is also the vocabulary [`TipTapJSONField`](storage.md) validates

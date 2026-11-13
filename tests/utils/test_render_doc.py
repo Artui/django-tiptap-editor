@@ -516,3 +516,32 @@ def test_the_editor_render_cases_cover_both_attributes_tiptap_3_added() -> None:
     for align in ("left", "center", "right"):
         assert ("td", "style", f"text-align: {align}") in rendered
     assert ("th", "style", "text-align: right") in rendered
+
+
+def _granted(attrs: dict[str, Any], kind: str = "paragraph") -> str:
+    node: dict[str, Any] = {
+        "type": kind,
+        "attrs": attrs,
+        "content": [{"type": "text", "text": "x"}],
+    }
+    grant = {"paragraph": ("class",), "heading": ("class",)}
+    return render_doc({"type": "doc", "content": [node]}, extra_attributes=grant)
+
+
+def test_a_granted_class_renders_after_the_block_style_and_escaped() -> None:
+    rendered = _granted({"class": 'a "b"', "textAlign": "center"})
+    assert rendered == '<p style="text-align: center" class="a &quot;b&quot;">x</p>'
+
+
+@pytest.mark.parametrize("value", [None, "", 3, ["a"], {"a": 1}])
+def test_a_granted_class_that_is_not_a_non_empty_string_renders_nothing(value: object) -> None:
+    assert _granted({"class": value}) == "<p>x</p>"
+
+
+def test_a_heading_grant_renders_at_its_level() -> None:
+    assert _granted({"level": 3, "class": "t"}, "heading") == '<h3 class="t">x</h3>'
+
+
+def test_no_grant_renders_no_class() -> None:
+    doc = {"type": "doc", "content": [{"type": "paragraph", "attrs": {"class": "lead"}}]}
+    assert render_doc(doc) == "<p></p>"

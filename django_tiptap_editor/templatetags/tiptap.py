@@ -18,6 +18,7 @@ from django_tiptap_editor.constants import (
 from django_tiptap_editor.types.tiptap_value import TipTapValue
 from django_tiptap_editor.utils.get_asset_mode import get_asset_mode
 from django_tiptap_editor.utils.get_default_config import get_default_config
+from django_tiptap_editor.utils.get_extra_attributes import get_extra_attributes
 from django_tiptap_editor.utils.get_import_map import get_import_map
 from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_html import sanitize_html
@@ -58,4 +59,4 @@ def tiptap_html(value: Any) -> SafeString:
         return mark_safe(str(value.html))
     if isinstance(value, str):
         return sanitize_html(value)
-    return render_doc(value)
+    return render_doc(value, extra_attributes=get_extra_attributes())

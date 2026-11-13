@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`extraAttributes` keeps a `class` on paragraphs and headings.** The config key takes
+  `{"paragraph": ["class"], "heading": ["class"]}`; `TIPTAP_DEFAULT_CONFIG` grants it and a
+  field may narrow that grant, not widen it. The editor parses the attribute, so it
+  survives the source view, and the HTML sanitiser keeps it without admitting a tag the
+  field's `features` leave out. In JSON storage the `doc` keeps it and the `html` mirror
+  renders the project grant. Other node types and attribute names raise
+  `ImproperlyConfigured`. `render_doc` gains an
+  `extra_attributes` keyword, and `get_extra_attributes` reads a grant.
+
 ### Changed
 
 - **Every `@tiptap/*` pin moves from 3.31.4 to 3.34.0.**
