@@ -30,8 +30,6 @@ const STORAGE_ATTR = "data-tiptap-storage";
 // every keystroke as a potential mount/unmount.
 const SHELL_ATTR = "data-tiptap-shell";
 
-// Re-exported primitives for extension authors (no bundler of their own needed).
-
 interface Instance {
   editor: Editor;
   shell: HTMLElement;

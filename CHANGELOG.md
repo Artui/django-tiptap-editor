@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Every `@tiptap/*` pin moves from 3.31.4 to 3.33.1, the newest release in the 3.x line.**
+- **Every `@tiptap/*` pin moves from 3.31.4 to 3.33.1.**
   The committed bundles are rebuilt from the new pins and pass the fidelity corpus.
   `TIPTAP_VERSION`, and with it the default external-mode import map, now names 3.33.1; a
   `TIPTAP_IMPORT_MAP` you set yourself keeps the versions it names.
