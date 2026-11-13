@@ -49,6 +49,9 @@ export interface TipTapConfig {
   // to be drawn. On by default. This never touches the uploaded file: the asset
   // keeps its own resolution, and only the width/height attributes change.
   imageResize?: boolean;
+  // Attributes kept on built-in nodes, by node type: `class` on paragraph and
+  // heading, e.g. { paragraph: ["class"] }. The server sanitises against it.
+  extraAttributes?: Record<string, string[]>;
   mergeTags?: MergeTag[];
   // Path B only (passed to init(); not serializable via data-tiptap-config).
   onChange?: (html: string) => void;

@@ -5,11 +5,11 @@
 import { buildExtensions } from "./build-extensions";
 import type { TipTapConfig } from "./default-config";
 import { getTranslator } from "./i18n";
-import { generateHTML, generateJSON } from "./tiptap-runtime";
+import { generateHTML, generateJSON, tiptap } from "./tiptap-runtime";
 
 function extensionsFor(config: TipTapConfig) {
   const locale = config.locale ?? "en";
-  return buildExtensions(config, { tiptap: {}, locale, t: getTranslator(locale) });
+  return buildExtensions(config, { tiptap, locale, t: getTranslator(locale) });
 }
 
 // Parse HTML into a ProseMirror document (the schema drops anything it can't

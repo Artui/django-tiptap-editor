@@ -10,6 +10,7 @@ import type { TipTapConfig } from "./default-config";
 import { BackgroundColor } from "./extensions/background-color";
 import { BlockStyle } from "./extensions/block-style";
 import { EnterKey } from "./extensions/enter-key";
+import { ExtraAttributes, resolveExtraAttributes } from "./extensions/extra-attributes";
 import { FontSize } from "./extensions/font-size";
 import { ImageResize } from "./extensions/image-resize";
 import { InlineImage } from "./extensions/inline-image";
@@ -188,6 +189,10 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
     // alone" in test/restrict-features.test.ts holds that clause).
     [enabled("image") && config.imageResize !== false, ImageResize],
   ];
+  // Last in the baseline so a granted class renders after the block styles,
+  // the order render_doc writes them in. Absent unless something is granted.
+  const extraGrant = resolveExtraAttributes(config.extraAttributes, enabled);
+  gated.push([Object.keys(extraGrant).length > 0, ExtraAttributes.configure({ grant: extraGrant })]);
   const baseline = gated.filter(([on]) => on).map(([, ext]) => ext);
 
   const requested = config.extensions ?? DEFAULT_EXTENSIONS;

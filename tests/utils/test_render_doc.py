@@ -489,6 +489,9 @@ _EDITOR_RENDER: list[dict[str, Any]] = json.loads(
 )["cases"]
 
 
+_EDITOR_GRANT = {"paragraph": ("class",), "heading": ("class",)}
+
+
 class _FirstElementAttributes(HTMLParser):
     """Record the attributes of the first ``tag`` element, in document order."""
 
@@ -505,7 +508,7 @@ class _FirstElementAttributes(HTMLParser):
 @pytest.mark.parametrize("case", _EDITOR_RENDER, ids=[case["name"] for case in _EDITOR_RENDER])
 def test_renders_an_element_with_the_attributes_the_editor_gives_it(case: dict[str, Any]) -> None:
     parser = _FirstElementAttributes(case["tag"])
-    parser.feed(str(render_doc(case["doc"])))
+    parser.feed(str(render_doc(case["doc"], extra_attributes=_EDITOR_GRANT)))
     assert parser.found == [tuple(pair) for pair in case["attributes"]]
 
 
@@ -516,3 +519,41 @@ def test_the_editor_render_cases_cover_both_attributes_tiptap_3_added() -> None:
     for align in ("left", "center", "right"):
         assert ("td", "style", f"text-align: {align}") in rendered
     assert ("th", "style", "text-align: right") in rendered
+
+
+def test_the_editor_render_cases_cover_the_granted_class() -> None:
+    by_name = {case["name"]: case for case in _EDITOR_RENDER}
+    assert by_name["paragraph with an empty class"]["attributes"] == []
+    assert by_name["paragraph with a numeric class"]["attributes"] == []
+    assert by_name["paragraph with class after text-align"]["attributes"][-1] == ["class", "lead"]
+    assert by_name["heading level 3 with a class and text-align"]["tag"] == "h3"
+    assert by_name["heading level 1 with a class only"]["attributes"] == [["class", "t"]]
+
+
+def _granted(attrs: dict[str, Any], kind: str = "paragraph") -> str:
+    node: dict[str, Any] = {
+        "type": kind,
+        "attrs": attrs,
+        "content": [{"type": "text", "text": "x"}],
+    }
+    grant = {"paragraph": ("class",), "heading": ("class",)}
+    return render_doc({"type": "doc", "content": [node]}, extra_attributes=grant)
+
+
+def test_a_granted_class_renders_after_the_block_style_and_escaped() -> None:
+    rendered = _granted({"class": 'a "b"', "textAlign": "center"})
+    assert rendered == '<p style="text-align: center" class="a &quot;b&quot;">x</p>'
+
+
+@pytest.mark.parametrize("value", [None, "", 3, ["a"], {"a": 1}])
+def test_a_granted_class_that_is_not_a_non_empty_string_renders_nothing(value: object) -> None:
+    assert _granted({"class": value}) == "<p>x</p>"
+
+
+def test_a_heading_grant_renders_at_its_level() -> None:
+    assert _granted({"level": 3, "class": "t"}, "heading") == '<h3 class="t">x</h3>'
+
+
+def test_no_grant_renders_no_class() -> None:
+    doc = {"type": "doc", "content": [{"type": "paragraph", "attrs": {"class": "lead"}}]}
+    assert render_doc(doc) == "<p></p>"

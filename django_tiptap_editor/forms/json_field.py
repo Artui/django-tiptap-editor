@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 
 from django_tiptap_editor.constants import STORAGE_FORMAT_JSON
 from django_tiptap_editor.types.tiptap_value import TipTapValue
+from django_tiptap_editor.utils.get_extra_attributes import get_extra_attributes
 from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.narrow_doc import narrow_doc
 from django_tiptap_editor.utils.render_doc import render_doc
@@ -56,7 +57,7 @@ class TipTapJSONFormField(forms.Field):
         sanitized = sanitize_doc(parsed.doc)
         doc = narrow_doc(sanitized, config=config)
         html = (
-            render_doc(doc)
+            render_doc(doc, extra_attributes=get_extra_attributes())
             if sanitized.get("content")
             else sanitize_html(parsed.html, schema=get_html_schema(config))
         )

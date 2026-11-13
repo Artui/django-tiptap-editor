@@ -55,6 +55,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "highlightColors",
         "colorPicker",
         "imageResize",
+        "extraAttributes",
     }
 )
 
@@ -210,6 +211,16 @@ EXTENSION_HTML_VOCABULARY: dict[str, dict[str, dict[str, tuple[str, ...]]]] = {
     "characterCount": {},
     "sourceView": {},
 }
+
+# What the ``extraAttributes`` config key may grant: the node types it decorates,
+# with the tags each renders as, and the attribute names. A grant decorates tags a
+# field already admits and never admits one. Widening either is additive; the set
+# starts narrow because narrowing it would break a stored config.
+EXTRA_ATTRIBUTE_TAGS: dict[str, tuple[str, ...]] = {
+    "paragraph": ("p",),
+    "heading": tuple(f"h{level}" for level in range(1, 7)),
+}
+EXTRA_ATTRIBUTE_NAMES = frozenset({"class"})
 
 # The block tags in the vocabulary above that hold text a reader sees as its own
 # block. On a field whose ``features`` leave one out, the sanitiser turns it into
@@ -383,7 +394,7 @@ DEFAULT_CONFIG: dict[str, object] = {}
 # TipTap version the committed glue is built + validated against. Keep in sync
 # with js/package.json (the build also bakes it into the glue for the
 # external-mode startup version check).
-TIPTAP_VERSION = "3.31.4"
+TIPTAP_VERSION = "3.34.0"
 
 # Bare `@tiptap/*` specifiers the glue ESM imports — the import map external mode
 # must resolve. tests/utils/test_get_import_map.py reads the imports out of the

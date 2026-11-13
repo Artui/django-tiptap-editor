@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from django.utils.safestring import SafeString, mark_safe
@@ -160,14 +161,23 @@ def _wrap_marks(text: str, marks: list[Any]) -> str:
     return out
 
 
-def _render_children(node: dict[str, Any]) -> str:
+_Grant = Mapping[str, tuple[str, ...]]
+
+
+def _extra(kind: str, attrs: dict[str, Any], grant: _Grant) -> str:
+    """Render the attributes ``grant`` gives ``kind``, each kept only as a string."""
+    names = grant.get(kind, ())
+    return "".join(_attr(name, attrs[name]) for name in names if isinstance(attrs.get(name), str))
+
+
+def _render_children(node: dict[str, Any], grant: _Grant) -> str:
     content = node.get("content")
     if not isinstance(content, list):
         return ""
-    return "".join(_render_node(child) for child in content if isinstance(child, dict))
+    return "".join(_render_node(child, grant) for child in content if isinstance(child, dict))
 
 
-def _cell(tag: str, node: dict[str, Any]) -> str:
+def _cell(tag: str, node: dict[str, Any], grant: _Grant) -> str:
     attrs = _attrs(node)
     align = attrs.get("align")
     rendered = (
@@ -180,10 +190,10 @@ def _cell(tag: str, node: dict[str, Any]) -> str:
             ]
         )
     )
-    return f"<{tag}{rendered}>{_render_children(node)}</{tag}>"
+    return f"<{tag}{rendered}>{_render_children(node, grant)}</{tag}>"
 
 
-def _render_node(node: dict[str, Any]) -> str:
+def _render_node(node: dict[str, Any], grant: _Grant) -> str:
     kind = node.get("type")
     attrs = _attrs(node)
 
@@ -192,23 +202,25 @@ def _render_node(node: dict[str, Any]) -> str:
         marks = node.get("marks")
         return _wrap_marks(text, marks) if isinstance(marks, list) else text
     if kind == "paragraph":
-        return f"<p{_block_style(attrs)}>{_render_children(node)}</p>"
+        opening = f"<p{_block_style(attrs)}{_extra(kind, attrs, grant)}>"
+        return f"{opening}{_render_children(node, grant)}</p>"
     if kind == "heading":
         level = _heading_level(attrs.get("level"))
-        return f"<h{level}{_block_style(attrs)}>{_render_children(node)}</h{level}>"
+        opening = f"<h{level}{_block_style(attrs)}{_extra(kind, attrs, grant)}>"
+        return f"{opening}{_render_children(node, grant)}</h{level}>"
     if kind == "bulletList":
-        return f"<ul>{_render_children(node)}</ul>"
+        return f"<ul>{_render_children(node, grant)}</ul>"
     if kind == "orderedList":
         # Tiptap writes ``start`` unless it is 1: a stored ``2.0`` must be numbered from 2 here.
         start = _whole_number(attrs.get("start"))
         start_attr = _attr("start", start) if start != 1 else ""
-        return f"<ol{start_attr}>{_render_children(node)}</ol>"
+        return f"<ol{start_attr}>{_render_children(node, grant)}</ol>"
     if kind == "listItem":
-        return f"<li>{_render_children(node)}</li>"
+        return f"<li>{_render_children(node, grant)}</li>"
     if kind == "blockquote":
-        return f"<blockquote>{_render_children(node)}</blockquote>"
+        return f"<blockquote>{_render_children(node, grant)}</blockquote>"
     if kind == "codeBlock":
-        return f"<pre><code>{_render_children(node)}</code></pre>"
+        return f"<pre><code>{_render_children(node, grant)}</code></pre>"
     if kind == "horizontalRule":
         return "<hr>"
     if kind == "hardBreak":
@@ -224,16 +236,16 @@ def _render_node(node: dict[str, Any]) -> str:
         )
         return f"<img{rendered}>"
     if kind == "table":
-        return f"<table><tbody>{_render_children(node)}</tbody></table>"
+        return f"<table><tbody>{_render_children(node, grant)}</tbody></table>"
     if kind == "tableRow":
-        return f"<tr>{_render_children(node)}</tr>"
+        return f"<tr>{_render_children(node, grant)}</tr>"
     if kind == "tableHeader":
-        return _cell("th", node)
+        return _cell("th", node, grant)
     if kind == "tableCell":
-        return _cell("td", node)
+        return _cell("td", node, grant)
     if kind == "doc":
-        return _render_children(node)
-    return _render_children(node)
+        return _render_children(node, grant)
+    return _render_children(node, grant)
 
 
 def render_doc(
@@ -241,9 +253,10 @@ def render_doc(
     *,
     link_protocols: tuple[str, ...] = DEFAULT_LINK_PROTOCOLS,
     image_protocols: tuple[str, ...] = DEFAULT_IMAGE_PROTOCOLS,
+    extra_attributes: _Grant | None = None,
 ) -> SafeString:
     """Render a ProseMirror document (dict) to a safe HTML string."""
     if not isinstance(doc, dict):
         return mark_safe("")
     clean = sanitize_doc(doc, link_protocols=link_protocols, image_protocols=image_protocols)
-    return mark_safe(_render_node(clean))
+    return mark_safe(_render_node(clean, extra_attributes or {}))

@@ -9,6 +9,7 @@ from django.db import models
 from django_tiptap_editor.constants import DEFAULT_IMAGE_PROTOCOLS, DEFAULT_LINK_PROTOCOLS
 from django_tiptap_editor.forms.json_field import TipTapJSONFormField
 from django_tiptap_editor.types.tiptap_value import TipTapValue
+from django_tiptap_editor.utils.get_extra_attributes import get_extra_attributes
 from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
 from django_tiptap_editor.utils.render_doc import render_doc
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
@@ -143,7 +144,10 @@ class TipTapJSONField(models.JSONField):
         )
         html = (
             render_doc(
-                doc, link_protocols=self.link_protocols, image_protocols=self.image_protocols
+                doc,
+                link_protocols=self.link_protocols,
+                image_protocols=self.image_protocols,
+                extra_attributes=get_extra_attributes(),
             )
             if doc.get("content")
             else coerced.html

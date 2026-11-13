@@ -12,7 +12,8 @@
               "margin": null,
               "marginBlockEnd": null,
               "paddingLeft": null,
-              "textAlign": null
+              "textAlign": null,
+              "class": null
             },
             "content": [
               {
@@ -59,7 +60,8 @@
               "margin": null,
               "marginBlockEnd": null,
               "paddingLeft": null,
-              "textAlign": null
+              "textAlign": null,
+              "class": null
             },
             "content": [
               {
@@ -117,7 +119,8 @@
                           "margin": null,
                           "marginBlockEnd": null,
                           "paddingLeft": null,
-                          "textAlign": null
+                          "textAlign": null,
+                          "class": null
                         },
                         "content": [
                           {
@@ -169,7 +172,8 @@
                           "margin": null,
                           "marginBlockEnd": null,
                           "paddingLeft": null,
-                          "textAlign": null
+                          "textAlign": null,
+                          "class": null
                         },
                         "content": [
                           {
@@ -221,7 +225,8 @@
                           "margin": null,
                           "marginBlockEnd": null,
                           "paddingLeft": null,
-                          "textAlign": null
+                          "textAlign": null,
+                          "class": null
                         },
                         "content": [
                           {
@@ -273,7 +278,8 @@
                           "margin": null,
                           "marginBlockEnd": null,
                           "paddingLeft": null,
-                          "textAlign": null
+                          "textAlign": null,
+                          "class": null
                         },
                         "content": [
                           {
@@ -325,7 +331,8 @@
                           "margin": null,
                           "marginBlockEnd": null,
                           "paddingLeft": null,
-                          "textAlign": null
+                          "textAlign": null,
+                          "class": null
                         },
                         "content": [
                           {
@@ -381,7 +388,8 @@
                           "margin": null,
                           "marginBlockEnd": null,
                           "paddingLeft": null,
-                          "textAlign": null
+                          "textAlign": null,
+                          "class": null
                         },
                         "content": [
                           {
@@ -401,6 +409,230 @@
       "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td><p>x</p></td></tr></tbody></table>",
       "tag": "td",
       "attributes": []
+    },
+    {
+      "name": "paragraph with plain class",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": "lead"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p class=\"lead\">x</p>",
+      "tag": "p",
+      "attributes": [
+        [
+          "class",
+          "lead"
+        ]
+      ]
+    },
+    {
+      "name": "paragraph with class with a quote and an ampersand",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": "a \"b\" & c"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p class=\"a &quot;b&quot; &amp; c\">x</p>",
+      "tag": "p",
+      "attributes": [
+        [
+          "class",
+          "a \"b\" & c"
+        ]
+      ]
+    },
+    {
+      "name": "paragraph with class after text-align",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": "center",
+              "class": "lead"
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p style=\"text-align: center;\" class=\"lead\">x</p>",
+      "tag": "p",
+      "attributes": [
+        [
+          "style",
+          "text-align: center"
+        ],
+        [
+          "class",
+          "lead"
+        ]
+      ]
+    },
+    {
+      "name": "paragraph with an empty class",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": ""
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p>x</p>",
+      "tag": "p",
+      "attributes": []
+    },
+    {
+      "name": "paragraph with a numeric class",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": 3
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p>x</p>",
+      "tag": "p",
+      "attributes": []
+    },
+    {
+      "name": "heading level 3 with a class and text-align",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": "right",
+              "class": "t",
+              "level": 3
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<h3 style=\"text-align: right;\" class=\"t\">x</h3>",
+      "tag": "h3",
+      "attributes": [
+        [
+          "style",
+          "text-align: right"
+        ],
+        [
+          "class",
+          "t"
+        ]
+      ]
+    },
+    {
+      "name": "heading level 1 with a class only",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": "t",
+              "level": 1
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<h1 class=\"t\">x</h1>",
+      "tag": "h1",
+      "attributes": [
+        [
+          "class",
+          "t"
+        ]
+      ]
     }
   ]
 }
