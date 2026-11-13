@@ -19,6 +19,11 @@ def test_no_config_reads_the_project_default() -> None:
     assert get_extra_attributes({"extraAttributes": {}}) == {}
 
 
+@override_settings(TIPTAP_DEFAULT_CONFIG={"extraAttributes": {"heading": ["class"]}})
+def test_an_empty_config_is_not_the_project_default() -> None:
+    assert get_extra_attributes({}) == {}
+
+
 def test_a_grant_is_deduplicated_and_an_empty_list_dropped() -> None:
     grant = {"paragraph": ["class", "class"], "heading": []}
     assert get_extra_attributes({"extraAttributes": grant}) == {"paragraph": ("class",)}
@@ -33,6 +38,8 @@ def test_a_grant_is_deduplicated_and_an_empty_list_dropped() -> None:
         ({"paragraph": ["data-x"]}, "unsupported attribute"),
         ({"paragraph": "class"}, "must be a list"),
         ({"paragraph": None}, "must be a list"),
+        ({"paragraph": [["class"]]}, "as strings"),
+        ({"paragraph": [3]}, "as strings"),
     ],
 )
 def test_a_malformed_grant_is_refused(grant: Any, message: str) -> None:

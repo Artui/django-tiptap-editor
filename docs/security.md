@@ -176,6 +176,9 @@ Narrowing needs the field's config, and only a form field has it. So:
 - **Changing a field's `features` does not rewrite stored rows.** A heading saved before
   the field lost `heading` stays in the column until that row is saved again through the
   form.
+- **The JSON `html` mirror renders the project's `extraAttributes` grant.** A field that
+  narrows the grant narrows its editor, not its stored mirror: a `class` the project grants
+  stays in the mirror's `html` on every path that derives it.
 - **`linkProtocols` is project-wide on the server.** A field's own `linkProtocols` limits
   its editor; the server's allowlist reads the project default.
 

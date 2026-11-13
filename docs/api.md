@@ -128,7 +128,9 @@ With `features`, it is the union of the vocabularies of `resolve_features(config
 extra extensions the config's own `extensions` names, and an undeclared extension warns only when
 the config names it. Link protocols come from the project default either way. The `extraAttributes` grant
 (the config's, or the project default's when no config is given) adds its attributes to tags
-the schema already admits, never a tag. Pass one to
+the schema already admits, never a tag. `get_html_schema({})` is the no-config case and reads the
+project grant; a non-empty config without the key, such as `{"features": [...]}`, grants nothing,
+whatever the project grants. Pass one to
 `sanitize_html(..., schema=...)` to sanitise against a different allowlist.
 
 `HtmlSchema.paragraph_blocks` is the set of built-in block tags (`h1`-`h6`, `blockquote`, `pre`,
@@ -140,9 +142,10 @@ before.
 
 `django_tiptap_editor.utils.get_extra_attributes.get_extra_attributes(config=None)` returns the
 [`extraAttributes`](configuration.md#extra-attributes) grant as `{node_type: (name, ...)}`, read
-from `config`, or from the project default config when `config` is `None`. Raises
-`ImproperlyConfigured` on a node type outside `EXTRA_ATTRIBUTE_TAGS` or a name outside
-`EXTRA_ATTRIBUTE_NAMES` (both in `constants`).
+from `config`, or from the project default config when `config` is `None` (an empty `{}` is a
+config, and grants nothing). Raises
+`ImproperlyConfigured` on a node type outside `EXTRA_ATTRIBUTE_TAGS`, a name outside
+`EXTRA_ATTRIBUTE_NAMES` (both in `constants`), or a name that is not a string.
 
 ### `narrow_doc`
 

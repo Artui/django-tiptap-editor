@@ -48,6 +48,8 @@ const table = (type: string, attrs: Json): Json =>
     type: "table",
     content: [{ type: "tableRow", content: [{ type, attrs, content: [paragraph(text())] }] }],
   });
+const block = (type: string, attrs: Json): Json =>
+  doc({ type, attrs, content: [text()] });
 const link = (attrs: Json): Json => doc(paragraph(text([{ type: "link", attrs }])));
 
 const CASES: Case[] = [
@@ -75,13 +77,37 @@ const CASES: Case[] = [
     target: { node: "tableCell" },
     doc: table("tableCell", { align: "justify" }),
   },
+  // The grant the harness editor mounts; render_doc is given the same one.
+  ...[
+    ["plain class", { class: "lead" }],
+    ["class with a quote and an ampersand", { class: 'a "b" & c' }],
+    ["class after text-align", { class: "lead", textAlign: "center" }],
+    ["an empty class", { class: "" }],
+    ["a numeric class", { class: 3 }],
+  ].map(([name, attrs]) => ({
+    name: `paragraph with ${name as string}`,
+    target: { node: "paragraph" },
+    doc: block("paragraph", attrs as Json),
+  })),
+  {
+    name: "heading level 3 with a class and text-align",
+    target: { node: "heading" },
+    doc: block("heading", { level: 3, class: "t", textAlign: "right" }),
+  },
+  {
+    name: "heading level 1 with a class only",
+    target: { node: "heading" },
+    doc: block("heading", { level: 1, class: "t" }),
+  },
 ];
+
+const GRANT = { paragraph: ["class"], heading: ["class"] };
 
 function generate(): string {
   const editor = new Editor({
     element: document.createElement("div"),
     content: "",
-    extensions: buildExtensions({}, { tiptap: {}, locale: "en", t: (k) => k }),
+    extensions: buildExtensions({ extraAttributes: GRANT }, { tiptap: {}, locale: "en", t: (k) => k }),
   });
   const cases = CASES.map(({ name, target, doc: input }) => {
     editor.commands.setContent(input, { emitUpdate: false });

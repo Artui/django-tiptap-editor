@@ -15,6 +15,11 @@ def _names(node_type: str, value: Any) -> tuple[str, ...]:
             f"TipTap extraAttributes[{node_type!r}] must be a list of attribute names, "
             f"got {value!r}."
         )
+    if not all(isinstance(name, str) for name in value):
+        raise ImproperlyConfigured(
+            f"TipTap extraAttributes[{node_type!r}] must hold attribute names as strings, "
+            f"got {value!r}."
+        )
     unknown = [name for name in value if name not in EXTRA_ATTRIBUTE_NAMES]
     if unknown:
         raise ImproperlyConfigured(

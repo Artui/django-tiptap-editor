@@ -156,6 +156,9 @@ def test_fixtures_cover_every_style_property_the_extensions_can_emit() -> None:
     assert styles - _observed().styles == set()
 
 
+@override_settings(
+    TIPTAP_DEFAULT_CONFIG={"extraAttributes": {"paragraph": ["class"], "heading": ["class"]}}
+)
 @pytest.mark.parametrize("name", sorted(SERIALIZED))
 def test_serialized_output_survives_byte_identically(name: str) -> None:
     assert str(sanitize_html(SERIALIZED[name])) == SERIALIZED[name]

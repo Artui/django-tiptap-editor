@@ -489,6 +489,9 @@ _EDITOR_RENDER: list[dict[str, Any]] = json.loads(
 )["cases"]
 
 
+_EDITOR_GRANT = {"paragraph": ("class",), "heading": ("class",)}
+
+
 class _FirstElementAttributes(HTMLParser):
     """Record the attributes of the first ``tag`` element, in document order."""
 
@@ -505,7 +508,7 @@ class _FirstElementAttributes(HTMLParser):
 @pytest.mark.parametrize("case", _EDITOR_RENDER, ids=[case["name"] for case in _EDITOR_RENDER])
 def test_renders_an_element_with_the_attributes_the_editor_gives_it(case: dict[str, Any]) -> None:
     parser = _FirstElementAttributes(case["tag"])
-    parser.feed(str(render_doc(case["doc"])))
+    parser.feed(str(render_doc(case["doc"], extra_attributes=_EDITOR_GRANT)))
     assert parser.found == [tuple(pair) for pair in case["attributes"]]
 
 
@@ -516,6 +519,15 @@ def test_the_editor_render_cases_cover_both_attributes_tiptap_3_added() -> None:
     for align in ("left", "center", "right"):
         assert ("td", "style", f"text-align: {align}") in rendered
     assert ("th", "style", "text-align: right") in rendered
+
+
+def test_the_editor_render_cases_cover_the_granted_class() -> None:
+    by_name = {case["name"]: case for case in _EDITOR_RENDER}
+    assert by_name["paragraph with an empty class"]["attributes"] == []
+    assert by_name["paragraph with a numeric class"]["attributes"] == []
+    assert by_name["paragraph with class after text-align"]["attributes"][-1] == ["class", "lead"]
+    assert by_name["heading level 3 with a class and text-align"]["tag"] == "h3"
+    assert by_name["heading level 1 with a class only"]["attributes"] == [["class", "t"]]
 
 
 def _granted(attrs: dict[str, Any], kind: str = "paragraph") -> str:

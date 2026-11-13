@@ -83,6 +83,44 @@ describe("extraAttributes", () => {
     ).toBe("<p>y</p>");
   });
 
+  it("renders nothing for a class that is not a string", () => {
+    const editor = makeEditor({ extraAttributes: FULL_GRANT });
+    editor.commands.setContent(
+      { type: "doc", content: [{ type: "paragraph", attrs: { class: 3 }, content: [{ type: "text", text: "x" }] }] },
+      { emitUpdate: false },
+    );
+    expect(editor.getHTML()).toBe("<p>x</p>");
+    editor.destroy();
+  });
+
+  it("parses an empty class to nothing and renders nothing for it", () => {
+    const editor = makeEditor({ extraAttributes: FULL_GRANT });
+    editor.commands.setContent('<p class="">x</p>', { emitUpdate: false });
+    expect(editor.getJSON().content?.[0].attrs?.class).toBeNull();
+    expect(editor.getHTML()).toBe("<p>x</p>");
+    editor.commands.setContent(
+      { type: "doc", content: [{ type: "paragraph", attrs: { class: "" }, content: [{ type: "text", text: "x" }] }] },
+      { emitUpdate: false },
+    );
+    expect(editor.getHTML()).toBe("<p>x</p>");
+    editor.destroy();
+  });
+
+  it("mounts nothing for a grant whose names are not a list, without throwing", () => {
+    const grant = { paragraph: "class" } as unknown as Record<string, string[]>;
+    const names = (config: TipTapConfig) =>
+      buildExtensions(config, ctx).map((extension) => extension.name);
+    expect(names({ extraAttributes: grant })).not.toContain("extraAttributes");
+
+    const textarea = document.createElement("textarea");
+    textarea.id = "extra-malformed";
+    document.body.appendChild(textarea);
+    const editor = DjangoTipTap.init(textarea, { extraAttributes: grant });
+    editor.commands.setContent('<p class="lead">x</p>', { emitUpdate: false });
+    expect(editor.getHTML()).toBe("<p>x</p>");
+    DjangoTipTap.destroy("extra-malformed");
+  });
+
   it("carries a granted class through the source view into the JSON envelope", () => {
     const form = document.createElement("form");
     const textarea = document.createElement("textarea");

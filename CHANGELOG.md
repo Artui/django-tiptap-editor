@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field may narrow that grant, not widen it. The editor parses the attribute, so it
   survives the source view, and the HTML sanitiser keeps it without admitting a tag the
   field's `features` leave out. In JSON storage the `doc` keeps it and the `html` mirror
-  renders the project grant. Other node types and attribute names raise
-  `ImproperlyConfigured`. `render_doc` gains an
+  renders the project grant. Other node types and attribute names, or a
+  name that is not a string, raise `ImproperlyConfigured`. `render_doc` gains an
   `extra_attributes` keyword, and `get_extra_attributes` reads a grant.
 
 ### Changed
