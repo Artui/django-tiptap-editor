@@ -30,7 +30,7 @@ specifier to the validated version on a CDN (`esm.sh`); override deliberately:
 
 ```python
 TIPTAP_IMPORT_MAP = {
-    "@tiptap/core": "https://esm.sh/@tiptap/core@3.33.1",
+    "@tiptap/core": "https://esm.sh/@tiptap/core@3.34.0",
     # … or your self-hosted URLs. Set {} to opt out of the default.
 }
 ```

@@ -14,7 +14,7 @@ export default defineConfig({
   // that read them — e.g. version-check.ts, index.ts — import cleanly under vitest.
   define: {
     __DTT_VERSION__: JSON.stringify(packageVersion),
-    __DTT_TIPTAP_VERSION__: '"3.33.1"',
+    __DTT_TIPTAP_VERSION__: '"3.34.0"',
     __DTT_BUILD__: '"bundle"',
   },
   test: {
