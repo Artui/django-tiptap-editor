@@ -454,6 +454,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#extra-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -888,6 +899,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#extra-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1038,6 +1060,11 @@ any omitted key.</p>
 <td><code>mergeTags</code></td>
 <td>list[{label, value}]</td>
 <td>Items for the merge-tags menu; <code>value</code> is inserted verbatim.</td>
+</tr>
+<tr>
+<td><code>extraAttributes</code></td>
+<td>dict[str, list[str]]</td>
+<td>Attributes kept on built-in blocks, by node type: <code>{"paragraph": ["class"], "heading": ["class"]}</code>. Only <code>class</code>, on <code>paragraph</code> and <code>heading</code>. See <a href="#extra-attributes">Extra attributes</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -1263,6 +1290,33 @@ made:</p>
 before. The fields admin pages build through <code>TipTapModelAdminMixin</code> are cleaned the same
 way. What is <em>not</em> narrowed per field, and what narrowing does not do to rows already
 stored, is in <a href="../security/#what-is-not-narrowed-per-field">Security</a>.</p>
+<h3 id="extra-attributes">Extra attributes<a class="headerlink" href="#extra-attributes" title="Permanent link">&para;</a></h3>
+<p><code>extraAttributes</code> keeps an attribute on the built-in blocks the editor otherwise strips it
+from. Today it grants <code>class</code>, on <code>paragraph</code> (<code>&lt;p&gt;</code>) and <code>heading</code> (<code>&lt;h1&gt;</code> to <code>&lt;h6&gt;</code>):</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">TIPTAP_DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="s2">&quot;extraAttributes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;paragraph&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">],</span> <span class="s2">&quot;heading&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">]},</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>A granted <code>class</code> is parsed by the editor, so it survives the source view, and the server
+keeps it when it sanitises the field. Any other node type or attribute name raises
+<code>ImproperlyConfigured</code>; <code>id</code> and <code>data-*</code> are not offered.</p>
+<ul>
+<li><strong>It never admits a tag.</strong> A field whose <code>features</code> leave out <code>heading</code> still turns a
+  posted <code>&lt;h2 class="title"&gt;</code> into a plain <code>&lt;p&gt;</code>; the grant only decorates tags the field
+  already keeps.</li>
+<li><strong>Values are kept as written.</strong> Nothing checks which classes an author uses, so a stored
+  class can match any selector your site's CSS or scripts bind to. Grant it only where the
+  authors may choose those.</li>
+<li><strong>The project grants, a field narrows.</strong> <code>TIPTAP_DEFAULT_CONFIG["extraAttributes"]</code> is
+  the ceiling. A widget's own <code>extraAttributes</code> may grant less (<code>{}</code> turns it off for that
+  field's editor and sanitiser) but not more: a grant beyond the project's raises
+  <code>ImproperlyConfigured</code>, because the <code>tiptap_html</code> filter and the JSON mirror render with
+  no field config, and would drop what only one field granted.</li>
+<li><strong>JSON storage renders the project grant.</strong> A <a href="../storage/"><code>TipTapJSONField</code></a> keeps a
+  granted <code>class</code> in its <code>doc</code>, and its <code>html</code> mirror renders what the project grants, on
+  every path that derives it (the form, the model's save, the <code>tiptap_html</code> filter on a raw
+  document). A field that narrows the grant narrows its editor, not its stored mirror.</li>
+</ul>
 <h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1295,7 +1349,7 @@ stored, is in <a href="../security/#what-is-not-narrowed-per-field">Security</a>
 </tr>
 </tbody>
 </table>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">TIPTAP_DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;450px&quot;</span><span class="p">,</span> <span class="s2">&quot;locale&quot;</span><span class="p">:</span> <span class="s2">&quot;sv&quot;</span><span class="p">}</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">TIPTAP_DEFAULT_CONFIG</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;450px&quot;</span><span class="p">,</span> <span class="s2">&quot;locale&quot;</span><span class="p">:</span> <span class="s2">&quot;sv&quot;</span><span class="p">}</span>
 </span></code></pre></div>
 <p>Settings are read lazily — importing the package never touches Django settings.</p>
 

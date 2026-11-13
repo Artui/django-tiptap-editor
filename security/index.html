@@ -1120,7 +1120,7 @@ decides what the stored value means:</p>
   <code>x &amp;lt</code> is stored as <code>x &amp;amp;lt</code> and shows as <code>x &amp;lt</code> rather than <code>x &lt;</code>. The
   editor never writes a field that ends mid-reference.</li>
 <li><strong>A character reference the parser leaves unfinished is written as text, which
-  is not how a browser reads it.</strong> A browser reads <code>&amp;#1a</code> as <code>&amp;#1;</code> and then <code>a</code>,
+  is not how a browser reads it.</strong> A browser reads <code>&amp;#1a</code> as <code>&amp;#1</code> and then <code>a</code>,
   and parses the markup after it. From Python 3.14, <code>html.parser</code> hands such a
   reference to the sanitiser with the whole rest of the field as its name, and
   that is written as text rather than read the browser's way, so
@@ -1233,6 +1233,9 @@ the text lives in an attribute, not in content, so there is nothing to unwrap.</
 <li><strong>Changing a field's <code>features</code> does not rewrite stored rows.</strong> A heading saved before
   the field lost <code>heading</code> stays in the column until that row is saved again through the
   form.</li>
+<li><strong>The JSON <code>html</code> mirror renders the project's <code>extraAttributes</code> grant.</strong> A field that
+  narrows the grant narrows its editor, not its stored mirror: a <code>class</code> the project grants
+  stays in the mirror's <code>html</code> on every path that derives it.</li>
 <li><strong><code>linkProtocols</code> is project-wide on the server.</strong> A field's own <code>linkProtocols</code> limits
   its editor; the server's allowlist reads the project default.</li>
 </ul>
@@ -1315,6 +1318,7 @@ never runs — <strong>rendering arbitrary JSON is not automatically safe.</stro
 <li><strong>Uploads are yours to police.</strong> <code>BaseImageUploadView</code> enforces the wire contract,
   not file-type/size/virus policy — add those in <code>save</code>.</li>
 </ul>
+<p>;</p>
 
 
 

@@ -564,6 +564,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get_extra_attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_extra_attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#narrow_doc" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1082,6 +1093,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get_extra_attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_extra_attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#narrow_doc" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1286,11 +1308,12 @@ field is <code>TipTapJSONFormField</code> (a <code>forms.Field</code> whose widg
 See <a href="../storage/">Storage format</a>.</p>
 <h3 id="tiptapvalue"><code>TipTapValue</code><a class="headerlink" href="#tiptapvalue" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.types.tiptap_value.TipTapValue</code> — frozen value with <code>.doc</code> (canonical
-ProseMirror JSON) and <code>.html</code> (the safe HTML mirror, re-derived from <code>doc</code> on save and sanitised
+ProseMirror JSON) and <code>.html</code> (the safe HTML mirror, re-derived from a non-empty <code>doc</code> on save and sanitised
 on construction, so it is safe on every instance however it was built). <code>str(value)</code> /
 <code>{{ value }}</code> render the mirror. <code>TipTapValue.from_stored({...})</code> builds one from a <code>{doc, html}</code>
 mapping or a bare doc, and raises <code>ValidationError</code> for anything else — assigning an HTML string
 does not convert it.</p>
+<p><code>doc</code> is a plain dict, and an edit made to it in place does not refresh <code>.html</code>. The mirror stays as it was until the row is saved with a doc that has content.</p>
 <h3 id="sanitize_html"><code>sanitize_html</code><a class="headerlink" href="#sanitize_html" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.utils.sanitize_html.sanitize_html(html, *, schema=None)</code> — reduces HTML to
 what the configured editor can emit and marks the result safe. Unknown tags are unwrapped (their
@@ -1306,12 +1329,23 @@ the sanitiser enforces. With no config, or a config without <code>features</code
 HTML vocabularies of every built-in extension, plus whatever <code>TIPTAP_EXTRA_EXTENSIONS</code> declares.
 With <code>features</code>, it is the union of the vocabularies of <code>resolve_features(config)</code>, plus only the
 extra extensions the config's own <code>extensions</code> names, and an undeclared extension warns only when
-the config names it. Link protocols come from the project default either way. Pass one to
+the config names it. Link protocols come from the project default either way. The <code>extraAttributes</code> grant
+(the config's, or the project default's when no config is given) adds its attributes to tags
+the schema already admits, never a tag. <code>get_html_schema({})</code> is the no-config case and reads the
+project grant; a non-empty config without the key, such as <code>{"features": [...]}</code>, grants nothing,
+whatever the project grants. Pass one to
 <code>sanitize_html(..., schema=...)</code> to sanitise against a different allowlist.</p>
 <p><code>HtmlSchema.paragraph_blocks</code> is the set of built-in block tags (<code>h1</code>-<code>h6</code>, <code>blockquote</code>, <code>pre</code>,
 <code>li</code>, <code>td</code>, <code>th</code>) a restricted schema does not admit, which <code>sanitize_html</code> turns into paragraphs.
 It is empty by default, so a schema built by hand, and the unrestricted one, unwrap those tags as
 before.</p>
+<h3 id="get_extra_attributes"><code>get_extra_attributes</code><a class="headerlink" href="#get_extra_attributes" title="Permanent link">&para;</a></h3>
+<p><code>django_tiptap_editor.utils.get_extra_attributes.get_extra_attributes(config=None)</code> returns the
+<a href="../configuration/#extra-attributes"><code>extraAttributes</code></a> grant as <code>{node_type: (name, ...)}</code>, read
+from <code>config</code>, or from the project default config when <code>config</code> is <code>None</code> (an empty <code>{}</code> is a
+config, and grants nothing). Raises
+<code>ImproperlyConfigured</code> on a node type outside <code>EXTRA_ATTRIBUTE_TAGS</code>, a name outside
+<code>EXTRA_ATTRIBUTE_NAMES</code> (both in <code>constants</code>), or a name that is not a string.</p>
 <h3 id="narrow_doc"><code>narrow_doc</code><a class="headerlink" href="#narrow_doc" title="Permanent link">&para;</a></h3>
 <p><code>django_tiptap_editor.utils.narrow_doc.narrow_doc(doc, *, config)</code> returns a copy of a sanitised
 ProseMirror <code>doc</code> holding only what <code>resolve_features(config)</code> and the config's <code>extensions</code>
@@ -1329,9 +1363,11 @@ when the config has no <code>features</code> key, or it is <code>None</code>, wh
 It assumes a config <code>validate_config</code> has accepted. See
 <a href="../configuration/#restricting-features">Restricting features</a>.</p>
 <h3 id="render_doc"><code>render_doc</code><a class="headerlink" href="#render_doc" title="Permanent link">&para;</a></h3>
-<p><code>django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…)</code>
+<p><code>django_tiptap_editor.utils.render_doc.render_doc(doc, *, link_protocols=…, image_protocols=…, extra_attributes=None)</code>
 — renders a ProseMirror <code>doc</code> dict to a safe HTML string in pure Python (no Node), covering the
-package's node/mark set with protocol allowlisting + CSS validation. The
+package's node/mark set with protocol allowlisting + CSS validation. <code>extra_attributes</code>, a grant
+as <code>get_extra_attributes</code> returns it, renders those string attributes on paragraphs and
+headings; without it none is rendered. The
 <code>{{ value|tiptap_html }}</code> filter wraps it (and uses a <code>TipTapValue</code>'s mirror when given one). See
 <a href="../storage/#server-side-rendering-python">Storage format</a>.</p>
 <h3 id="baseimageuploadview-imageuploaderror"><code>BaseImageUploadView</code> / <code>ImageUploadError</code><a class="headerlink" href="#baseimageuploadview-imageuploaderror" title="Permanent link">&para;</a></h3>
