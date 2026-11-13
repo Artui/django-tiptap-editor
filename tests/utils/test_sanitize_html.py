@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import Callable
 from html import unescape
@@ -156,12 +157,26 @@ def test_fixtures_cover_every_style_property_the_extensions_can_emit() -> None:
     assert styles - _observed().styles == set()
 
 
+_CLASSED = sorted(
+    n for n, html in SERIALIZED.items() if re.search(r'<(p|h[1-6])[^>]* class="', html)
+)
+
+
+@pytest.mark.parametrize("name", sorted(set(SERIALIZED) - set(_CLASSED)))
+def test_serialized_output_survives_byte_identically(name: str) -> None:
+    assert str(sanitize_html(SERIALIZED[name])) == SERIALIZED[name]
+
+
 @override_settings(
     TIPTAP_DEFAULT_CONFIG={"extraAttributes": {"paragraph": ["class"], "heading": ["class"]}}
 )
-@pytest.mark.parametrize("name", sorted(SERIALIZED))
-def test_serialized_output_survives_byte_identically(name: str) -> None:
+@pytest.mark.parametrize("name", _CLASSED)
+def test_serialized_class_output_survives_byte_identically_under_a_grant(name: str) -> None:
     assert str(sanitize_html(SERIALIZED[name])) == SERIALIZED[name]
+
+
+def test_the_granted_class_cases_are_checked() -> None:
+    assert len(_CLASSED) == 5
 
 
 # The full node and mark vocabulary of the JSON path, so the server-side
