@@ -108,3 +108,17 @@ def test_the_model_field_accepts_a_granted_attribute() -> None:
 def test_the_html_filter_renders_a_raw_doc_and_keeps_stored_html_with_the_project_grant() -> None:
     assert tiptap_html(DOC) == POSTED
     assert tiptap_html(POSTED) == POSTED
+
+
+@PROJECT
+def test_a_per_field_grant_saves_through_the_model_with_the_mirror_the_form_built() -> None:
+    for grant in ({"heading": ["class"]}, {}):
+        value = _json_field(extraAttributes=grant).clean(_envelope())
+        stored = TipTapJSONField().get_prep_value(value)
+        assert stored == {"doc": DOC, "html": POSTED}
+        assert value.html == POSTED
+
+
+def test_a_per_field_grant_the_model_could_not_render_is_refused_before_saving() -> None:
+    with pytest.raises(ImproperlyConfigured, match="narrow the project"):
+        _json_field(extraAttributes=GRANT).clean(_envelope())
