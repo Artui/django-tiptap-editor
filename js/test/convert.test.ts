@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 
 import { htmlToJSON, htmlToStored, renderHTML } from "../src/convert";
+import { registerExtension } from "../src/registry";
 
 describe("html <-> json conversion", () => {
   it("parses HTML into a ProseMirror doc", () => {
@@ -30,5 +31,30 @@ describe("html <-> json conversion", () => {
   it("applies schema normalization on conversion (div -> paragraph)", () => {
     // A legacy-editor-ism with no schema node: <div> maps to a paragraph.
     expect(htmlToStored("<div>legacy</div>").html).toBe("<p>legacy</p>");
+  });
+
+  describe("a factory that reads ctx.tiptap", () => {
+    const config = { extensions: ["ctx-mark"] };
+    registerExtension("ctx-mark", (_cfg, ctx) => {
+      const { Mark } = ctx.tiptap as { Mark: { create: (o: object) => never } };
+      return Mark.create({
+        name: "ctxMark",
+        parseHTML: () => [{ tag: "mark.ctx" }],
+        renderHTML: () => ["mark", { class: "ctx" }, 0],
+      });
+    });
+    const html = '<p><mark class="ctx">x</mark></p>';
+
+    it("htmlToJSON builds the extension", () => {
+      expect(JSON.stringify(htmlToJSON(html, config))).toContain("ctxMark");
+    });
+
+    it("renderHTML builds the extension", () => {
+      expect(renderHTML(htmlToJSON(html, config), config)).toBe(html);
+    });
+
+    it("htmlToStored builds the extension", () => {
+      expect(htmlToStored(html, config).html).toBe(html);
+    });
   });
 });

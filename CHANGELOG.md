@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TIPTAP_VERSION`, and with it the default external-mode import map, now names 3.33.1; a
   `TIPTAP_IMPORT_MAP` you set yourself keeps the versions it names.
 
+### Fixed
+
+- **A custom extension factory that reads `ctx.tiptap` no longer throws in the conversion helpers.**
+  `DjangoTipTap.renderHTML`, `htmlToJSON` and `htmlToStored` passed an empty `tiptap` namespace,
+  so the factory shown in the extending guide failed with "Cannot read properties of undefined
+  (reading 'create')" whenever the config named it; they now pass the same namespace as the editor.
+
 ### Docs
 
 - **Storage and the API reference say when the `html` mirror is re-derived.** A `doc` with no
