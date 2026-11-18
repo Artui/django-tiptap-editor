@@ -27,6 +27,9 @@ export interface TipTapConfig {
   // for it renders. Consumer extensions named in `extensions` are unaffected.
   features?: string[] | null;
   toolbar?: string[][];
+  // A text label per toolbar button key, shown after its glyph and used as its
+  // accessible name. Inert for a key the toolbar does not render.
+  toolbarLabels?: Record<string, string>;
   linkProtocols?: string[];
   // Links a URL as it is typed. Off by default. Autolinked and pasted plain URLs
   // keep to linkProtocols; inert on a field whose features exclude link.

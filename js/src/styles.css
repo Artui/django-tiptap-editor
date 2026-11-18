@@ -234,6 +234,24 @@
   padding: 0 2px;
 }
 
+/* A toolbarLabels label: the button grows to fit it, up to a cap. */
+.django-tiptap__btn.django-tiptap__btn--labelled {
+  width: auto;
+  min-width: 30px;
+  padding: 0 6px;
+  gap: 4px;
+}
+
+.django-tiptap__btn-label {
+  display: inline-block;
+  max-width: 16em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
 .django-tiptap__caret {
   font-size: 9px;
   margin-left: 2px;

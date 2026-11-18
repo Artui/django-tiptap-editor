@@ -50,6 +50,7 @@ KNOWN_CONFIG_KEYS = frozenset(
         "manualMount",
         "enterKey",
         "toolbar",
+        "toolbarLabels",
         "features",
         "extensions",
         "paragraphStyle",
