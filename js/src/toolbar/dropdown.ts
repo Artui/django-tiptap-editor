@@ -1,6 +1,8 @@
 // Minimal toolbar dropdown: a trigger button plus a panel that opens below it.
 // Closes on outside-click, Escape, or when the panel signals done. One panel is
 // open at a time (opening one closes others via a shared registry).
+import { applyLabel } from "./label";
+
 export interface Dropdown {
   el: HTMLElement;
   trigger: HTMLButtonElement;
@@ -13,6 +15,7 @@ const openPanels = new Set<() => void>();
 export interface DropdownOptions {
   title: string;
   triggerHTML: string;
+  label?: string;
   buildPanel: (close: () => void) => HTMLElement;
 }
 
@@ -28,6 +31,9 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   trigger.setAttribute("aria-haspopup", "true");
   trigger.setAttribute("aria-expanded", "false");
   trigger.innerHTML = opts.triggerHTML;
+  if (opts.label) {
+    applyLabel(trigger, opts.label);
+  }
 
   const panel = document.createElement("div");
   panel.className = "django-tiptap__panel";

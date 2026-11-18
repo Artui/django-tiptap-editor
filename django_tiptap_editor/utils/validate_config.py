@@ -92,6 +92,15 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         if value is not None and not isinstance(value, bool):
             raise ImproperlyConfigured(f"TipTap {key} must be a boolean, got {value!r}.")
 
+    labels = config.get("toolbarLabels")
+    if labels is not None and (
+        not isinstance(labels, dict)
+        or not all(isinstance(k, str) and isinstance(v, str) for k, v in labels.items())
+    ):
+        raise ImproperlyConfigured(
+            f"TipTap toolbarLabels must be a dict of button names to strings, got {labels!r}."
+        )
+
     for key in _LENGTH_KEYS:
         value = config.get(key)
         if value is None or value == "":

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Text labels on toolbar buttons, through `toolbarLabels`.** A new config key maps a
+  toolbar button key to a label, e.g. `{"mergeTags": "Insert token"}`. The label shows as
+  text after the button's glyph (before a dropdown's caret), and is the button's tooltip
+  and accessible name. It works on every built-in button, the seven dropdown triggers and
+  `ui.registerButton` buttons; on `fontSize` it replaces the size readout. Labels are
+  set as text, never markup, and are not translated. `""` counts as no label, and a key the
+  toolbar does not render is ignored. `validate_config` refuses anything but a dict of
+  strings to strings. Fields without the key render as before.
+
 - **Toolbar state for assistive technology.** Every toolbar button with an active state
   carries `aria-pressed` (`"true"` / `"false"`) that follows `.is-active` on each refresh:
   the built-in toggles, `link` (which opens a prompt rather than toggling, but reports the

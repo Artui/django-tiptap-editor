@@ -1,10 +1,12 @@
 // Dropdown controls for the textStyle attributes (font size / family, text
 // color, highlight). All four are textStyle marks, so they apply uniformly via
 // setMark — which merges, so setting one doesn't clear the others.
+import { configFor } from "../editor-config";
 import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 import type { ButtonSpec, RenderedControl } from "./button-registry";
 import { createDropdown } from "./dropdown";
+import { toolbarLabel } from "./label";
 
 function applyTextStyle(editor: Editor, attr: string, value: string | null): void {
   editor.chain().focus().setMark("textStyle", { [attr]: value }).run();
@@ -47,9 +49,11 @@ export function selectControl(opts: {
     render(editor: Editor): RenderedControl {
       const t = translatorFor(editor);
       const options = typeof opts.options === "function" ? opts.options(editor) : opts.options;
+      const label = toolbarLabel(configFor(editor), opts.title);
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
+        label,
         buildPanel(close) {
           const list = document.createElement("div");
           list.className = "django-tiptap__menu";
@@ -73,7 +77,8 @@ export function selectControl(opts: {
           return list;
         },
       });
-      if (!opts.showValue) {
+      // A label replaces the readout, so the trigger keeps one name.
+      if (!opts.showValue || label) {
         return { el: dd.el };
       }
       const readout = valueReadout([t("default"), ...options.map((o) => o.label)]);
@@ -127,6 +132,7 @@ export function commandMenuControl(opts: {
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
+        label: toolbarLabel(configFor(editor), opts.title),
         buildPanel(close) {
           const menu = document.createElement("div");
           menu.className = "django-tiptap__menu";
@@ -218,6 +224,7 @@ export function colorControl(opts: {
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
+        label: toolbarLabel(configFor(editor), opts.title),
         buildPanel(close) {
           const panel = document.createElement("div");
           const grid = document.createElement("div");
