@@ -203,6 +203,16 @@ describe("input on the bound textarea", () => {
 });
 
 describe("source view writes through", () => {
+  it("hands onChange the new content on close, never the stale doc", () => {
+    const onChange = vi.fn();
+    const { editor } = mount("html", { onChange } as TipTapConfig);
+    toggleSourceView(editor);
+    onChange.mockClear();
+    typeSource("<p>edited</p>");
+    toggleSourceView(editor);
+    expect(onChange.mock.calls.map(([html]) => html)).toEqual(["<p>edited</p>", "<p>edited</p>"]);
+  });
+
   it("HTML mode: each keystroke updates the bound value and fires one input", async () => {
     const { textarea, editor, events } = mount("html");
     toggleSourceView(editor);
@@ -232,6 +242,22 @@ describe("source view writes through", () => {
     await tick();
     expect(events).toEqual(["input"]);
     expect(textarea.value).toBe(written);
+  });
+
+  it.each([
+    ["a trailing rule", {}, "<p>a</p><hr>"],
+    ["a typed URL with autolink", { autolink: true }, "<p>see https://example.com </p>"],
+    ["a trailing table", {}, "<table><tbody><tr><td><p>a</p></td></tr></tbody></table>"],
+  ])("stores what closing stores for %s", async (_name, config, html) => {
+    const { textarea, editor, events } = mount("html", config as TipTapConfig);
+    toggleSourceView(editor);
+    typeSource(html);
+    await tick();
+    const written = textarea.value;
+    toggleSourceView(editor);
+    await tick();
+    expect(textarea.value).toBe(written);
+    expect(events).toEqual(["input"]);
   });
 
   it("a FormData built in a listener during a submit flush does not throw", async () => {
