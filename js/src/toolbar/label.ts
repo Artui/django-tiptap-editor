@@ -13,6 +13,7 @@ export function applyLabel(button: HTMLButtonElement, label: string): void {
   const span = document.createElement("span");
   span.className = "django-tiptap__btn-label";
   span.textContent = label;
+  button.classList.add("django-tiptap__btn--labelled");
   button.insertBefore(span, button.querySelector(":scope > .django-tiptap__caret"));
   button.title = label;
   button.setAttribute("aria-label", label);

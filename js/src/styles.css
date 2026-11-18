@@ -235,7 +235,7 @@
 }
 
 /* A toolbarLabels label: the button grows to fit it, up to a cap. */
-.django-tiptap__btn:has(> .django-tiptap__btn-label) {
+.django-tiptap__btn.django-tiptap__btn--labelled {
   width: auto;
   min-width: 30px;
   padding: 0 6px;

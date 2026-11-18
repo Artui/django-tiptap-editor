@@ -92,8 +92,10 @@ describe("toolbarLabels", () => {
   it.each(DROPDOWNS)("puts the label between the glyph and the caret on the %s trigger", (key) => {
     const { bar } = mount({ toolbarLabels: { [key]: "L" } });
     const trigger = btn(bar, key);
-    const span = trigger.querySelector(".django-tiptap__btn-label") as Element;
-    expect(span.nextElementSibling?.classList.contains("django-tiptap__caret")).toBe(true);
+    const span = trigger.querySelector(".django-tiptap__btn-label");
+    expect(span).not.toBeNull();
+    expect(trigger.classList.contains("django-tiptap__btn--labelled")).toBe(true);
+    expect(span?.nextElementSibling?.classList.contains("django-tiptap__caret")).toBe(true);
     expect(trigger.getAttribute("aria-label")).toBe("L");
   });
 
@@ -104,7 +106,7 @@ describe("toolbarLabels", () => {
     document.body.innerHTML = "";
     const empty = Object.fromEntries(EVERYTHING.flat().map((k) => [k, ""]));
     expect(snapshot(mount({ toolbarLabels: empty }, EVERYTHING).bar)).toEqual(base);
-    expect(document.querySelector(".django-tiptap__btn-label")).toBeNull();
+    expect(document.querySelector(".django-tiptap__btn-label, .django-tiptap__btn--labelled")).toBeNull();
   });
 
   it("replaces the font-size readout, and the value no longer renames the trigger", () => {

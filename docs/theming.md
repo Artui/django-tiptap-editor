@@ -213,10 +213,11 @@ its widest label (in the active locale and `fontSizes`) so it does not shift as 
 moves. Its accessible name is the `fontSizeValue` string (`"{name}: {value}"`, e.g.
 `Font size: 16`); a locale registered with `registerLocale` can reword it.
 
-A button given a [`toolbarLabels`](configuration.md) entry carries its text in
-`.django-tiptap__btn-label`, after the glyph and before a dropdown's caret. The span does
-not wrap and ends in an ellipsis past `16em`; the button grows to fit it, and the toolbar
-still wraps by group. On `fontSize` the label takes the readout's place.
+A button given a [`toolbarLabels`](configuration.md) entry carries
+`.django-tiptap__btn--labelled` and its text in `.django-tiptap__btn-label`, after the
+glyph and before a dropdown's caret. The span does not wrap and ends in an ellipsis past
+`16em`; the button grows to fit it, and the toolbar still wraps by group. On `fontSize`
+the label takes the readout's place.
 
 ## Region renderers (tier 2, semi-stable)
 
