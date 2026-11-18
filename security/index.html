@@ -1048,8 +1048,12 @@ run in the browser:</p>
 <li><strong>ProseMirror's schema is a normalizer.</strong> Content is parsed into a strict document
   model on load; anything the schema doesn't represent — <code>&lt;script&gt;</code>, event handlers,
   unknown tags/attributes — is dropped. The editor never <em>holds</em> markup it can't model.</li>
-<li><strong>Link protocols are allowlisted</strong> (<code>linkProtocols</code>, default <code>http</code>/<code>https</code>/<code>mailto</code>/
-  <code>tel</code>) and <strong>image <code>src</code> is protocol-validated</strong> on insertion.</li>
+<li><strong>Autolinked and pasted URLs follow <code>linkProtocols</code></strong> (default <code>http</code>/<code>https</code>/<code>mailto</code>/
+  <code>tel</code>): a typed or pasted plain URL outside the list stays text. The editor does not
+  enforce the list on everything: a link in loaded or pasted HTML whose scheme Tiptap
+  accepts by default (<code>ftp</code>, <code>sms</code>, <code>xmpp</code> and others) still loads as a link. The
+  server's allowlist below is what decides what is stored. <strong>Image <code>src</code> is
+  protocol-validated</strong> on insertion.</li>
 <li><strong>Source view re-parses through the schema</strong>, so what you see equals what the editor
   submits.</li>
 </ul>
@@ -1237,7 +1241,10 @@ the text lives in an attribute, not in content, so there is nothing to unwrap.</
   narrows the grant narrows its editor, not its stored mirror: a <code>class</code> the project grants
   stays in the mirror's <code>html</code> on every path that derives it.</li>
 <li><strong><code>linkProtocols</code> is project-wide on the server.</strong> A field's own <code>linkProtocols</code> limits
-  its editor; the server's allowlist reads the project default.</li>
+  its editor; the server's allowlist reads the project default. A field list wider than
+  the project's lets its editor link (and autolink) a scheme the server strips on save:
+  the text is kept and the link is dropped. Nothing clamps the field's list to the
+  project's.</li>
 </ul>
 <p>A link that opens a new browsing context always carries <code>rel="noopener noreferrer"</code>,
 whatever the stored document asked for: <code>rel="opener"</code> re-enables the <code>window.opener</code>

@@ -997,6 +997,11 @@ any omitted key.</p>
 <td>Groups of <a href="#toolbar-buttons">button keys</a>. Omit for the default.</td>
 </tr>
 <tr>
+<td><code>toolbarLabels</code></td>
+<td>dict[str, str]</td>
+<td>A text label per button key, shown after the button's glyph (before a dropdown's caret) and used verbatim as its tooltip and accessible name, e.g. <code>{"mergeTags": "Insert token"}</code>. Works on every toolbar button: the built-in buttons, the dropdowns and <code>ui.registerButton</code> buttons; on <code>fontSize</code> it replaces the size readout. <code>""</code> counts as no label, and a key the toolbar does not render (absent, unknown, or hidden by <code>features</code>) does nothing and raises nothing. A long label is cut with an ellipsis.</td>
+</tr>
+<tr>
 <td><code>features</code></td>
 <td>list[str]</td>
 <td>Built-in extensions this field's editor may use; everything else is off, shortcuts and paste included. Omit for every built-in. See <a href="#restricting-features">Restricting features</a>.</td>
@@ -1009,7 +1014,12 @@ any omitted key.</p>
 <tr>
 <td><code>linkProtocols</code></td>
 <td>list[str]</td>
-<td>Allowed link protocols. Default <code>["http","https","mailto","tel"]</code>.</td>
+<td>Allowed link protocols. Default <code>["http","https","mailto","tel"]</code>. Autolinked and pasted plain URLs keep to this list: a scheme outside it stays plain text (a bare email address counts as <code>mailto</code>, a bare <code>www.</code> address as <code>http</code>).</td>
+</tr>
+<tr>
+<td><code>autolink</code></td>
+<td>bool</td>
+<td>Turns a URL into a link as it is typed, once a space follows it. Default <code>False</code>. It follows <code>linkProtocols</code>, so with <code>["http","https"]</code> a typed <code>ftp://</code> URL or bare email address stays plain text. On a field whose <code>features</code> leave out <code>link</code> the key does nothing and raises nothing.</td>
 </tr>
 <tr>
 <td><code>imageUploadUrl</code></td>
@@ -1034,7 +1044,7 @@ any omitted key.</p>
 <tr>
 <td><code>fontSizes</code></td>
 <td>list[str]</td>
-<td>Presets for the <code>fontSize</code> dropdown; each a CSS length like <code>"16px"</code> (label = value without <code>px</code>). Omit for the built-in list.</td>
+<td>Presets for the <code>fontSize</code> dropdown; each a CSS length like <code>"16px"</code> (label = value without <code>px</code>); the trigger shows the label of the size under the caret. Omit for the built-in list.</td>
 </tr>
 <tr>
 <td><code>textColors</code></td>
@@ -1126,7 +1136,7 @@ so one bad field does not stop the rest of the page mounting.</p>
 <h3 id="toolbar-buttons">Toolbar buttons<a class="headerlink" href="#toolbar-buttons" title="Permanent link">&para;</a></h3>
 <p><code>undo</code> <code>redo</code> · <code>bold</code> <code>italic</code> <code>underline</code> <code>strike</code> <code>code</code> · <code>fontSize</code> <code>fontFamily</code>
 <code>color</code> <code>highlight</code> · <code>h1</code> <code>h2</code> <code>h3</code> <code>paragraph</code> · <code>bulletList</code> <code>orderedList</code>
-<code>blockquote</code> · <code>alignLeft</code> <code>alignCenter</code> <code>alignRight</code> <code>alignJustify</code> · <code>image</code> <code>table</code> ·
+<code>blockquote</code> <code>horizontalRule</code> (opt-in) · <code>alignLeft</code> <code>alignCenter</code> <code>alignRight</code> <code>alignJustify</code> · <code>image</code> <code>table</code> ·
 <code>link</code> <code>unlink</code> <code>clearFormatting</code> · <code>sourceView</code> · <code>mergeTags</code> (opt-in).</p>
 <p>A group is an inner array; groups render with separators. Register your own buttons with
 <a href="../extending/#toolbar-buttons"><code>ui.registerButton</code></a>.</p>
@@ -1341,6 +1351,11 @@ keeps it when it sanitises the field. Any other node type or attribute name rais
 <td><code>TIPTAP_IMPORT_MAP</code></td>
 <td>CDN default</td>
 <td>External mode: bare-specifier → URL map.</td>
+</tr>
+<tr>
+<td><code>TIPTAP_COLOR_SCHEME</code></td>
+<td><code>"light"</code></td>
+<td><code>"light"</code>, <code>"dark"</code> or <code>"system"</code> (follows the OS). The glue writes it to <code>&lt;html&gt;</code> as <code>data-tiptap-theme</code> unless the page set that attribute already. See <a href="../theming/#dark-mode">Dark mode</a>.</td>
 </tr>
 <tr>
 <td><code>TIPTAP_EXTRA_EXTENSIONS</code></td>

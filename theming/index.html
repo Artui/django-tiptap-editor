@@ -649,6 +649,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dark-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dark mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dark mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-picked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is picked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forcing-it-from-the-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forcing it from the page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layering-with-your-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layering with your overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shadow-roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shadow roots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#content-colours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Content colours
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#targeting-parts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -944,6 +1016,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dark-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dark mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dark mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-is-picked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it is picked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forcing-it-from-the-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forcing it from the page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layering-with-your-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layering with your overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shadow-roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shadow roots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#content-colours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Content colours
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#targeting-parts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1114,6 +1258,38 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 <td>Links, focus, selected-image outline</td>
 </tr>
 <tr>
+<td><code>--tiptap-content-bg</code> / <code>--tiptap-content-fg</code></td>
+<td>Editing area and source view (light default: unset, so the area shows the shell's <code>--tiptap-bg</code> / <code>--tiptap-fg</code>)</td>
+</tr>
+<tr>
+<td><code>--tiptap-content-border</code></td>
+<td>Table cell borders in the editing area (light default: <code>--tiptap-border</code>)</td>
+</tr>
+<tr>
+<td><code>--tiptap-highlight-ink</code></td>
+<td>Text colour of a highlighted run that has no colour of its own (light default: unset, so it inherits)</td>
+</tr>
+<tr>
+<td><code>--tiptap-highlight-glyph-bg</code> / <code>--tiptap-highlight-glyph-fg</code></td>
+<td>The highlight button's glyph (light: <code>#fff3a3</code>, text inherits the button's)</td>
+</tr>
+<tr>
+<td><code>--tiptap-swatch-border</code> / <code>--tiptap-swatch-border-hover</code></td>
+<td>Colour swatch and custom-colour chip outline, and its hover</td>
+</tr>
+<tr>
+<td><code>--tiptap-shadow-color</code></td>
+<td>Shadow of the dropdown panels and the floating menus</td>
+</tr>
+<tr>
+<td><code>--tiptap-modal-shadow-color</code> / <code>--tiptap-overlay-bg</code></td>
+<td>Image-picker modal shadow and the overlay behind it</td>
+</tr>
+<tr>
+<td><code>--tiptap-color-scheme</code></td>
+<td><code>color-scheme</code> of the shell and the picker modal, so the source textarea, the colour input and the focus ring follow the scheme (light default: unset, so they inherit the page's)</td>
+</tr>
+<tr>
 <td><code>--tiptap-modal-z</code></td>
 <td>Image-picker overlay <code>z-index</code> (default <code>2000</code>)</td>
 </tr>
@@ -1167,12 +1343,118 @@ radius: a token set on <code>:root</code> themes the picker as well as the edito
 <p><code>setTokens</code> writes onto <code>document.documentElement</code>, so it is the page-wide layer (3
 above): every editor follows it, including ones mounted later, and a field's own
 <code>height</code> / <code>maxHeight</code> config still wins over a <code>height</code> / <code>max-height</code> token.</p>
+<h2 id="dark-mode">Dark mode<a class="headerlink" href="#dark-mode" title="Permanent link">&para;</a></h2>
+<p>The editor ships a dark colour set beside the light one. Light is the default, so a page
+that does nothing renders as it did before.</p>
+<h3 id="how-it-is-picked">How it is picked<a class="headerlink" href="#how-it-is-picked" title="Permanent link">&para;</a></h3>
+<p>The scheme is read from one attribute on <code>&lt;html&gt;</code>, <code>data-tiptap-theme</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Scheme</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>absent, or <code>"light"</code></td>
+<td>light</td>
+</tr>
+<tr>
+<td><code>"dark"</code></td>
+<td>dark</td>
+</tr>
+<tr>
+<td><code>"system"</code></td>
+<td>dark when the OS asks for it (<code>prefers-color-scheme: dark</code>), light otherwise</td>
+</tr>
+</tbody>
+</table>
+<p>The usual way to set it is the <code>TIPTAP_COLOR_SCHEME</code> setting:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">TIPTAP_COLOR_SCHEME</span> <span class="o">=</span> <span class="s2">&quot;system&quot;</span>  <span class="c1"># or &quot;dark&quot;, or &quot;light&quot; (the default)</span>
+</span></code></pre></div>
+<p>Every widget then carries the value, and the glue writes it to <code>&lt;html&gt;</code> once, when the
+first editor mounts. It is project-wide: a per-field scheme would have to sit on the
+editor's shell, where it would beat the tokens you set on <code>:root</code>. The Django admin does
+not follow its own theme toggle; set the setting there like anywhere else.</p>
+<h3 id="forcing-it-from-the-page">Forcing it from the page<a class="headerlink" href="#forcing-it-from-the-page" title="Permanent link">&para;</a></h3>
+<p>An attribute the page already set wins over the setting: the glue never overwrites it. So
+a template can force a scheme, and a site with its own light/dark toggle drives the editor
+by writing the attribute:</p>
+<div class="language-html highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">&lt;</span><span class="nt">html</span> <span class="na">data-tiptap-theme</span><span class="o">=</span><span class="s">&quot;dark&quot;</span><span class="p">&gt;</span>
+</span></code></pre></div>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">document</span><span class="p">.</span><span class="nx">documentElement</span><span class="p">.</span><span class="nx">dataset</span><span class="p">.</span><span class="nx">tiptapTheme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">userPrefersDark</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s2">&quot;dark&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;light&quot;</span><span class="p">;</span>
+</span></code></pre></div>
+<p>There is no JavaScript API for it beyond that attribute. A page that mounts editors by
+hand (<code>DjangoTipTap.init</code>, the <code>tiptap_config</code> tag) sets the attribute itself, since no
+widget carries the setting there.</p>
+<h3 id="layering-with-your-overrides">Layering with your overrides<a class="headerlink" href="#layering-with-your-overrides" title="Permanent link">&para;</a></h3>
+<p>The scheme changes the built-in defaults and nothing else, so everything under
+<a href="#tokens">Tokens</a> still holds: a token you set on <code>:root</code>, with <code>ui.setTokens</code>, on
+<code>.django-tiptap</code> or on a field beats either scheme. That has one consequence worth
+planning for: <strong>override colours in pairs.</strong> A project that set <code>--tiptap-bg: #fff</code> for a
+light look keeps that white background in the dark scheme, under the dark scheme's light
+<code>--tiptap-fg</code>, and its text disappears. Set the foreground with the background
+(<code>--tiptap-fg</code> with <code>--tiptap-bg</code>, <code>--tiptap-content-fg</code> with <code>--tiptap-content-bg</code>,
+<code>--tiptap-btn-fg</code> with <code>--tiptap-toolbar-bg</code>), or scope an override to one scheme by
+putting it under the attribute:</p>
+<div class="language-css highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">html</span><span class="o">[</span><span class="nt">data-tiptap-theme</span><span class="o">=</span><span class="s2">&quot;dark&quot;</span><span class="o">]</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nv">--tiptap-accent</span><span class="p">:</span><span class="w"> </span><span class="mh">#7cc4fa</span><span class="p">;</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p">}</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">@</span><span class="k">media</span><span class="w"> </span><span class="o">(</span><span class="nt">prefers-color-scheme</span><span class="o">:</span><span class="w"> </span><span class="nt">dark</span><span class="o">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nt">html</span><span class="o">[</span><span class="nt">data-tiptap-theme</span><span class="o">=</span><span class="s2">&quot;system&quot;</span><span class="o">]</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="nv">--tiptap-accent</span><span class="p">:</span><span class="w"> </span><span class="mh">#7cc4fa</span><span class="p">;</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The dark values themselves live in private <code>--_tiptap-*</code> properties on <code>&lt;html&gt;</code>, which
+the public tokens read. They are not part of the stable surface: set the <code>--tiptap-*</code>
+tokens, never the private ones.</p>
+<h3 id="shadow-roots">Shadow roots<a class="headerlink" href="#shadow-roots" title="Permanent link">&para;</a></h3>
+<p>Custom properties inherit into a shadow root, but the scheme rules key on the page's
+<code>&lt;html data-tiptap-theme&gt;</code>, and a rule in a stylesheet loaded inside a shadow root never
+matches <code>&lt;html&gt;</code>. An editor in a shadow root therefore follows the page's scheme only when the
+document itself loads the stylesheet: the widget's form Media already does, and a hand-built
+page must link <code>tiptap.bundle.css</code> in the document too, besides any copy inside the shadow
+root. Otherwise set the tokens on the host element, which beats the scheme there.</p>
+<h3 id="content-colours">Content colours<a class="headerlink" href="#content-colours" title="Permanent link">&para;</a></h3>
+<p>In the dark scheme the editing area is a dark paper a step lighter than the toolbar
+(<code>--tiptap-content-bg</code>), and the chrome around it goes dark. Stored content is never
+rewritten: the HTML a field posts is the same in both schemes. Two things follow:</p>
+<ul>
+<li>The built-in highlights are light backgrounds with no text colour, so the dark scheme
+  gives a highlighted run that has no colour of its own a dark ink
+  (<code>--tiptap-highlight-ink</code>). A run with an inline colour keeps it.</li>
+<li>An authored dark text colour (the <code>#1f2329</code> swatch, for one) stays dark, so it reads
+  poorly on the dark paper. It is shown as stored, because that is how it will look where
+  it is published. A project whose authors use dark text a lot can keep a light paper in
+  the dark scheme by setting <code>--tiptap-content-bg</code> and <code>--tiptap-content-fg</code> (as a pair)
+  to light values.</li>
+</ul>
+<p>The editor's outer border plays the same role in both schemes; neither scheme claims a
+contrast ratio for it.</p>
 <h2 id="targeting-parts">Targeting parts<a class="headerlink" href="#targeting-parts" title="Permanent link">&para;</a></h2>
 <p>The shell uses stable, namespaced classes you can style directly: <code>.django-tiptap</code>
 (shell), <code>.django-tiptap__toolbar</code>, <code>.django-tiptap__group</code>, <code>.django-tiptap__btn</code>
 (<code>.is-active</code>), <code>.django-tiptap__content</code>, <code>.django-tiptap__statusbar</code>,
 <code>.django-tiptap .ProseMirror</code> (the editing surface), and the dropdown/menu/swatch/modal
 classes.</p>
+<p>Toggle buttons (those with an active state, including <code>link</code> and any <code>ui.registerButton</code>
+spec with <code>isActive</code>) carry <code>aria-pressed</code> alongside <code>.is-active</code>; dropdown triggers carry
+<code>aria-expanded</code> alongside <code>.is-open</code>. Either attribute is a styling hook as good as the class.</p>
+<p>The font-size trigger shows the current size as text (<code>Default</code>, <code>16</code>) rather than a glyph:
+<code>.django-tiptap__value-text</code> is the visible value and <code>.django-tiptap__value-sizer</code> an
+invisible stack of every label in the same grid cell, which keeps the trigger as wide as
+its widest label (in the active locale and <code>fontSizes</code>) so it does not shift as the caret
+moves. Its accessible name is the <code>fontSizeValue</code> string (<code>"{name}: {value}"</code>, e.g.
+<code>Font size: 16</code>); a locale registered with <code>registerLocale</code> can reword it.</p>
+<p>A button given a <a href="../configuration/"><code>toolbarLabels</code></a> entry carries
+<code>.django-tiptap__btn--labelled</code> and its text in <code>.django-tiptap__btn-label</code>, after the
+glyph and before a dropdown's caret. The span does not wrap and ends in an ellipsis past
+<code>16em</code>; the button grows to fit it. The toolbar wraps by group, and a group's own buttons
+wrap too, so a narrow field never pushes one out of reach. On <code>fontSize</code>
+the label takes the readout's place.</p>
 <h2 id="region-renderers-tier-2-semi-stable">Region renderers (tier 2, semi-stable)<a class="headerlink" href="#region-renderers-tier-2-semi-stable" title="Permanent link">&para;</a></h2>
 <p>When tokens and classes aren't enough, replace a whole chrome <strong>region</strong> while keeping the
 rest of the editor. <code>ui.setRenderer(region, fn)</code> registers a renderer for one region; <code>fn(ctx)</code>
@@ -1205,7 +1487,7 @@ overlays):</p>
 </tr>
 <tr>
 <td><code>ctx.t</code></td>
-<td>the active translator (<code>ctx.t("bold")</code>)</td>
+<td>the active translator (<code>ctx.t("bold")</code>; with named parameters, <code>ctx.t("fontSizeValue", { name: ctx.t("fontSize"), value: "16" })</code>, which fills <code>{name}</code> and <code>{value}</code>)</td>
 </tr>
 <tr>
 <td><code>ctx.getButton(key)</code></td>
@@ -1213,15 +1495,15 @@ overlays):</p>
 </tr>
 </tbody>
 </table>
-<div class="language-js highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// A custom statusbar showing a live character count.</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;statusbar&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">el</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nx">el</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;django-tiptap__statusbar&quot;</span><span class="p">;</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">el</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">getText</span><span class="p">().</span><span class="nx">length</span><span class="si">}</span><span class="sb"> characters`</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="p">);</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nx">update</span><span class="p">();</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">el</span><span class="p">;</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">});</span>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// A custom statusbar showing a live character count.</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;statusbar&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">el</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nx">el</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;django-tiptap__statusbar&quot;</span><span class="p">;</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">el</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">getText</span><span class="p">().</span><span class="nx">length</span><span class="si">}</span><span class="sb"> characters`</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="p">);</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="nx">update</span><span class="p">();</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">el</span><span class="p">;</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p">});</span>
 </span></code></pre></div>
 <p>A region renderer returns a static node — wire your own reactivity off <code>ctx.editor</code> (as above).
 The built-in toolbar's button-state refresh only applies to the <em>default</em> toolbar.</p>
@@ -1229,21 +1511,21 @@ The built-in toolbar's button-state refresh only applies to the <em>default</em>
 <p><code>"bubbleMenu"</code> and <code>"floatingMenu"</code> are overlays positioned over the editor by the package (a
 lean built-in positioner — no <code>tippy.js</code>). Your renderer supplies the contents; it's shown/hidden
 and positioned automatically as the selection changes, and clamped within the editor box.</p>
-<div class="language-js highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// A bubble toolbar over selected text, reusing built-in button specs.</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;bubbleMenu&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">key</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;italic&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;link&quot;</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">spec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">getButton</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">btn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;button&quot;</span><span class="p">);</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;button&quot;</span><span class="p">;</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;django-tiptap__btn&quot;</span><span class="p">;</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">innerHTML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">spec</span><span class="p">.</span><span class="nx">icon</span><span class="p">;</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;mousedown&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">());</span><span class="w"> </span><span class="c1">// keep the selection</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">spec</span><span class="p">.</span><span class="nx">onClick</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">));</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="nx">bar</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">btn</span><span class="p">);</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">bar</span><span class="p">;</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="p">});</span>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// A bubble toolbar over selected text, reusing built-in button specs.</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;bubbleMenu&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">);</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">key</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;italic&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;link&quot;</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">spec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">getButton</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">btn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;button&quot;</span><span class="p">);</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;button&quot;</span><span class="p">;</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;django-tiptap__btn&quot;</span><span class="p">;</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">innerHTML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">spec</span><span class="p">.</span><span class="nx">icon</span><span class="p">;</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;mousedown&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">());</span><span class="w"> </span><span class="c1">// keep the selection</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="nx">btn</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">spec</span><span class="p">.</span><span class="nx">onClick</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">editor</span><span class="p">));</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="nx">bar</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">btn</span><span class="p">);</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">bar</span><span class="p">;</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="p">});</span>
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Keep the selection on click</p>
@@ -1257,13 +1539,13 @@ bubble/floating-menu extensions.</p>
 <p><code>ui.setShellRenderer(fn)</code> hands you the <strong>entire</strong> editor shell. <code>fn(ctx)</code> gets everything a
 region renderer does <strong>plus <code>ctx.content</code></strong> — the ProseMirror host element — and must return the
 shell root with <code>ctx.content</code> placed somewhere inside it, or the editor won't be visible.</p>
-<div class="language-js highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setShellRenderer</span><span class="p">((</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;section&quot;</span><span class="p">);</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-editor-shell&quot;</span><span class="p">;</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="c1">// ... build your own toolbar/chrome here ...</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">content</span><span class="p">);</span><span class="w"> </span><span class="c1">// REQUIRED: the editing surface</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">root</span><span class="p">;</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="p">});</span>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setShellRenderer</span><span class="p">((</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;section&quot;</span><span class="p">);</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-editor-shell&quot;</span><span class="p">;</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="c1">// ... build your own toolbar/chrome here ...</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">content</span><span class="p">);</span><span class="w"> </span><span class="c1">// REQUIRED: the editing surface</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">root</span><span class="p">;</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="p">});</span>
 </span></code></pre></div>
 <p>This is the most powerful and the <strong>most likely to change</strong> across minor releases — treat it as
 experimental and pin your supported version range. See the <a href="../semver/">stability policy</a>.</p>
@@ -1276,12 +1558,12 @@ order before <code>DOMContentLoaded</code>, so the registry is populated before 
 that auto-mounts swapped-in fields — then <strong>skip</strong> that field, so it never mounts before your
 renderers exist. Register everything, then mount explicitly with <code>DjangoTipTap.autoMount()</code> (which
 mounts every field, including <code>manualMount</code> ones) or <code>DjangoTipTap.init(el, config)</code>:</p>
-<div class="language-html highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;…/tiptap.bundle.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;toolbar&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">myToolbar</span><span class="p">);</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerExtension</span><span class="p">(</span><span class="s2">&quot;myMark&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">myMarkFactory</span><span class="p">);</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">autoMount</span><span class="p">();</span><span class="w"> </span><span class="c1">// now mount the manualMount fields</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<div class="language-html highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;…/tiptap.bundle.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setRenderer</span><span class="p">(</span><span class="s2">&quot;toolbar&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">myToolbar</span><span class="p">);</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">registerExtension</span><span class="p">(</span><span class="s2">&quot;myMark&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">myMarkFactory</span><span class="p">);</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">autoMount</span><span class="p">();</span><span class="w"> </span><span class="c1">// now mount the manualMount fields</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
 </span></code></pre></div>
 
 

@@ -781,7 +781,16 @@
 so it is safe to drop into a preview node. For an email-style preview, render <code>html</code> into
 an iframe with your email CSS instead of a <code>&lt;div&gt;</code>.</p>
 <p>Because <code>onChange</code> is a JS function it can't travel through the <code>data-tiptap-config</code>
-attribute used by auto-mount — use <code>init()</code> (Path B) when you need it.</p>
+attribute used by auto-mount — use <code>init()</code> (Path B) when you need it. An auto-mounted
+field fires <code>input</code> on its bound textarea instead (see
+<a href="../../api/#events-on-the-bound-textarea">Events on the bound textarea</a>); in HTML storage
+the textarea's value is the HTML to preview:</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;id_body&quot;</span><span class="p">);</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nx">field</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nx">preview</span><span class="p">.</span><span class="nx">innerHTML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">field</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">});</span>
+</span></code></pre></div>
+<p>In JSON storage the value is the <code>{doc, html}</code> envelope, so preview <code>JSON.parse(field.value).html</code>.</p>
 
 
 

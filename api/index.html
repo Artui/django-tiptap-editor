@@ -658,6 +658,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#events-on-the-bound-textarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events on the bound textarea
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#explicit-init-path-b" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1187,6 +1198,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#events-on-the-bound-textarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events on the bound textarea
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#explicit-init-path-b" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1430,18 +1452,47 @@ more swap shapes are handled:</p>
 builds. The automatic triggers (initial scan + the <code>MutationObserver</code>) then skip it; mount it
 yourself once you're ready with <code>DjangoTipTap.autoMount()</code> (mounts every field, including
 manualMount ones) or <code>DjangoTipTap.init(el, config)</code>. See <a href="../theming/#load-order">Theming → Load order</a>.</p>
+<h3 id="events-on-the-bound-textarea">Events on the bound textarea<a class="headerlink" href="#events-on-the-bound-textarea" title="Permanent link">&para;</a></h3>
+<p>Every mounted field, auto-mounted or explicit, fires <code>input</code> and <code>change</code> on its bound
+<code>&lt;textarea&gt;</code>, both bubbling, so a listener on the textarea or its form (htmx
+<code>hx-trigger="input changed delay:300ms"</code>, a form autosave, a dirty-form check) sees every
+edit, toolbar edits included:</p>
+<ul>
+<li><strong><code>input</code></strong> fires once per edit that changes the stored value: typing, a toolbar button, a
+  merge tag, an image upload, a programmatic command. It is dispatched in a microtask after
+  the value is written, so a listener reads the new value and may run editor commands.
+  Mounting fires nothing, and so does an update that leaves the stored value as it was
+  (opening and closing source view, <code>setContent</code> of the same content).</li>
+<li><strong><code>change</code></strong> fires when focus leaves the editor's shell and the value differs from the
+  last <code>change</code>. Moving focus inside the shell (the colour picker, the source textarea)
+  does not count as leaving; an edit made while focus was elsewhere fires at the next leave.</li>
+<li><strong>Source view writes through.</strong> While it is open, each keystroke stores what closing it
+  would store (the source parsed through the schema) and fires one <code>input</code>, so an autosave
+  never reads a stale value.</li>
+</ul>
+<p>The editor's own native <code>input</code> and <code>change</code> events keep bubbling from inside the shell,
+so a form-level listener sees both: a typed keystroke arrives once from the editing
+surface and once from the textarea. Filter on <code>event.target</code>; the bound textarea is the
+one whose value is current.</p>
+<div class="language-js highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">form</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;body&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nx">autosave</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">FormData</span><span class="p">(</span><span class="nx">form</span><span class="p">));</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">});</span>
+</span></code></pre></div>
 <h3 id="explicit-init-path-b">Explicit init (Path B)<a class="headerlink" href="#explicit-init-path-b" title="Permanent link">&para;</a></h3>
 <p>For full control — and for the <code>onChange</code> callback, which can't travel through the JSON
-<code>data-tiptap-config</code> attribute:</p>
-<div class="language-html highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;ed&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">editor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;ed&quot;</span><span class="p">),</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;400px&quot;</span><span class="p">,</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nx">imageUploadUrl</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/editor/upload/&quot;</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nx">mergeTags</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;First name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;{{ first_name }}&quot;</span><span class="w"> </span><span class="p">}],</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nx">onChange</span><span class="p">(</span><span class="nx">html</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* live preview, autosave, … */</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p">});</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<code>data-tiptap-config</code> attribute (an auto-mounted field has the
+<a href="#events-on-the-bound-textarea">textarea events</a> instead):</p>
+<div class="language-html highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;ed&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">editor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;ed&quot;</span><span class="p">),</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;400px&quot;</span><span class="p">,</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nx">imageUploadUrl</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/editor/upload/&quot;</span><span class="p">,</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="nx">mergeTags</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;First name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;{{ first_name }}&quot;</span><span class="w"> </span><span class="p">}],</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="nx">onChange</span><span class="p">(</span><span class="nx">html</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* live preview, autosave, … */</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p">});</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
 </span></code></pre></div>
 <p>See <a href="../extending/">Extending</a> for <code>registerExtension</code> / <code>registerButton</code> and the load
 order rules, and <a href="../theming/">Theming</a> for <code>setTokens</code>, <code>setRenderer</code>, and <code>setShellRenderer</code>.</p>
