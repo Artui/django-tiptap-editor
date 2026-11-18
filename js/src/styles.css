@@ -253,6 +253,27 @@
   gap: 1px;
 }
 
+/* The font-size trigger's readout: the value and an invisible stack of every
+   label share one grid cell, so the widest label sets the width. */
+.django-tiptap__value,
+.django-tiptap__value-sizer {
+  display: inline-grid;
+}
+
+.django-tiptap__value {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.django-tiptap__value > *,
+.django-tiptap__value-sizer > * {
+  grid-area: 1 / 1;
+}
+
+.django-tiptap__value-sizer {
+  visibility: hidden;
+}
+
 .django-tiptap__panel {
   position: absolute;
   top: calc(100% + 4px);
