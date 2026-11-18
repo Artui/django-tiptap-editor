@@ -40,6 +40,7 @@ export function selectControl(opts: {
   triggerHTML: string;
   options: SelectOptions;
   styleOption?: boolean;
+  showValue?: boolean;
 }): ButtonSpec {
   return {
     title: opts.title,
@@ -72,9 +73,42 @@ export function selectControl(opts: {
           return list;
         },
       });
-      return { el: dd.el };
+      if (!opts.showValue) {
+        return { el: dd.el };
+      }
+      const readout = valueReadout([t("default"), ...options.map((o) => o.label)]);
+      dd.trigger.prepend(readout.el);
+      const refresh = (): void => {
+        const current = editor.getAttributes("textStyle")[opts.attr] as string | undefined;
+        const text = current
+          ? (options.find((o) => o.value === current)?.label ?? current.replace(/px$/, ""))
+          : t("default");
+        readout.text.textContent = text;
+        dd.trigger.setAttribute("aria-label", t(`${opts.title}Value`, { name: t(opts.title), value: text }));
+      };
+      refresh();
+      return { el: dd.el, refresh };
     },
   };
+}
+
+// The visible value over an invisible stack of every label in one grid cell, so the
+// trigger is as wide as its widest label and never jitters as the value changes.
+function valueReadout(labels: string[]): { el: HTMLElement; text: HTMLElement } {
+  const el = document.createElement("span");
+  el.className = "django-tiptap__value";
+  const text = document.createElement("span");
+  text.className = "django-tiptap__value-text";
+  const sizer = document.createElement("span");
+  sizer.className = "django-tiptap__value-sizer";
+  sizer.setAttribute("aria-hidden", "true");
+  for (const label of labels) {
+    const span = document.createElement("span");
+    span.textContent = label;
+    sizer.appendChild(span);
+  }
+  el.append(text, sizer);
+  return { el, text };
 }
 
 export type MenuItem = { label: string; run: () => void } | "separator";

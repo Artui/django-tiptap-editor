@@ -202,6 +202,17 @@ The shell uses stable, namespaced classes you can style directly: `.django-tipta
 `.django-tiptap .ProseMirror` (the editing surface), and the dropdown/menu/swatch/modal
 classes.
 
+Toggle buttons (those with an active state, including `link` and any `ui.registerButton`
+spec with `isActive`) carry `aria-pressed` alongside `.is-active`; dropdown triggers carry
+`aria-expanded` alongside `.is-open`. Either attribute is a styling hook as good as the class.
+
+The font-size trigger shows the current size as text (`Default`, `16`) rather than a glyph:
+`.django-tiptap__value-text` is the visible value and `.django-tiptap__value-sizer` an
+invisible stack of every label in the same grid cell, which keeps the trigger as wide as
+its widest label (in the active locale and `fontSizes`) so it does not shift as the caret
+moves. Its accessible name is the `fontSizeValue` string (`"{name}: {value}"`, e.g.
+`Font size: 16`); a locale registered with `registerLocale` can reword it.
+
 ## Region renderers (tier 2, semi-stable)
 
 When tokens and classes aren't enough, replace a whole chrome **region** while keeping the

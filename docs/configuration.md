@@ -23,7 +23,7 @@ any omitted key.
 | `imageListUrl` | str | Enables the library picker. |
 | `imageFileTypes` | str | Comma-separated extensions for the upload dialog, e.g. `"png,jpg,gif"`. |
 | `fontFamilies` | list[str] | Presets for the `fontFamily` dropdown; each a full CSS font stack (label = first segment, quotes stripped). Omit for the built-in list. |
-| `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`). Omit for the built-in list. |
+| `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`); the trigger shows the label of the size under the caret. Omit for the built-in list. |
 | `textColors` | list[str] | Swatches for the `color` (text color) dropdown; each any CSS color. Omit for the built-in palette. |
 | `highlightColors` | list[str] | Swatches for the `highlight` (background) dropdown; each any CSS color. Omit for the built-in palette. |
 | `colorPicker` | bool | Adds a native color picker under both color swatch grids, for colors the palettes don't carry. Default `False`. |

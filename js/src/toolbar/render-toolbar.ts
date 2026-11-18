@@ -94,7 +94,9 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
       groupEl.appendChild(button);
       refreshers.push(() => {
         if (spec.isActive) {
-          button.classList.toggle("is-active", spec.isActive(editor));
+          const active = spec.isActive(editor);
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
         }
         if (spec.isEnabled) {
           button.toggleAttribute("disabled", !spec.isEnabled(editor));

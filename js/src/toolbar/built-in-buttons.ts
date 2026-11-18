@@ -113,7 +113,8 @@ const BUILTIN: Record<string, ButtonSpec> = {
   fontSize: needs("fontSize", selectControl({
     title: "fontSize",
     attr: "fontSize",
-    triggerHTML: `<span class="django-tiptap__glyph">A<small>A</small></span>${caret}`,
+    triggerHTML: caret,
+    showValue: true,
     options: (e) =>
       (configFor(e).fontSizes ?? FONT_SIZES).map((v) => ({ label: v.replace("px", ""), value: v })),
   })),

@@ -26,6 +26,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   trigger.title = opts.title;
   trigger.setAttribute("aria-label", opts.title);
   trigger.setAttribute("aria-haspopup", "true");
+  trigger.setAttribute("aria-expanded", "false");
   trigger.innerHTML = opts.triggerHTML;
 
   const panel = document.createElement("div");
@@ -38,6 +39,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     }
     panel.hidden = true;
     trigger.classList.remove("is-open");
+    trigger.setAttribute("aria-expanded", "false");
     openPanels.delete(close);
     document.removeEventListener("mousedown", onOutside, true);
     document.removeEventListener("keydown", onKey, true);
@@ -63,6 +65,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     panel.appendChild(opts.buildPanel(close));
     panel.hidden = false;
     trigger.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
     openPanels.add(close);
     document.addEventListener("mousedown", onOutside, true);
     document.addEventListener("keydown", onKey, true);

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Toolbar state for assistive technology.** Every toolbar button with an active state
+  carries `aria-pressed` (`"true"` / `"false"`) that follows `.is-active` on each refresh:
+  the built-in toggles, `link` (which opens a prompt rather than toggling, but reports the
+  same state sighted users see), and any `ui.registerButton` spec with `isActive`. Buttons
+  without one (`undo`, `redo`, `unlink`, `clearFormatting`) stay without it. Every dropdown
+  trigger carries `aria-expanded`, `"false"` until opened and again after every way of
+  closing it. Before, both states were visible only as classes.
+
+- **Placeholders in translated strings.** The translator takes optional named parameters,
+  `t(key, { name: "..." })`, filling `{name}` in the string; a key called without them
+  returns what it did before. The new `fontSizeValue` key (`"{name}: {value}"` in en and
+  sv) names the font-size trigger.
+
 - **A `horizontalRule` toolbar button.** Name it in `toolbar` to insert a rule at the cursor;
   it is opt-in, so the default toolbar is unchanged, and it is hidden (with one warning) when
   the field's `features` leave `horizontalRule` out. Before, a toolbar naming it logged
@@ -47,6 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [Events on the bound textarea](https://artui.github.io/django-tiptap-editor/api/#events-on-the-bound-textarea).
 
 ### Changed
+
+- **The font-size trigger shows the current size instead of the `AA` glyph.** It reads
+  `Default` (translated) on unsized text and the preset label (`16`) inside a sized run, a
+  size off the `fontSizes` list showing without its `px`; its accessible name follows
+  (`Font size: 16`), so the visible text is inside the name, and its tooltip stays the
+  plain `Font size`. The trigger is as wide as its widest label, so it does not shift as
+  the caret moves. `fontFamily` and the other dropdowns keep their glyphs.
 
 - **Pasted plain URLs outside `linkProtocols` no longer become links in the editor.**
   Tiptap's own list (`ftp`, `sms`, `xmpp`, a bare email address as `mailto` and others) used
