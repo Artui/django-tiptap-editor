@@ -14,21 +14,117 @@
    a shadow root, as a web component wrapping the editor does, never matches
    :root there, so without it that editor had no defaults at all (no height, no
    border colour). There the defaults sit on the host element, so a token set on
-   the document's :root stops at it; a rule on the host element does reach it. */
+   the document's :root stops at it; a rule on the host element does reach it.
+
+   Colour tokens read a private --_tiptap-* value first: the scheme rules below
+   set only those, so no rule but this one declares a --tiptap-* default and a
+   token set by setTokens or a host rule still wins in either scheme. A token
+   with no fallback here is invalid until a scheme sets it, so its use site
+   falls back to the 0.14.0 value (content-bg to --tiptap-bg, and so on). */
 :where(:root, :host) {
   --tiptap-height: 360px;
   --tiptap-max-height: none;
   --tiptap-font: inherit;
-  --tiptap-fg: #1f2329;
-  --tiptap-bg: #ffffff;
-  --tiptap-border: #d0d5dd;
+  --tiptap-fg: var(--_tiptap-fg, #1f2329);
+  --tiptap-bg: var(--_tiptap-bg, #ffffff);
+  --tiptap-border: var(--_tiptap-border, #d0d5dd);
   --tiptap-radius: 8px;
-  --tiptap-toolbar-bg: #f7f8fa;
-  --tiptap-btn-fg: #3a4151;
-  --tiptap-btn-hover-bg: #e7eaef;
-  --tiptap-btn-active-bg: #e0e7ff;
-  --tiptap-btn-active-fg: #3538cd;
-  --tiptap-accent: #3538cd;
+  --tiptap-toolbar-bg: var(--_tiptap-toolbar-bg, #f7f8fa);
+  --tiptap-btn-fg: var(--_tiptap-btn-fg, #3a4151);
+  --tiptap-btn-hover-bg: var(--_tiptap-btn-hover-bg, #e7eaef);
+  --tiptap-btn-active-bg: var(--_tiptap-btn-active-bg, #e0e7ff);
+  --tiptap-btn-active-fg: var(--_tiptap-btn-active-fg, #3538cd);
+  --tiptap-accent: var(--_tiptap-accent, #3538cd);
+  --tiptap-content-bg: var(--_tiptap-content-bg);
+  --tiptap-content-fg: var(--_tiptap-content-fg);
+  --tiptap-content-border: var(--_tiptap-content-border);
+  --tiptap-highlight-ink: var(--_tiptap-highlight-ink);
+  --tiptap-highlight-glyph-bg: var(--_tiptap-highlight-glyph-bg, #fff3a3);
+  --tiptap-highlight-glyph-fg: var(--_tiptap-highlight-glyph-fg);
+  --tiptap-swatch-border: var(--_tiptap-swatch-border, rgba(16, 24, 40, 0.15));
+  --tiptap-swatch-border-hover: var(--_tiptap-swatch-border-hover, rgba(16, 24, 40, 0.3));
+  --tiptap-shadow-color: var(--_tiptap-shadow-color, rgba(16, 24, 40, 0.16));
+  --tiptap-modal-shadow-color: var(--_tiptap-modal-shadow-color, rgba(16, 24, 40, 0.3));
+  --tiptap-overlay-bg: var(--_tiptap-overlay-bg, rgba(16, 24, 40, 0.5));
+  --tiptap-color-scheme: var(--_tiptap-color-scheme);
+}
+
+/* The dark set, picked by data-tiptap-theme on <html> (the glue writes
+   TIPTAP_COLOR_SCHEME there unless the host set it). Root-only and
+   zero-specificity like the defaults; "system" follows the OS. The forced-light
+   rule comes last, so source order settles any tie in its favour. */
+@media (prefers-color-scheme: dark) {
+  :where(html[data-tiptap-theme="system"]) {
+    --_tiptap-fg: #e6e8eb;
+    --_tiptap-bg: #1c1f24;
+    --_tiptap-border: #5b6270;
+    --_tiptap-toolbar-bg: #252a31;
+    --_tiptap-btn-fg: #c4c9d2;
+    --_tiptap-btn-hover-bg: #353b46;
+    --_tiptap-btn-active-bg: #33386b;
+    --_tiptap-btn-active-fg: #c9cbff;
+    --_tiptap-accent: #9a9dff;
+    --_tiptap-content-bg: #2f343d;
+    --_tiptap-content-fg: #e6e8eb;
+    --_tiptap-content-border: #858d9b;
+    --_tiptap-highlight-ink: #1f2329;
+    --_tiptap-highlight-glyph-bg: #fff3a3;
+    --_tiptap-highlight-glyph-fg: #1f2329;
+    --_tiptap-swatch-border: rgba(255, 255, 255, 0.35);
+    --_tiptap-swatch-border-hover: rgba(255, 255, 255, 0.6);
+    --_tiptap-shadow-color: rgba(0, 0, 0, 0.5);
+    --_tiptap-modal-shadow-color: rgba(0, 0, 0, 0.6);
+    --_tiptap-overlay-bg: rgba(0, 0, 0, 0.6);
+    --_tiptap-color-scheme: dark;
+  }
+}
+
+:where(html[data-tiptap-theme="dark"]) {
+  --_tiptap-fg: #e6e8eb;
+  --_tiptap-bg: #1c1f24;
+  --_tiptap-border: #5b6270;
+  --_tiptap-toolbar-bg: #252a31;
+  --_tiptap-btn-fg: #c4c9d2;
+  --_tiptap-btn-hover-bg: #353b46;
+  --_tiptap-btn-active-bg: #33386b;
+  --_tiptap-btn-active-fg: #c9cbff;
+  --_tiptap-accent: #9a9dff;
+  --_tiptap-content-bg: #2f343d;
+  --_tiptap-content-fg: #e6e8eb;
+  --_tiptap-content-border: #858d9b;
+  --_tiptap-highlight-ink: #1f2329;
+  --_tiptap-highlight-glyph-bg: #fff3a3;
+  --_tiptap-highlight-glyph-fg: #1f2329;
+  --_tiptap-swatch-border: rgba(255, 255, 255, 0.35);
+  --_tiptap-swatch-border-hover: rgba(255, 255, 255, 0.6);
+  --_tiptap-shadow-color: rgba(0, 0, 0, 0.5);
+  --_tiptap-modal-shadow-color: rgba(0, 0, 0, 0.6);
+  --_tiptap-overlay-bg: rgba(0, 0, 0, 0.6);
+  --_tiptap-color-scheme: dark;
+}
+
+:where(html[data-tiptap-theme="light"]) {
+  --_tiptap-fg: initial;
+  --_tiptap-bg: initial;
+  --_tiptap-border: initial;
+  --_tiptap-toolbar-bg: initial;
+  --_tiptap-btn-fg: initial;
+  --_tiptap-btn-hover-bg: initial;
+  --_tiptap-btn-active-bg: initial;
+  --_tiptap-btn-active-fg: initial;
+  --_tiptap-accent: initial;
+  --_tiptap-content-bg: initial;
+  --_tiptap-content-fg: initial;
+  --_tiptap-content-border: initial;
+  --_tiptap-highlight-ink: initial;
+  --_tiptap-highlight-glyph-bg: initial;
+  --_tiptap-highlight-glyph-fg: initial;
+  --_tiptap-swatch-border: initial;
+  --_tiptap-swatch-border-hover: initial;
+  --_tiptap-shadow-color: initial;
+  --_tiptap-modal-shadow-color: initial;
+  --_tiptap-overlay-bg: initial;
+  --_tiptap-color-scheme: initial;
 }
 
 .django-tiptap {
@@ -40,6 +136,7 @@
   background: var(--tiptap-bg);
   color: var(--tiptap-fg);
   font-family: var(--tiptap-font);
+  color-scheme: var(--tiptap-color-scheme);
   overflow: hidden;
 }
 
@@ -54,7 +151,7 @@
   background: var(--tiptap-bg);
   border: 1px solid var(--tiptap-border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+  box-shadow: 0 8px 24px var(--tiptap-shadow-color);
 }
 
 /* Toolbar */
@@ -131,7 +228,8 @@
 }
 
 .django-tiptap__glyph--highlight {
-  background: #fff3a3;
+  background: var(--tiptap-highlight-glyph-bg);
+  color: var(--tiptap-highlight-glyph-fg, currentColor);
   border-radius: 2px;
   padding: 0 2px;
 }
@@ -167,7 +265,7 @@
   background: var(--tiptap-bg);
   border: 1px solid var(--tiptap-border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+  box-shadow: 0 8px 24px var(--tiptap-shadow-color);
 }
 
 .django-tiptap__menu {
@@ -214,7 +312,7 @@
   width: 22px;
   height: 22px;
   padding: 0;
-  border: 1px solid rgba(16, 24, 40, 0.15);
+  border: 1px solid var(--tiptap-swatch-border);
   border-radius: 4px;
   cursor: pointer;
 }
@@ -252,7 +350,7 @@
   flex: none;
   width: 22px;
   height: 22px;
-  border: 1px solid rgba(16, 24, 40, 0.15);
+  border: 1px solid var(--tiptap-swatch-border);
   border-radius: 4px;
   overflow: hidden;
   background: conic-gradient(
@@ -269,7 +367,7 @@
 }
 
 .django-tiptap__picker:hover .django-tiptap__picker-chip {
-  border-color: rgba(16, 24, 40, 0.3);
+  border-color: var(--tiptap-swatch-border-hover);
 }
 
 /* The native control, made invisible but still the click target: the OS picker
@@ -341,12 +439,14 @@
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--tiptap-fg);
-  background: var(--tiptap-bg);
+  color: var(--tiptap-content-fg, var(--tiptap-fg));
+  background: var(--tiptap-content-bg, var(--tiptap-bg));
 }
 
 .django-tiptap .ProseMirror {
   min-height: var(--tiptap-height);
+  color: var(--tiptap-content-fg, currentColor);
+  background: var(--tiptap-content-bg, transparent);
   padding: 12px 14px;
   outline: none;
 }
@@ -369,8 +469,8 @@
 }
 
 /* Host stylesheets style bare table elements, and this content area keeps its
-   own light background in every theme, so their rules have to be undone here
-   rather than left to inherit. The Django admin's base.css is the case that
+   own background whatever the page's theme, so their rules have to be undone
+   here rather than left to inherit. The Django admin's base.css is the case that
    shipped: it paints every row (odd and even, near-black under its dark
    theme, behind this editor's dark text) and sets every cell to a smaller
    font and line height, with semi-bold headers. A cell's own background is
@@ -381,7 +481,7 @@
 
 .django-tiptap .ProseMirror th,
 .django-tiptap .ProseMirror td {
-  border: 1px solid var(--tiptap-border);
+  border: 1px solid var(--tiptap-content-border, var(--tiptap-border));
   padding: 4px 8px;
   font-size: inherit;
   line-height: inherit;
@@ -393,6 +493,14 @@
 
 .django-tiptap .ProseMirror a {
   color: var(--tiptap-accent);
+}
+
+/* Built-in highlights are light backgrounds with no text colour, so on a dark
+   paper the inherited light text vanishes on them. Display only: an inline
+   color still wins and nothing stored changes. Zero-specificity, so any host
+   rule beats it; with no ink set (the light scheme) it is plain inheritance. */
+:where(.django-tiptap .ProseMirror span[style*="background-color"]:not([style^="color"]):not([style*=" color"]):not([style*=";color"])) {
+  color: var(--tiptap-highlight-ink, currentColor);
 }
 
 .django-tiptap .ProseMirror img {
@@ -417,7 +525,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(16, 24, 40, 0.5);
+  background: var(--tiptap-overlay-bg, var(--_tiptap-overlay-bg, rgba(16, 24, 40, 0.5)));
 }
 
 .django-tiptap__modal {
@@ -426,11 +534,13 @@
   width: min(680px, 92vw);
   max-height: 80vh;
   overflow: hidden;
-  background: var(--tiptap-bg, #fff);
-  color: var(--tiptap-fg, #1f2329);
+  background: var(--tiptap-bg, var(--_tiptap-bg, #fff));
+  color: var(--tiptap-fg, var(--_tiptap-fg, #1f2329));
   border-radius: var(--tiptap-radius, 8px);
-  box-shadow: 0 16px 48px rgba(16, 24, 40, 0.3);
+  box-shadow: 0 16px 48px
+    var(--tiptap-modal-shadow-color, var(--_tiptap-modal-shadow-color, rgba(16, 24, 40, 0.3)));
   font-family: var(--tiptap-font, inherit);
+  color-scheme: var(--tiptap-color-scheme, var(--_tiptap-color-scheme));
 }
 
 .django-tiptap__modal-header {
@@ -438,7 +548,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--tiptap-border, #d0d5dd);
+  border-bottom: 1px solid var(--tiptap-border, var(--_tiptap-border, #d0d5dd));
   font-weight: 500;
 }
 
@@ -448,7 +558,7 @@
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  color: var(--tiptap-btn-fg, #3a4151);
+  color: var(--tiptap-btn-fg, var(--_tiptap-btn-fg, #3a4151));
 }
 
 .django-tiptap__modal-body {
@@ -467,7 +577,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 6px;
-  border: 1px solid var(--tiptap-border, #d0d5dd);
+  border: 1px solid var(--tiptap-border, var(--_tiptap-border, #d0d5dd));
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
@@ -489,7 +599,7 @@
 }
 
 .django-tiptap__picker-item:hover {
-  border-color: var(--tiptap-accent, #3538cd);
+  border-color: var(--tiptap-accent, var(--_tiptap-accent, #3538cd));
 }
 
 /* Image resize handles. An overlay tracking the selected image, NOT a wrapper

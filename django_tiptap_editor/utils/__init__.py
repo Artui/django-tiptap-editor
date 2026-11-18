@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django_tiptap_editor.utils.get_asset_mode import get_asset_mode
+from django_tiptap_editor.utils.get_color_scheme import get_color_scheme
 from django_tiptap_editor.utils.get_default_config import get_default_config
 from django_tiptap_editor.utils.get_extra_attributes import get_extra_attributes
 from django_tiptap_editor.utils.get_extra_extensions import get_extra_extensions
@@ -16,6 +17,7 @@ from django_tiptap_editor.utils.validate_config import validate_config
 
 __all__ = [
     "get_asset_mode",
+    "get_color_scheme",
     "get_default_config",
     "get_extra_attributes",
     "get_extra_extensions",

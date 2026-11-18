@@ -12,8 +12,12 @@ make harness   # serves the repo root at http://localhost:8765/harness/
 directly in a browser works too; the server target exists so the page runs over `http://`
 like a real deployment.
 
-Three sections:
+Four sections:
 
+- **Colour scheme** — a `light` / `dark` / `system` switch that writes `data-tiptap-theme`
+  on `<html>` (the page follows it too), above an editor holding every surface the dark
+  set covers: a link, highlights, coloured and authored-dark text, a table and an image,
+  with the colour picker and an image library (`imageListUrl` as a `data:` URL) enabled.
 - **Playground** — a live editor with an `enterKey` mode switch and the serialized value
   the form would POST, updated on every change.
 - **Restricted field** — an email-style field (`features: ["bold", "italic", "link",

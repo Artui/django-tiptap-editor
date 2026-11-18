@@ -7,6 +7,7 @@ import type { AnyExtension } from "@tiptap/core";
 
 import { buildExtensions } from "./build-extensions";
 import { buildShell } from "./build-shell";
+import { applyColorScheme } from "./color-scheme";
 import { htmlToJSON, htmlToStored, renderHTML } from "./convert";
 import { isCssLength } from "./css-length";
 import type { TipTapConfig } from "./default-config";
@@ -216,6 +217,8 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   document
     .querySelectorAll(`[${SHELL_ATTR}="${id}"]`)
     .forEach((orphan) => orphan.remove());
+
+  applyColorScheme(element);
 
   const content = document.createElement("div");
   content.className = "django-tiptap__content";

@@ -20,6 +20,15 @@ STORAGE_FORMATS = frozenset({STORAGE_FORMAT_HTML, STORAGE_FORMAT_JSON})
 DEFAULT_LINK_PROTOCOLS = ("http", "https", "mailto", "tel")
 DEFAULT_IMAGE_PROTOCOLS = ("http", "https", "data")
 
+# data-* attribute carrying TIPTAP_COLOR_SCHEME, which the glue copies to <html>
+# as data-tiptap-theme unless the host already set that attribute.
+COLOR_SCHEME_ATTR = "data-tiptap-color-scheme"
+
+# Colour schemes (see TIPTAP_COLOR_SCHEME). "light" is the default; "system"
+# follows prefers-color-scheme.
+COLOR_SCHEME_LIGHT = "light"
+COLOR_SCHEMES = frozenset({COLOR_SCHEME_LIGHT, "dark", "system"})
+
 # Asset delivery modes (see TIPTAP_ASSET_MODE).
 ASSET_MODE_BUNDLE = "bundle"
 ASSET_MODE_EXTERNAL = "external"
