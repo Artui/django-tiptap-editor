@@ -17,7 +17,8 @@ any omitted key.
 | `toolbar` | list[list[str]] | Groups of [button keys](#toolbar-buttons). Omit for the default. |
 | `features` | list[str] | Built-in extensions this field's editor may use; everything else is off, shortcuts and paste included. Omit for every built-in. See [Restricting features](#restricting-features). |
 | `extensions` | list[str] | Custom extension names (add them to `TIPTAP_EXTRA_EXTENSIONS`). Built-ins listed here change nothing; to turn built-ins off, use [`features`](#restricting-features). |
-| `linkProtocols` | list[str] | Allowed link protocols. Default `["http","https","mailto","tel"]`. |
+| `linkProtocols` | list[str] | Allowed link protocols. Default `["http","https","mailto","tel"]`. Autolinked and pasted plain URLs keep to this list: a scheme outside it stays plain text (a bare email address counts as `mailto`, a bare `www.` address as `http`). |
+| `autolink` | bool | Turns a URL into a link as it is typed, once a space follows it. Default `False`. It follows `linkProtocols`, so with `["http","https"]` a typed `ftp://` URL or bare email address stays plain text. On a field whose `features` leave out `link` the key does nothing and raises nothing. |
 | `imageUploadUrl` | str | Enables image upload (see [Contracts](contracts.md)). |
 | `imageListUrl` | str | Enables the library picker. |
 | `imageFileTypes` | str | Comma-separated extensions for the upload dialog, e.g. `"png,jpg,gif"`. |

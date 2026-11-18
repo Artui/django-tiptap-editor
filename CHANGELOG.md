@@ -30,6 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--tiptap-color-scheme`; their light defaults are the 0.14.0 colours. `get_color_scheme`
   reads the setting. See [Dark mode](https://artui.github.io/django-tiptap-editor/theming/#dark-mode).
 
+- **`autolink` turns a typed URL into a link.** Off by default, so typing behaves as on
+  0.14.0. It follows `linkProtocols`: with `["http", "https"]` a typed `ftp://` URL or bare
+  email address stays plain text. On a field whose `features` leave out `link` it does
+  nothing. A non-boolean value raises `ImproperlyConfigured`. See
+  [Configuration](https://artui.github.io/django-tiptap-editor/configuration/).
+
+### Changed
+
+- **Pasted plain URLs outside `linkProtocols` no longer become links in the editor.**
+  Tiptap's own list (`ftp`, `sms`, `xmpp`, a bare email address as `mailto` and others) used
+  to apply to pasted text whatever `linkProtocols` said, and the server then dropped the
+  link on save. Stored output is unchanged; the editor now shows what will be stored.
+
 ## [0.14.0] — 2026-11-13
 
 ### Added

@@ -99,6 +99,20 @@ const STARTER_KIT_FEATURES = [
 // The StarterKit options for a restricted field: every excluded child false.
 // ListKeymap goes with listItem; its handlers already bail out without the node,
 // but a keymap for a list the field cannot hold is noise in the extension set.
+// Tiptap's `protocols` adds to a built-in list, so autolinked and pasted plain
+// URLs are narrowed to linkProtocols here; a schemeless match takes linkify's
+// default (mailto for an email address, http otherwise).
+function linkSchemeAllowed(protocols: string[]): (url: string) => boolean {
+  const allowed = new Set(protocols.map((p) => p.toLowerCase()));
+  return (url: string): boolean => {
+    const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(url)?.[1];
+    if (scheme) {
+      return allowed.has(scheme.toLowerCase());
+    }
+    return allowed.has(/^[^/?#:]+@[^/?#]+$/.test(url) ? "mailto" : "http");
+  };
+}
+
 function restrictedStarterKit(enabled: (name: string) => boolean): Record<string, false> {
   const off: Record<string, false> = {};
   for (const name of STARTER_KIT_FEATURES) {
@@ -166,8 +180,9 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
       enabled("link"),
       Link.configure({
         openOnClick: false,
-        autolink: false,
+        autolink: config.autolink === true,
         protocols,
+        shouldAutoLink: linkSchemeAllowed(protocols),
         HTMLAttributes: { target: null, rel: null },
       }),
     ],

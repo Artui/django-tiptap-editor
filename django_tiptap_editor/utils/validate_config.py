@@ -87,7 +87,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         ):
             raise ImproperlyConfigured(f"TipTap {key} must be a list of strings, got {value!r}.")
 
-    for key in ("colorPicker", "imageResize"):
+    for key in ("colorPicker", "imageResize", "autolink"):
         value = config.get(key)
         if value is not None and not isinstance(value, bool):
             raise ImproperlyConfigured(f"TipTap {key} must be a boolean, got {value!r}.")

@@ -31,8 +31,12 @@ run in the browser:
 - **ProseMirror's schema is a normalizer.** Content is parsed into a strict document
   model on load; anything the schema doesn't represent — `<script>`, event handlers,
   unknown tags/attributes — is dropped. The editor never *holds* markup it can't model.
-- **Link protocols are allowlisted** (`linkProtocols`, default `http`/`https`/`mailto`/
-  `tel`) and **image `src` is protocol-validated** on insertion.
+- **Autolinked and pasted URLs follow `linkProtocols`** (default `http`/`https`/`mailto`/
+  `tel`): a typed or pasted plain URL outside the list stays text. The editor does not
+  enforce the list on everything: a link in loaded or pasted HTML whose scheme Tiptap
+  accepts by default (`ftp`, `sms`, `xmpp` and others) still loads as a link. The
+  server's allowlist below is what decides what is stored. **Image `src` is
+  protocol-validated** on insertion.
 - **Source view re-parses through the schema**, so what you see equals what the editor
   submits.
 
@@ -180,7 +184,10 @@ Narrowing needs the field's config, and only a form field has it. So:
   narrows the grant narrows its editor, not its stored mirror: a `class` the project grants
   stays in the mirror's `html` on every path that derives it.
 - **`linkProtocols` is project-wide on the server.** A field's own `linkProtocols` limits
-  its editor; the server's allowlist reads the project default.
+  its editor; the server's allowlist reads the project default. A field list wider than
+  the project's lets its editor link (and autolink) a scheme the server strips on save:
+  the text is kept and the link is dropped. Nothing clamps the field's list to the
+  project's.
 
 A link that opens a new browsing context always carries `rel="noopener noreferrer"`,
 whatever the stored document asked for: `rel="opener"` re-enables the `window.opener`
