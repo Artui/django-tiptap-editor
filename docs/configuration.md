@@ -99,7 +99,7 @@ so one bad field does not stop the rest of the page mounting.
 
 `undo` `redo` · `bold` `italic` `underline` `strike` `code` · `fontSize` `fontFamily`
 `color` `highlight` · `h1` `h2` `h3` `paragraph` · `bulletList` `orderedList`
-`blockquote` · `alignLeft` `alignCenter` `alignRight` `alignJustify` · `image` `table` ·
+`blockquote` `horizontalRule` (opt-in) · `alignLeft` `alignCenter` `alignRight` `alignJustify` · `image` `table` ·
 `link` `unlink` `clearFormatting` · `sourceView` · `mergeTags` (opt-in).
 
 A group is an inner array; groups render with separators. Register your own buttons with

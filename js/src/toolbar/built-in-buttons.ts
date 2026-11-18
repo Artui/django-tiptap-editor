@@ -174,6 +174,13 @@ const BUILTIN: Record<string, ButtonSpec> = {
     isActive: (e) => e.isActive("blockquote"),
     onClick: (e) => e.chain().focus().toggleBlockquote().run(),
   },
+  horizontalRule: {
+    icon: ICONS.horizontalRule,
+    title: "horizontalRule",
+    requires: "horizontalRule",
+    isEnabled: (e) => e.can().setHorizontalRule(),
+    onClick: (e) => e.chain().focus().setHorizontalRule().run(),
+  },
   alignLeft: align("left"),
   alignCenter: align("center"),
   alignRight: align("right"),

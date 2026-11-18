@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A `horizontalRule` toolbar button.** Name it in `toolbar` to insert a rule at the cursor;
+  it is opt-in, so the default toolbar is unchanged, and it is hidden (with one warning) when
+  the field's `features` leave `horizontalRule` out. Before, a toolbar naming it logged
+  `unknown toolbar button` and rendered nothing.
+
 - **A dark colour scheme, opt-in through `TIPTAP_COLOR_SCHEME`.** The setting takes
   `"light"` (the default, which changes nothing), `"dark"` or `"system"`, which follows
   `prefers-color-scheme`. The widget carries it and the glue writes it to `<html>` as
