@@ -5,7 +5,14 @@ from typing import Any
 
 from django import forms
 
-from django_tiptap_editor.constants import BUNDLE_CSS, BUNDLE_JS, CONFIG_ATTR, STORAGE_ATTR
+from django_tiptap_editor.constants import (
+    BUNDLE_CSS,
+    BUNDLE_JS,
+    COLOR_SCHEME_ATTR,
+    CONFIG_ATTR,
+    STORAGE_ATTR,
+)
+from django_tiptap_editor.utils.get_color_scheme import get_color_scheme
 from django_tiptap_editor.utils.get_default_config import get_default_config
 from django_tiptap_editor.utils.get_storage_format import get_storage_format
 from django_tiptap_editor.utils.resolve_features import resolve_features
@@ -47,6 +54,9 @@ class TipTapWidget(forms.Textarea):
         config = _with_resolved_features(self.get_config(widget_attrs))
         widget_attrs[CONFIG_ATTR] = json.dumps(config)
         widget_attrs[STORAGE_ATTR] = self.storage or get_storage_format()
+        scheme = get_color_scheme()
+        if scheme is not None:
+            widget_attrs[COLOR_SCHEME_ATTR] = scheme
         return context
 
     @property

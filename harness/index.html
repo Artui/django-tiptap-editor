@@ -17,6 +17,28 @@
         --fail: #b02a37;
         --code-bg: #f7f8fa;
       }
+      /* The page follows the editor's scheme switch, so a dark editor is seen on
+         a dark page the way a dark admin shows it. */
+      :root[data-tiptap-theme="dark"] {
+        color-scheme: dark;
+        --bg: #121417;
+        --panel: #1a1d21;
+        --ink: #e6e8eb;
+        --muted: #9aa1ad;
+        --line: #343a43;
+        --code-bg: #20242a;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root[data-tiptap-theme="system"] {
+          color-scheme: dark;
+          --bg: #121417;
+          --panel: #1a1d21;
+          --ink: #e6e8eb;
+          --muted: #9aa1ad;
+          --line: #343a43;
+          --code-bg: #20242a;
+        }
+      }
       * { box-sizing: border-box; }
       body {
         margin: 0;
@@ -57,10 +79,11 @@
         padding: 7px 14px;
         border: 1px solid var(--line);
         border-radius: 6px;
-        background: #fff;
+        background: var(--panel);
+        color: var(--ink);
         cursor: pointer;
       }
-      button:hover { background: #f0f1f3; }
+      button:hover { background: var(--code-bg); }
       table { border-collapse: collapse; width: 100%; font-size: 14px; }
       th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
       th { background: var(--code-bg); font-weight: 600; }
@@ -83,6 +106,19 @@
         runs the same key presses across all three <code>enterKey</code> modes and asserts the
         serialized HTML.
       </p>
+
+      <section class="panel">
+        <h2>Colour scheme</h2>
+        <p class="lede">
+          Writes <code>data-tiptap-theme</code> on <code>&lt;html&gt;</code>, as
+          <code>TIPTAP_COLOR_SCHEME</code> does through the widget. <code>system</code> follows
+          the OS setting. The editor below carries every surface the dark set covers: open the
+          colour and highlight menus, the image picker, source view, and click the image for its
+          resize handles.
+        </p>
+        <div class="modes" id="schemes"></div>
+        <div id="theme-slot"></div>
+      </section>
 
       <section class="panel">
         <h2>Playground</h2>
@@ -127,6 +163,40 @@
     <script src="../django_tiptap_editor/static/django_tiptap_editor/tiptap.bundle.js"></script>
     <script>
       const MODES = ["paragraph", "hardBreak", "swap"];
+
+      // --- colour scheme -------------------------------------------------
+      const SCHEMES = ["light", "dark", "system"];
+      const schemes = document.getElementById("schemes");
+      for (const scheme of SCHEMES) {
+        const label = document.createElement("label");
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "scheme";
+        radio.value = scheme;
+        radio.checked = scheme === "light";
+        radio.addEventListener("change", () => {
+          document.documentElement.setAttribute("data-tiptap-theme", scheme);
+        });
+        const code = document.createElement("code");
+        code.textContent = scheme;
+        label.append(radio, code);
+        schemes.appendChild(label);
+      }
+      document.documentElement.setAttribute("data-tiptap-theme", "light");
+
+      const PICTURE =
+        "data:image/svg+xml," +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180">' +
+            '<rect width="320" height="180" fill="#3598db"/>' +
+            '<circle cx="90" cy="90" r="50" fill="#f1c40f"/></svg>',
+        );
+      const IMAGES = "data:application/json," + encodeURIComponent(
+        JSON.stringify([
+          { title: "Sun", value: PICTURE },
+          { title: "Sun again", value: PICTURE },
+        ]),
+      );
 
       // --- editor plumbing ------------------------------------------------
       // Mount the way Django does: drop a textarea carrying data-tiptap-config
@@ -373,6 +443,20 @@
         toolbar: EMAIL_TOOLBAR,
       });
       mountComparison("full-slot", "harness-full", "full-value", {});
+
+      mount(
+        document.getElementById("theme-slot"),
+        "harness-theme",
+        { height: "260px", colorPicker: true, imageListUrl: IMAGES },
+        "<p>Plain text, <a href=\"https://example.com\">a link</a>, "
+          + '<span style="background-color: #fff3a3">a highlight</span>, '
+          + '<span style="background-color: #bfe3ff">another</span>, '
+          + '<span style="color: #e03e2d">red text</span> and '
+          + '<span style="color: #1f2329">authored dark text</span>.</p>'
+          + "<table><tbody><tr><th>Head</th><th>Head</th></tr>"
+          + "<tr><td>Cell</td><td>Cell</td></tr></tbody></table>"
+          + '<p><img src="https://placehold.co/240x135" alt="resize me" width="240" height="135"></p>',
+      );
 
       document.querySelectorAll("[data-paste]").forEach((button) => {
         button.addEventListener("click", () => {

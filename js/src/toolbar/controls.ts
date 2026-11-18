@@ -1,10 +1,12 @@
 // Dropdown controls for the textStyle attributes (font size / family, text
 // color, highlight). All four are textStyle marks, so they apply uniformly via
 // setMark — which merges, so setting one doesn't clear the others.
+import { configFor } from "../editor-config";
 import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 import type { ButtonSpec, RenderedControl } from "./button-registry";
 import { createDropdown } from "./dropdown";
+import { toolbarLabel } from "./label";
 
 function applyTextStyle(editor: Editor, attr: string, value: string | null): void {
   editor.chain().focus().setMark("textStyle", { [attr]: value }).run();
@@ -40,15 +42,18 @@ export function selectControl(opts: {
   triggerHTML: string;
   options: SelectOptions;
   styleOption?: boolean;
+  showValue?: boolean;
 }): ButtonSpec {
   return {
     title: opts.title,
     render(editor: Editor): RenderedControl {
       const t = translatorFor(editor);
       const options = typeof opts.options === "function" ? opts.options(editor) : opts.options;
+      const label = toolbarLabel(configFor(editor), opts.title);
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
+        label,
         buildPanel(close) {
           const list = document.createElement("div");
           list.className = "django-tiptap__menu";
@@ -72,9 +77,43 @@ export function selectControl(opts: {
           return list;
         },
       });
-      return { el: dd.el };
+      // A label replaces the readout, so the trigger keeps one name.
+      if (!opts.showValue || label) {
+        return { el: dd.el };
+      }
+      const readout = valueReadout([t("default"), ...options.map((o) => o.label)]);
+      dd.trigger.prepend(readout.el);
+      const refresh = (): void => {
+        const current = editor.getAttributes("textStyle")[opts.attr] as string | undefined;
+        const text = current
+          ? (options.find((o) => o.value === current)?.label ?? current.replace(/px$/, ""))
+          : t("default");
+        readout.text.textContent = text;
+        dd.trigger.setAttribute("aria-label", t(`${opts.title}Value`, { name: t(opts.title), value: text }));
+      };
+      refresh();
+      return { el: dd.el, refresh };
     },
   };
+}
+
+// The visible value over an invisible stack of every label in one grid cell, so the
+// trigger is as wide as its widest label and never jitters as the value changes.
+function valueReadout(labels: string[]): { el: HTMLElement; text: HTMLElement } {
+  const el = document.createElement("span");
+  el.className = "django-tiptap__value";
+  const text = document.createElement("span");
+  text.className = "django-tiptap__value-text";
+  const sizer = document.createElement("span");
+  sizer.className = "django-tiptap__value-sizer";
+  sizer.setAttribute("aria-hidden", "true");
+  for (const label of labels) {
+    const span = document.createElement("span");
+    span.textContent = label;
+    sizer.appendChild(span);
+  }
+  el.append(text, sizer);
+  return { el, text };
 }
 
 export type MenuItem = { label: string; run: () => void } | "separator";
@@ -93,6 +132,7 @@ export function commandMenuControl(opts: {
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
+        label: toolbarLabel(configFor(editor), opts.title),
         buildPanel(close) {
           const menu = document.createElement("div");
           menu.className = "django-tiptap__menu";
@@ -184,6 +224,7 @@ export function colorControl(opts: {
       const dd = createDropdown({
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
+        label: toolbarLabel(configFor(editor), opts.title),
         buildPanel(close) {
           const panel = document.createElement("div");
           const grid = document.createElement("div");

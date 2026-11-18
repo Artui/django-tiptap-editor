@@ -7,6 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-11-18
+
+### Added
+
+- **Text labels on toolbar buttons, through `toolbarLabels`.** A new config key maps a
+  toolbar button key to a label, e.g. `{"mergeTags": "Insert token"}`. The label shows as
+  text after the button's glyph (before a dropdown's caret), and is the button's tooltip
+  and accessible name. It works on every built-in button, the seven dropdown triggers and
+  `ui.registerButton` buttons; on `fontSize` it replaces the size readout. Labels are
+  set as text, never markup, and are not translated. `""` counts as no label, and a key the
+  toolbar does not render is ignored. `validate_config` refuses anything but a dict of
+  strings to strings. Fields without the key render as before.
+
+- **Toolbar state for assistive technology.** Every toolbar button with an active state
+  carries `aria-pressed` (`"true"` / `"false"`) that follows `.is-active` on each refresh:
+  the built-in toggles, `link` (which opens a prompt rather than toggling, but reports the
+  same state sighted users see), and any `ui.registerButton` spec with `isActive`. Buttons
+  without one (`undo`, `redo`, `unlink`, `clearFormatting`) stay without it. Every dropdown
+  trigger carries `aria-expanded`, `"false"` until opened and again after every way of
+  closing it. Before, both states were visible only as classes.
+
+- **Placeholders in translated strings.** The translator takes optional named parameters,
+  `t(key, { name: "..." })`, filling `{name}` in the string; a key called without them
+  returns what it did before. The new `fontSizeValue` key (`"{name}: {value}"` in en and
+  sv) names the font-size trigger.
+
+- **A `horizontalRule` toolbar button.** Name it in `toolbar` to insert a rule at the cursor;
+  it is opt-in, so the default toolbar is unchanged, and it is hidden (with one warning) when
+  the field's `features` leave `horizontalRule` out. Before, a toolbar naming it logged
+  `unknown toolbar button` and rendered nothing.
+
+- **A dark colour scheme, opt-in through `TIPTAP_COLOR_SCHEME`.** The setting takes
+  `"light"` (the default, which changes nothing), `"dark"` or `"system"`, which follows
+  `prefers-color-scheme`. The widget carries it and the glue writes it to `<html>` as
+  `data-tiptap-theme`, unless the page set that attribute itself: a host template or toggle
+  always wins, and setting the attribute is the API for a site with its own switch. Any
+  other value raises `ImproperlyConfigured`. In the dark scheme the chrome goes dark and
+  the editing area is a dark paper a step lighter than the toolbar; a highlighted run with
+  no colour of its own gets a dark ink, and stored content is never rewritten. Every
+  colour token has a dark value, and a token set by `ui.setTokens` or a host rule still
+  beats either scheme. New tokens: `--tiptap-content-bg`, `--tiptap-content-fg`,
+  `--tiptap-content-border`, `--tiptap-highlight-ink`, `--tiptap-highlight-glyph-bg`,
+  `--tiptap-highlight-glyph-fg`, `--tiptap-swatch-border`, `--tiptap-swatch-border-hover`,
+  `--tiptap-shadow-color`, `--tiptap-modal-shadow-color`, `--tiptap-overlay-bg` and
+  `--tiptap-color-scheme`; their light defaults are the 0.14.0 colours. `get_color_scheme`
+  reads the setting. See [Dark mode](https://artui.github.io/django-tiptap-editor/theming/#dark-mode).
+
+- **`autolink` turns a typed URL into a link.** Off by default, so typing behaves as on
+  0.14.0. It follows `linkProtocols`: with `["http", "https"]` a typed `ftp://` URL or bare
+  email address stays plain text. On a field whose `features` leave out `link` it does
+  nothing. A non-boolean value raises `ImproperlyConfigured`. See
+  [Configuration](https://artui.github.io/django-tiptap-editor/configuration/).
+
+- **The bound textarea fires `input` and `change`.** Every mounted field now dispatches a
+  bubbling `input` on its textarea once per edit that changes the stored value, toolbar
+  edits included, and `change` when focus leaves the editor with the value changed, so an
+  auto-mounted field works with htmx `hx-trigger="input changed"`, a form autosave or a
+  dirty-form check. Mounting, and opening or closing source view without an edit, fire
+  nothing. While source view is open each keystroke now updates the bound value. The
+  editor's native events keep bubbling to the form, so a form-level listener filters on
+  `event.target`. `onChange` is unchanged. See
+  [Events on the bound textarea](https://artui.github.io/django-tiptap-editor/api/#events-on-the-bound-textarea).
+
+### Changed
+
+- **The font-size trigger shows the current size instead of the `AA` glyph.** It reads
+  `Default` (translated) on unsized text and the preset label (`16`) inside a sized run, a
+  size off the `fontSizes` list showing without its `px`; its accessible name follows
+  (`Font size: 16`), so the visible text is inside the name, and its tooltip stays the
+  plain `Font size`. The trigger is as wide as its widest label, so it does not shift as
+  the caret moves. `fontFamily` and the other dropdowns keep their glyphs.
+
+- **Pasted plain URLs outside `linkProtocols` no longer become links in the editor.**
+  Tiptap's own list (`ftp`, `sms`, `xmpp`, a bare email address as `mailto` and others) used
+  to apply to pasted text whatever `linkProtocols` said, and the server then dropped the
+  link on save. Stored output is unchanged; the editor now shows what will be stored.
+
+### Fixed
+
+- **A non-string `TIPTAP_ASSET_MODE` raises `ImproperlyConfigured`.** A list or dict (any
+  unhashable value) raised a bare `TypeError` from the membership check instead of the
+  settings error every other bad value gets.
+
 ## [0.14.0] — 2026-11-13
 
 ### Added
@@ -1131,7 +1214,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.11.1...v0.12.0

@@ -10,6 +10,7 @@ from django.test import override_settings
 from django_tiptap_editor.constants import (
     BUNDLE_CSS,
     BUNDLE_JS,
+    COLOR_SCHEME_ATTR,
     CONFIG_ATTR,
     FEATURE_CORE,
     STORAGE_ATTR,
@@ -53,6 +54,27 @@ def test_storage_attr_honours_explicit_json() -> None:
 def test_storage_attr_falls_back_to_setting() -> None:
     context = TipTapWidget().get_context("body", "", {})
     assert context["widget"]["attrs"][STORAGE_ATTR] == "json"
+
+
+def test_color_scheme_attr_absent_when_setting_unset() -> None:
+    html = TipTapWidget().render("body", "")
+    assert COLOR_SCHEME_ATTR not in html
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark", "system"])
+@pytest.mark.parametrize(
+    "widget", [TipTapWidget(), AdminTipTapWidget(), TipTapWidget(storage="json")]
+)
+def test_color_scheme_setting_reaches_the_textarea(scheme: str, widget: TipTapWidget) -> None:
+    with override_settings(TIPTAP_COLOR_SCHEME=scheme):
+        html = widget.render("body", "")
+    assert f'{COLOR_SCHEME_ATTR}="{scheme}"' in html
+
+
+@override_settings(TIPTAP_COLOR_SCHEME="page")
+def test_color_scheme_setting_is_validated_on_render() -> None:
+    with pytest.raises(ImproperlyConfigured, match="TIPTAP_COLOR_SCHEME"):
+        TipTapWidget().render("body", "")
 
 
 def test_media_emits_bundle() -> None:

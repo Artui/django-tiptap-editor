@@ -79,7 +79,7 @@ def test_string_list_with_non_string_item_raises(key: str) -> None:
         validate_config({key: ["16px", 12]})
 
 
-BOOL_KEYS = ["colorPicker", "imageResize"]
+BOOL_KEYS = ["colorPicker", "imageResize", "autolink"]
 
 
 @pytest.mark.parametrize("key", BOOL_KEYS)
@@ -98,6 +98,27 @@ def test_boolean_keys_omitted_pass() -> None:
 def test_boolean_key_non_boolean_raises(key: str, value: object) -> None:
     with pytest.raises(ImproperlyConfigured, match=f"TipTap {key} must be a boolean"):
         validate_config({key: value})
+
+
+@pytest.mark.parametrize(
+    "labels", [{}, {"mergeTags": "Insert token"}, {"bold": "", "nope": "unknown keys are inert"}]
+)
+def test_toolbar_labels_dict_of_strings_passes(labels: dict[str, str]) -> None:
+    cfg = {"toolbarLabels": labels}
+    assert validate_config(cfg) is cfg
+
+
+@pytest.mark.parametrize(
+    "labels", ["Insert token", ["mergeTags"], {"mergeTags": 1}, {"bold": None}, {1: "x"}]
+)
+def test_toolbar_labels_other_than_dict_of_strings_raises(labels: object) -> None:
+    with pytest.raises(ImproperlyConfigured, match="TipTap toolbarLabels must be a dict"):
+        validate_config({"toolbarLabels": labels})
+
+
+def test_there_is_no_merge_tags_label_key() -> None:
+    with pytest.raises(ImproperlyConfigured, match="Unknown TipTap config key"):
+        validate_config({"mergeTagsLabel": "Insert token"})
 
 
 # ``features``: a list of built-in extension names restricting what one field's

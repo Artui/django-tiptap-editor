@@ -8,6 +8,7 @@ import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 import { getButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
+import { applyLabel, toolbarLabel } from "./label";
 
 export interface RenderedToolbar {
   el: HTMLElement;
@@ -17,15 +18,19 @@ export interface RenderedToolbar {
 function renderButton(
   key: string,
   spec: ButtonSpec,
-  label: string,
+  title: string,
+  label: string | undefined,
   onClick: () => void,
 ): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "django-tiptap__btn";
   button.innerHTML = spec.icon ?? "";
-  button.title = label;
-  button.setAttribute("aria-label", label);
+  button.title = title;
+  button.setAttribute("aria-label", title);
+  if (label) {
+    applyLabel(button, label);
+  }
   button.setAttribute("data-key", key);
   // Keep the editor selection when the button is pressed.
   button.addEventListener("mousedown", (event) => event.preventDefault());
@@ -87,14 +92,16 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
       const onClick = spec.onClick;
       // Refresh after the command runs: most commands fire a transaction (which
       // refreshes anyway), but some — e.g. source-view's setEditable — don't.
-      const button = renderButton(key, spec, t(spec.title), () => {
+      const button = renderButton(key, spec, t(spec.title), toolbarLabel(config, key), () => {
         onClick(editor);
         refresh();
       });
       groupEl.appendChild(button);
       refreshers.push(() => {
         if (spec.isActive) {
-          button.classList.toggle("is-active", spec.isActive(editor));
+          const active = spec.isActive(editor);
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
         }
         if (spec.isEnabled) {
           button.toggleAttribute("disabled", !spec.isEnabled(editor));

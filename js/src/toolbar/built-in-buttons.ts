@@ -113,7 +113,8 @@ const BUILTIN: Record<string, ButtonSpec> = {
   fontSize: needs("fontSize", selectControl({
     title: "fontSize",
     attr: "fontSize",
-    triggerHTML: `<span class="django-tiptap__glyph">A<small>A</small></span>${caret}`,
+    triggerHTML: caret,
+    showValue: true,
     options: (e) =>
       (configFor(e).fontSizes ?? FONT_SIZES).map((v) => ({ label: v.replace("px", ""), value: v })),
   })),
@@ -173,6 +174,13 @@ const BUILTIN: Record<string, ButtonSpec> = {
     requires: "blockquote",
     isActive: (e) => e.isActive("blockquote"),
     onClick: (e) => e.chain().focus().toggleBlockquote().run(),
+  },
+  horizontalRule: {
+    icon: ICONS.horizontalRule,
+    title: "horizontalRule",
+    requires: "horizontalRule",
+    isEnabled: (e) => e.can().setHorizontalRule(),
+    onClick: (e) => e.chain().focus().setHorizontalRule().run(),
   },
   alignLeft: align("left"),
   alignCenter: align("center"),

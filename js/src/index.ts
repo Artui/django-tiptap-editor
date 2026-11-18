@@ -7,6 +7,7 @@ import type { AnyExtension } from "@tiptap/core";
 
 import { buildExtensions } from "./build-extensions";
 import { buildShell } from "./build-shell";
+import { applyColorScheme } from "./color-scheme";
 import { htmlToJSON, htmlToStored, renderHTML } from "./convert";
 import { isCssLength } from "./css-length";
 import type { TipTapConfig } from "./default-config";
@@ -16,8 +17,14 @@ import { registerExtension } from "./registry";
 import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
-import { flushSourceView } from "./toolbar/source-view";
-import { Editor, getSchema, tiptap } from "./tiptap-runtime";
+import { flushSourceView, setSourceWriter } from "./toolbar/source-view";
+import {
+  createDocument,
+  Editor,
+  getHTMLFromFragment,
+  getSchema,
+  tiptap,
+} from "./tiptap-runtime";
 import { ui } from "./ui";
 import { checkTipTapVersion, SUPPORTED_TIPTAP_VERSION } from "./version-check";
 import "./styles.css";
@@ -166,6 +173,52 @@ function watchFormSubmit(element: HTMLTextAreaElement, editor: Editor): () => vo
   };
 }
 
+type Doc = Editor["state"]["doc"];
+
+// The bound textarea's input and change, which a .value write never fires. Both
+// compare against the glue's own serialisation of the mounted doc, never against
+// element.value: setEditable emits "update" with no doc change, and the server's
+// bytes (json.dumps spacing, <b> for <strong>) are not the glue's, so a guard on
+// the field would rewrite it and fire input on merely opening source view.
+// Both are deferred to a microtask: a listener reads the written value, a command
+// it runs does not re-enter the editor's update, a FormData it builds during the
+// submit flush is not built inside the formdata handler, and input precedes change.
+// change fires when focus leaves the shell (not Tiptap's blur: the colour input
+// and source view take focus inside it) with the value differing from the last change.
+function bindValueEvents(
+  element: HTMLTextAreaElement,
+  editor: Editor,
+  json: boolean,
+): { store: (doc: Doc) => void; onFocusOut: (event: FocusEvent) => void } {
+  const serialise = (doc: Doc): string => {
+    const html = getHTMLFromFragment(doc.content, editor.schema);
+    return json ? JSON.stringify({ doc: doc.toJSON(), html }) : html;
+  };
+  let last = serialise(editor.state.doc);
+  let committed = last;
+  return {
+    store(doc) {
+      const next = serialise(doc);
+      if (next === last) {
+        return;
+      }
+      last = next;
+      element.value = next;
+      queueMicrotask(() => element.dispatchEvent(new Event("input", { bubbles: true })));
+    },
+    onFocusOut(event) {
+      const to = event.relatedTarget;
+      if (to instanceof Node && (event.currentTarget as HTMLElement).contains(to)) {
+        return;
+      }
+      if (last !== committed) {
+        committed = last;
+        queueMicrotask(() => element.dispatchEvent(new Event("change", { bubbles: true })));
+      }
+    },
+  };
+}
+
 // height is the editing area's minimum and maxHeight its cap (the content region
 // scrolls inside it, under the toolbar). Each is written onto the shell, where
 // it beats a page-wide token on :root, and only once it passes the length rule
@@ -217,6 +270,8 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
     .querySelectorAll(`[${SHELL_ATTR}="${id}"]`)
     .forEach((orphan) => orphan.remove());
 
+  applyColorScheme(element);
+
   const content = document.createElement("div");
   content.className = "django-tiptap__content";
 
@@ -230,18 +285,19 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const json = element.getAttribute(STORAGE_ATTR) === "json";
 
   const extensions = buildExtensions(config, ctx);
+  let store: (doc: Doc) => void = () => {};
   const editor = new Editor({
     element: content,
     extensions,
     content: json ? readInitialContent(element.value, extensions) : element.value || "",
     onUpdate({ editor }) {
-      const html = editor.getHTML();
-      element.value = json
-        ? JSON.stringify({ doc: editor.getJSON(), html })
-        : html;
-      config.onChange?.(html);
+      store(editor.state.doc);
+      config.onChange?.(editor.getHTML());
     },
   });
+  const value = bindValueEvents(element, editor, json);
+  store = value.store;
+  setSourceWriter(editor, (html) => store(createDocument(html, editor.schema)));
   // Make the translator + config resolvable from any onClick(editor) / control.
   setTranslator(editor, t);
   setEditorConfig(editor, config);
@@ -250,6 +306,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   // Default chrome, or a consumer's region / shell override (see build-shell).
   const shell = buildShell(editor, config, content, t);
   shell.el.setAttribute(SHELL_ATTR, id);
+  shell.el.addEventListener("focusout", value.onFocusOut);
   applyLengths(shell.el, config);
 
   element.style.display = "none";

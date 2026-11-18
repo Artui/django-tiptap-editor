@@ -5,7 +5,7 @@
 // the toolbar) can translate without threading `t` everywhere.
 import type { Editor } from "./tiptap-runtime";
 
-export type Translator = (key: string) => string;
+export type Translator = (key: string, params?: Record<string, string>) => string;
 
 const EN: Record<string, string> = {
   undo: "Undo",
@@ -22,11 +22,13 @@ const EN: Record<string, string> = {
   bulletList: "Bullet list",
   orderedList: "Numbered list",
   blockquote: "Blockquote",
+  horizontalRule: "Horizontal rule",
   alignLeft: "Align left",
   alignCenter: "Align center",
   alignRight: "Align right",
   alignJustify: "Justify",
   fontSize: "Font size",
+  fontSizeValue: "{name}: {value}",
   fontFamily: "Font family",
   color: "Text color",
   highlight: "Highlight",
@@ -75,11 +77,13 @@ const SV: Record<string, string> = {
   bulletList: "Punktlista",
   orderedList: "Numrerad lista",
   blockquote: "Citat",
+  horizontalRule: "Vågrät linje",
   alignLeft: "Vänsterjustera",
   alignCenter: "Centrera",
   alignRight: "Högerjustera",
   alignJustify: "Marginaljustera",
   fontSize: "Teckenstorlek",
+  fontSizeValue: "{name}: {value}",
   fontFamily: "Teckensnitt",
   color: "Textfärg",
   highlight: "Överstrykning",
@@ -119,8 +123,16 @@ export function registerLocale(code: string, strings: Record<string, string>): v
   locales[code] = { ...(locales[code] ?? {}), ...strings };
 }
 
+// Named placeholders: "{name}" takes params.name; one with no param stays as written.
+function interpolate(text: string, params?: Record<string, string>): string {
+  if (!params) {
+    return text;
+  }
+  return text.replace(/\{(\w+)\}/g, (match, name: string) => params[name] ?? match);
+}
+
 export function getTranslator(locale: string): Translator {
-  return (key: string) => locales[locale]?.[key] ?? EN[key] ?? key;
+  return (key, params) => interpolate(locales[locale]?.[key] ?? EN[key] ?? key, params);
 }
 
 const perEditor = new WeakMap<Editor, Translator>();
@@ -130,5 +142,5 @@ export function setTranslator(editor: Editor, translator: Translator): void {
 }
 
 export function translatorFor(editor: Editor): Translator {
-  return perEditor.get(editor) ?? ((key: string) => EN[key] ?? key);
+  return perEditor.get(editor) ?? ((key, params) => interpolate(EN[key] ?? key, params));
 }

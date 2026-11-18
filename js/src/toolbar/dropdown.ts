@@ -1,6 +1,8 @@
 // Minimal toolbar dropdown: a trigger button plus a panel that opens below it.
 // Closes on outside-click, Escape, or when the panel signals done. One panel is
 // open at a time (opening one closes others via a shared registry).
+import { applyLabel } from "./label";
+
 export interface Dropdown {
   el: HTMLElement;
   trigger: HTMLButtonElement;
@@ -13,6 +15,7 @@ const openPanels = new Set<() => void>();
 export interface DropdownOptions {
   title: string;
   triggerHTML: string;
+  label?: string;
   buildPanel: (close: () => void) => HTMLElement;
 }
 
@@ -26,7 +29,11 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   trigger.title = opts.title;
   trigger.setAttribute("aria-label", opts.title);
   trigger.setAttribute("aria-haspopup", "true");
+  trigger.setAttribute("aria-expanded", "false");
   trigger.innerHTML = opts.triggerHTML;
+  if (opts.label) {
+    applyLabel(trigger, opts.label);
+  }
 
   const panel = document.createElement("div");
   panel.className = "django-tiptap__panel";
@@ -38,6 +45,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     }
     panel.hidden = true;
     trigger.classList.remove("is-open");
+    trigger.setAttribute("aria-expanded", "false");
     openPanels.delete(close);
     document.removeEventListener("mousedown", onOutside, true);
     document.removeEventListener("keydown", onKey, true);
@@ -63,6 +71,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     panel.appendChild(opts.buildPanel(close));
     panel.hidden = false;
     trigger.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
     openPanels.add(close);
     document.addEventListener("mousedown", onOutside, true);
     document.addEventListener("keydown", onKey, true);

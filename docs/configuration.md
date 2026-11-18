@@ -15,14 +15,16 @@ any omitted key.
 | `manualMount` | bool | Opt the field out of auto-mount (initial scan + observer); mount it yourself after registering renderers. See [Theming → Load order](theming.md#load-order). |
 | `enterKey` | str | Enter / Shift-Enter behaviour **outside lists**: `"paragraph"` (default — Enter splits into a new paragraph, Shift-Enter inserts a line break), `"hardBreak"` (Enter inserts a `<br>`), or `"swap"` (exchange the two). Inside a list item Enter always starts the next item and Shift-Enter always breaks the line — see [Extending → The Enter key](extending.md#the-enter-key-built-in). |
 | `toolbar` | list[list[str]] | Groups of [button keys](#toolbar-buttons). Omit for the default. |
+| `toolbarLabels` | dict[str, str] | A text label per button key, shown after the button's glyph (before a dropdown's caret) and used verbatim as its tooltip and accessible name, e.g. `{"mergeTags": "Insert token"}`. Works on every toolbar button: the built-in buttons, the dropdowns and `ui.registerButton` buttons; on `fontSize` it replaces the size readout. `""` counts as no label, and a key the toolbar does not render (absent, unknown, or hidden by `features`) does nothing and raises nothing. A long label is cut with an ellipsis. |
 | `features` | list[str] | Built-in extensions this field's editor may use; everything else is off, shortcuts and paste included. Omit for every built-in. See [Restricting features](#restricting-features). |
 | `extensions` | list[str] | Custom extension names (add them to `TIPTAP_EXTRA_EXTENSIONS`). Built-ins listed here change nothing; to turn built-ins off, use [`features`](#restricting-features). |
-| `linkProtocols` | list[str] | Allowed link protocols. Default `["http","https","mailto","tel"]`. |
+| `linkProtocols` | list[str] | Allowed link protocols. Default `["http","https","mailto","tel"]`. Autolinked and pasted plain URLs keep to this list: a scheme outside it stays plain text (a bare email address counts as `mailto`, a bare `www.` address as `http`). |
+| `autolink` | bool | Turns a URL into a link as it is typed, once a space follows it. Default `False`. It follows `linkProtocols`, so with `["http","https"]` a typed `ftp://` URL or bare email address stays plain text. On a field whose `features` leave out `link` the key does nothing and raises nothing. |
 | `imageUploadUrl` | str | Enables image upload (see [Contracts](contracts.md)). |
 | `imageListUrl` | str | Enables the library picker. |
 | `imageFileTypes` | str | Comma-separated extensions for the upload dialog, e.g. `"png,jpg,gif"`. |
 | `fontFamilies` | list[str] | Presets for the `fontFamily` dropdown; each a full CSS font stack (label = first segment, quotes stripped). Omit for the built-in list. |
-| `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`). Omit for the built-in list. |
+| `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`); the trigger shows the label of the size under the caret. Omit for the built-in list. |
 | `textColors` | list[str] | Swatches for the `color` (text color) dropdown; each any CSS color. Omit for the built-in palette. |
 | `highlightColors` | list[str] | Swatches for the `highlight` (background) dropdown; each any CSS color. Omit for the built-in palette. |
 | `colorPicker` | bool | Adds a native color picker under both color swatch grids, for colors the palettes don't carry. Default `False`. |
@@ -99,7 +101,7 @@ so one bad field does not stop the rest of the page mounting.
 
 `undo` `redo` · `bold` `italic` `underline` `strike` `code` · `fontSize` `fontFamily`
 `color` `highlight` · `h1` `h2` `h3` `paragraph` · `bulletList` `orderedList`
-`blockquote` · `alignLeft` `alignCenter` `alignRight` `alignJustify` · `image` `table` ·
+`blockquote` `horizontalRule` (opt-in) · `alignLeft` `alignCenter` `alignRight` `alignJustify` · `image` `table` ·
 `link` `unlink` `clearFormatting` · `sourceView` · `mergeTags` (opt-in).
 
 A group is an inner array; groups render with separators. Register your own buttons with
@@ -243,6 +245,7 @@ keeps it when it sanitises the field. Any other node type or attribute name rais
 | `TIPTAP_DEFAULT_CONFIG` | `{}` | Config merged under every widget's per-field config. |
 | `TIPTAP_ASSET_MODE` | `"bundle"` | `"bundle"` or `"external"` — see [Asset modes](asset-modes.md). |
 | `TIPTAP_IMPORT_MAP` | CDN default | External mode: bare-specifier → URL map. |
+| `TIPTAP_COLOR_SCHEME` | `"light"` | `"light"`, `"dark"` or `"system"` (follows the OS). The glue writes it to `<html>` as `data-tiptap-theme` unless the page set that attribute already. See [Dark mode](theming.md#dark-mode). |
 | `TIPTAP_EXTRA_EXTENSIONS` | `[]` | Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type `TipTapJSONField` accepts in a stored document. A tag that runs script, or whose content a browser parses by rules of its own (`math`, `textarea`, `title`, `xmp`, …), raises `ImproperlyConfigured`. See [Extending](extending.md#declaring-what-an-extension-emits). |
 
 ```python
