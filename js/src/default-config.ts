@@ -28,6 +28,9 @@ export interface TipTapConfig {
   features?: string[] | null;
   toolbar?: string[][];
   linkProtocols?: string[];
+  // Links a URL as it is typed. Off by default. Autolinked and pasted plain URLs
+  // keep to linkProtocols; inert on a field whose features exclude link.
+  autolink?: boolean;
   imageUploadUrl?: string;
   imageListUrl?: string;
   imageFileTypes?: string;

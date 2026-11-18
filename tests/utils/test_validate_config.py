@@ -79,7 +79,7 @@ def test_string_list_with_non_string_item_raises(key: str) -> None:
         validate_config({key: ["16px", 12]})
 
 
-BOOL_KEYS = ["colorPicker", "imageResize"]
+BOOL_KEYS = ["colorPicker", "imageResize", "autolink"]
 
 
 @pytest.mark.parametrize("key", BOOL_KEYS)
