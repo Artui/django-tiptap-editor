@@ -20,6 +20,7 @@ export const tiptap = { Editor, Extension, Mark, Node, mergeAttributes };
 // and the glue resolves @tiptap/core via the consumer's import map). Power the
 // JSON storage helpers and the HTML->JSON migration path.
 export { generateHTML, generateJSON } from "@tiptap/core";
+export { createDocument, getHTMLFromFragment } from "@tiptap/core";
 
 // The schema an extension set produces, without mounting an editor. Lets the
 // JSON-storage load check a stored doc against the field's own schema first.

@@ -15,6 +15,15 @@ interface SourceState {
 
 const states = new WeakMap<Editor, SourceState>();
 
+// Each keystroke in the source textarea goes through the glue's writer (index.ts),
+// which parses it as closing would, stores it in the bound field and fires input
+// there, so an autosave never reads a stale value while source view is open.
+const writers = new WeakMap<Editor, (html: string) => void>();
+
+export function setSourceWriter(editor: Editor, write: (html: string) => void): void {
+  writers.set(editor, write);
+}
+
 export function isSourceActive(editor: Editor): boolean {
   return states.has(editor);
 }
@@ -38,8 +47,9 @@ function leaveSourceView(editor: Editor, state: SourceState, refocus: boolean): 
   dom.style.display = "";
   toolbarOf(editor)?.classList.remove("is-source-mode");
   states.delete(editor);
-  editor.setEditable(true);
+  // Content first: setEditable emits an update, which must not see the stale doc.
   editor.commands.setContent(html, { emitUpdate: true });
+  editor.setEditable(true);
   if (refocus) {
     editor.commands.focus();
   }
@@ -75,6 +85,7 @@ export function toggleSourceView(editor: Editor): void {
   textarea.className = "django-tiptap__source";
   textarea.spellcheck = false;
   textarea.value = editor.getHTML();
+  textarea.addEventListener("input", () => writers.get(editor)?.(textarea.value));
 
   dom.style.display = "none";
   content.appendChild(note);

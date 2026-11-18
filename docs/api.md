@@ -250,10 +250,43 @@ builds. The automatic triggers (initial scan + the `MutationObserver`) then skip
 yourself once you're ready with `DjangoTipTap.autoMount()` (mounts every field, including
 manualMount ones) or `DjangoTipTap.init(el, config)`. See [Theming → Load order](theming.md#load-order).
 
+### Events on the bound textarea
+
+Every mounted field, auto-mounted or explicit, fires `input` and `change` on its bound
+`<textarea>`, both bubbling, so a listener on the textarea or its form (htmx
+`hx-trigger="input changed delay:300ms"`, a form autosave, a dirty-form check) sees every
+edit, toolbar edits included:
+
+- **`input`** fires once per edit that changes the stored value: typing, a toolbar button, a
+  merge tag, an image upload, a programmatic command. It is dispatched in a microtask after
+  the value is written, so a listener reads the new value and may run editor commands.
+  Mounting fires nothing, and so does an update that leaves the stored value as it was
+  (opening and closing source view, `setContent` of the same content).
+- **`change`** fires when focus leaves the editor's shell and the value differs from the
+  last `change`. Moving focus inside the shell (the colour picker, the source textarea)
+  does not count as leaving; an edit made while focus was elsewhere fires at the next leave.
+- **Source view writes through.** While it is open, each keystroke stores what closing it
+  would store (the source parsed through the schema) and fires one `input`, so an autosave
+  never reads a stale value.
+
+The editor's own native `input` and `change` events keep bubbling from inside the shell,
+so a form-level listener sees both: a typed keystroke arrives once from the editing
+surface and once from the textarea. Filter on `event.target`; the bound textarea is the
+one whose value is current.
+
+```js
+form.addEventListener("input", (event) => {
+  if (event.target.name === "body") {
+    autosave(new FormData(form));
+  }
+});
+```
+
 ### Explicit init (Path B)
 
 For full control — and for the `onChange` callback, which can't travel through the JSON
-`data-tiptap-config` attribute:
+`data-tiptap-config` attribute (an auto-mounted field has the
+[textarea events](#events-on-the-bound-textarea) instead):
 
 ```html
 <textarea id="ed"></textarea>
