@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A dark colour scheme, opt-in through `TIPTAP_COLOR_SCHEME`.** The setting takes
+  `"light"` (the default, which changes nothing), `"dark"` or `"system"`, which follows
+  `prefers-color-scheme`. The widget carries it and the glue writes it to `<html>` as
+  `data-tiptap-theme`, unless the page set that attribute itself: a host template or toggle
+  always wins, and setting the attribute is the API for a site with its own switch. Any
+  other value raises `ImproperlyConfigured`. In the dark scheme the chrome goes dark and
+  the editing area is a dark paper a step lighter than the toolbar; a highlighted run with
+  no colour of its own gets a dark ink, and stored content is never rewritten. Every
+  colour token has a dark value, and a token set by `ui.setTokens` or a host rule still
+  beats either scheme. New tokens: `--tiptap-content-bg`, `--tiptap-content-fg`,
+  `--tiptap-content-border`, `--tiptap-highlight-ink`, `--tiptap-highlight-glyph-bg`,
+  `--tiptap-highlight-glyph-fg`, `--tiptap-swatch-border`, `--tiptap-swatch-border-hover`,
+  `--tiptap-shadow-color`, `--tiptap-modal-shadow-color`, `--tiptap-overlay-bg` and
+  `--tiptap-color-scheme`; their light defaults are the 0.14.0 colours. `get_color_scheme`
+  reads the setting. See [Dark mode](https://artui.github.io/django-tiptap-editor/theming/#dark-mode).
+
 ## [0.14.0] — 2026-11-13
 
 ### Added

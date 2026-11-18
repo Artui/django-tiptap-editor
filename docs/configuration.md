@@ -243,6 +243,7 @@ keeps it when it sanitises the field. Any other node type or attribute name rais
 | `TIPTAP_DEFAULT_CONFIG` | `{}` | Config merged under every widget's per-field config. |
 | `TIPTAP_ASSET_MODE` | `"bundle"` | `"bundle"` or `"external"` — see [Asset modes](asset-modes.md). |
 | `TIPTAP_IMPORT_MAP` | CDN default | External mode: bare-specifier → URL map. |
+| `TIPTAP_COLOR_SCHEME` | `"light"` | `"light"`, `"dark"` or `"system"` (follows the OS). The glue writes it to `<html>` as `data-tiptap-theme` unless the page set that attribute already. See [Dark mode](theming.md#dark-mode). |
 | `TIPTAP_EXTRA_EXTENSIONS` | `[]` | Extra extensions accepted by config validation: a list of names, or a mapping of name to the HTML vocabulary each emits. A declared name is also an extra node/mark type `TipTapJSONField` accepts in a stored document. A tag that runs script, or whose content a browser parses by rules of its own (`math`, `textarea`, `title`, `xmp`, …), raises `ImproperlyConfigured`. See [Extending](extending.md#declaring-what-an-extension-emits). |
 
 ```python

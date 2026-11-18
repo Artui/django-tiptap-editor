@@ -27,6 +27,14 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-btn-hover-bg` | Button hover background |
 | `--tiptap-btn-active-bg` / `--tiptap-btn-active-fg` | Active button colours |
 | `--tiptap-accent` | Links, focus, selected-image outline |
+| `--tiptap-content-bg` / `--tiptap-content-fg` | Editing area and source view (light default: unset, so the area shows the shell's `--tiptap-bg` / `--tiptap-fg`) |
+| `--tiptap-content-border` | Table cell borders in the editing area (light default: `--tiptap-border`) |
+| `--tiptap-highlight-ink` | Text colour of a highlighted run that has no colour of its own (light default: unset, so it inherits) |
+| `--tiptap-highlight-glyph-bg` / `--tiptap-highlight-glyph-fg` | The highlight button's glyph (light: `#fff3a3`, text inherits the button's) |
+| `--tiptap-swatch-border` / `--tiptap-swatch-border-hover` | Colour swatch and custom-colour chip outline, and its hover |
+| `--tiptap-shadow-color` | Shadow of the dropdown panels and the floating menus |
+| `--tiptap-modal-shadow-color` / `--tiptap-overlay-bg` | Image-picker modal shadow and the overlay behind it |
+| `--tiptap-color-scheme` | `color-scheme` of the shell and the picker modal, so the source textarea, the colour input and the focus ring follow the scheme (light default: unset, so they inherit the page's) |
 | `--tiptap-modal-z` | Image-picker overlay `z-index` (default `2000`) |
 
 The defaults are declared on the document root with zero specificity
@@ -89,6 +97,102 @@ DjangoTipTap.ui.setTokens({ accent: "#0b7285", radius: "12px" });
 `setTokens` writes onto `document.documentElement`, so it is the page-wide layer (3
 above): every editor follows it, including ones mounted later, and a field's own
 `height` / `maxHeight` config still wins over a `height` / `max-height` token.
+
+## Dark mode
+
+The editor ships a dark colour set beside the light one. Light is the default, so a page
+that does nothing renders as it did before.
+
+### How it is picked
+
+The scheme is read from one attribute on `<html>`, `data-tiptap-theme`:
+
+| Value | Scheme |
+| --- | --- |
+| absent, or `"light"` | light |
+| `"dark"` | dark |
+| `"system"` | dark when the OS asks for it (`prefers-color-scheme: dark`), light otherwise |
+
+The usual way to set it is the `TIPTAP_COLOR_SCHEME` setting:
+
+```python
+TIPTAP_COLOR_SCHEME = "system"  # or "dark", or "light" (the default)
+```
+
+Every widget then carries the value, and the glue writes it to `<html>` once, when the
+first editor mounts. It is project-wide: a per-field scheme would have to sit on the
+editor's shell, where it would beat the tokens you set on `:root`. The Django admin does
+not follow its own theme toggle; set the setting there like anywhere else.
+
+### Forcing it from the page
+
+An attribute the page already set wins over the setting: the glue never overwrites it. So
+a template can force a scheme, and a site with its own light/dark toggle drives the editor
+by writing the attribute:
+
+```html
+<html data-tiptap-theme="dark">
+```
+
+```js
+document.documentElement.dataset.tiptapTheme = userPrefersDark ? "dark" : "light";
+```
+
+There is no JavaScript API for it beyond that attribute. A page that mounts editors by
+hand (`DjangoTipTap.init`, the `tiptap_config` tag) sets the attribute itself, since no
+widget carries the setting there.
+
+### Layering with your overrides
+
+The scheme changes the built-in defaults and nothing else, so everything under
+[Tokens](#tokens) still holds: a token you set on `:root`, with `ui.setTokens`, on
+`.django-tiptap` or on a field beats either scheme. That has one consequence worth
+planning for: **override colours in pairs.** A project that set `--tiptap-bg: #fff` for a
+light look keeps that white background in the dark scheme, under the dark scheme's light
+`--tiptap-fg`, and its text disappears. Set the foreground with the background
+(`--tiptap-fg` with `--tiptap-bg`, `--tiptap-content-fg` with `--tiptap-content-bg`,
+`--tiptap-btn-fg` with `--tiptap-toolbar-bg`), or scope an override to one scheme by
+putting it under the attribute:
+
+```css
+html[data-tiptap-theme="dark"] {
+  --tiptap-accent: #7cc4fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-tiptap-theme="system"] {
+    --tiptap-accent: #7cc4fa;
+  }
+}
+```
+
+The dark values themselves live in private `--_tiptap-*` properties on `<html>`, which
+the public tokens read. They are not part of the stable surface: set the `--tiptap-*`
+tokens, never the private ones.
+
+### Shadow roots
+
+Custom properties inherit into a shadow root, so an editor inside one (with the
+stylesheet loaded in the shadow root) follows the page's `data-tiptap-theme` like any
+other. A token set on the host element still beats it there.
+
+### Content colours
+
+In the dark scheme the editing area is a dark paper a step lighter than the toolbar
+(`--tiptap-content-bg`), and the chrome around it goes dark. Stored content is never
+rewritten: the HTML a field posts is the same in both schemes. Two things follow:
+
+- The built-in highlights are light backgrounds with no text colour, so the dark scheme
+  gives a highlighted run that has no colour of its own a dark ink
+  (`--tiptap-highlight-ink`). A run with an inline colour keeps it.
+- An authored dark text colour (the `#1f2329` swatch, for one) stays dark, so it reads
+  poorly on the dark paper. It is shown as stored, because that is how it will look where
+  it is published. A project whose authors use dark text a lot can keep a light paper in
+  the dark scheme by setting `--tiptap-content-bg` and `--tiptap-content-fg` (as a pair)
+  to light values.
+
+The editor's outer border plays the same role in both schemes; neither scheme claims a
+contrast ratio for it.
 
 ## Targeting parts
 
