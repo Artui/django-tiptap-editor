@@ -54,6 +54,13 @@ describe("autolink config", () => {
     editor.destroy();
   });
 
+  it("reads linkProtocols case-insensitively: a typed http URL still links", () => {
+    const editor = makeEditor({ autolink: true, linkProtocols: ["HTTP"] });
+    type(editor, "see http://example.org ");
+    expect(hrefs(editor)).toEqual(["http://example.org"]);
+    editor.destroy();
+  });
+
   it("does not link a typed ftp URL or bare email outside linkProtocols", () => {
     const editor = makeEditor({ autolink: true, linkProtocols: ["http", "https"] });
     type(editor, "ftp://example.org and a@b.org or https://example.org ");

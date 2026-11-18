@@ -167,6 +167,7 @@
 
 .django-tiptap__group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
 }

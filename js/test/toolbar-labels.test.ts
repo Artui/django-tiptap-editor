@@ -11,6 +11,7 @@ import { registerBuiltInButtons } from "../src/toolbar/built-in-buttons";
 import { renderToolbar } from "../src/toolbar/render-toolbar";
 import type { RenderedToolbar } from "../src/toolbar/render-toolbar";
 import { Editor } from "../src/tiptap-runtime";
+import { declaredOn } from "./declared-on";
 
 const ctx = { tiptap: {}, locale: "en", t: (k: string) => k };
 
@@ -151,5 +152,17 @@ describe("toolbarLabels", () => {
     const trigger = control?.el.querySelector(".django-tiptap__dropdown-trigger");
     expect(trigger?.querySelector(".django-tiptap__btn-label")?.textContent).toBe("Insert token");
     expect(trigger?.getAttribute("aria-label")).toBe("Insert token");
+  });
+});
+
+describe("the labelled button's stylesheet", () => {
+  it("grows the button to fit its label", () => {
+    expect(
+      declaredOn(".django-tiptap__btn.django-tiptap__btn--labelled", "width"),
+    ).toEqual(["auto"]);
+  });
+
+  it("lets a group's buttons wrap, so a narrow field cannot clip them", () => {
+    expect(declaredOn(".django-tiptap__group", "flex-wrap")).toEqual(["wrap"]);
   });
 });

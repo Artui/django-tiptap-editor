@@ -17,7 +17,7 @@ def test_reads_each_scheme(scheme: str) -> None:
         assert get_color_scheme() == scheme
 
 
-@pytest.mark.parametrize("scheme", ["auto", "page", "Dark", "", True])
+@pytest.mark.parametrize("scheme", ["auto", "page", "Dark", "", True, ["dark"]])
 def test_rejects_anything_else(scheme: object) -> None:
     with override_settings(TIPTAP_COLOR_SCHEME=scheme), pytest.raises(ImproperlyConfigured):
         get_color_scheme()

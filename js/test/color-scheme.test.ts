@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { applyColorScheme } from "../src/color-scheme";
 import DjangoTipTap from "../src/index";
+import { declaredOn } from "./declared-on";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const STYLES = readFileSync(join(HERE, "../src/styles.css"), "utf8");
@@ -277,6 +278,20 @@ describe("the highlight ink rule", () => {
     expect(byText("red")?.matches(selector)).toBe(false);
   });
 
+  it("leaves a run with a font-family or a font-size alone, however it sets colours", () => {
+    const shell = mount(
+      '<p><span style="font-family: Georgia; color: rgb(224, 62, 45); background-color: rgb(255, 243, 163)">family</span> ' +
+        '<span style="font-size: 20px">size</span></p>',
+    );
+    const spans = Array.from(shell.querySelectorAll<HTMLElement>(".ProseMirror span"));
+    const byText = (text: string) => spans.find((span) => span.textContent === text);
+    const selector = inkSelector();
+    expect(byText("family")).toBeDefined();
+    expect(byText("family")?.matches(selector)).toBe(false);
+    expect(byText("size")).toBeDefined();
+    expect(byText("size")?.matches(selector)).toBe(false);
+  });
+
   it("never changes the HTML the field posts", () => {
     const html =
       '<p><span style="color: #1f2329">dark</span> <span style="background-color: #fff3a3">hl</span> ' +
@@ -323,5 +338,24 @@ describe("applyColorScheme", () => {
     DjangoTipTap.init(element, {});
     mounted.push(element.id);
     expect(document.documentElement.getAttribute("data-tiptap-theme")).toBe("system");
+  });
+});
+
+describe("use sites jsdom cannot resolve through var()", () => {
+  it("paints the editing area with the content tokens", () => {
+    expect(declaredOn(".django-tiptap .ProseMirror", "color")).toEqual([
+      "var(--tiptap-content-fg, currentColor)",
+    ]);
+    expect(declaredOn(".django-tiptap .ProseMirror", "background")).toEqual([
+      "var(--tiptap-content-bg, transparent)",
+    ]);
+  });
+
+  it("borders table cells with the content border, falling back to the chrome border", () => {
+    for (const cell of [".django-tiptap .ProseMirror th", ".django-tiptap .ProseMirror td"]) {
+      expect(declaredOn(cell, "border")).toEqual([
+        "1px solid var(--tiptap-content-border, var(--tiptap-border))",
+      ]);
+    }
   });
 });

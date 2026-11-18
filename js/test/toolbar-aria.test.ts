@@ -9,6 +9,7 @@ import { registerBuiltInButtons } from "../src/toolbar/built-in-buttons";
 import { renderToolbar } from "../src/toolbar/render-toolbar";
 import type { RenderedToolbar } from "../src/toolbar/render-toolbar";
 import { Editor } from "../src/tiptap-runtime";
+import { declaredOn } from "./declared-on";
 
 const ctx = { tiptap: {}, locale: "en", t: (k: string) => k };
 
@@ -253,5 +254,11 @@ describe("translator interpolation", () => {
     expect(t("custom")).toBe("Custom…");
     expect(t("missing-key")).toBe("missing-key");
     expect(t("fontSizeValue")).toBe("{name}: {value}");
+  });
+});
+
+describe("the font-size value sizer", () => {
+  it("is hidden, so only the widest label's width shows", () => {
+    expect(declaredOn(".django-tiptap__value-sizer", "visibility")).toEqual(["hidden"]);
   });
 });

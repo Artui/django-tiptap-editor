@@ -20,3 +20,9 @@ def test_external() -> None:
 def test_invalid_raises() -> None:
     with pytest.raises(ImproperlyConfigured):
         get_asset_mode()
+
+
+@pytest.mark.parametrize("mode", [["bundle"], {"mode": "bundle"}, 1])
+def test_non_string_raises_improperly_configured(mode: object) -> None:
+    with override_settings(TIPTAP_ASSET_MODE=mode), pytest.raises(ImproperlyConfigured):
+        get_asset_mode()

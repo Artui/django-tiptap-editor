@@ -37,6 +37,21 @@ describe("the horizontalRule toolbar button", () => {
     expect(editor.getHTML()).toContain("<hr>");
   });
 
+  it("is disabled where a rule cannot replace the selection, such as a selected inline image", () => {
+    registerBuiltInButtons();
+    const config: TipTapConfig = { toolbar: [["horizontalRule"]] };
+    const editor = makeEditor(config);
+    const toolbar = renderToolbar(editor, config);
+    const button = toolbar.el.querySelector<HTMLButtonElement>('[data-key="horizontalRule"]');
+    toolbar.refresh();
+    expect(button?.disabled).toBe(false);
+    editor.commands.setContent('<p><img src="https://example.org/a.png"></p>');
+    editor.commands.setNodeSelection(1);
+    toolbar.refresh();
+    expect(editor.state.selection.constructor.name).toBe("NodeSelection");
+    expect(button?.disabled).toBe(true);
+  });
+
   it("is hidden with one warning when features leave horizontalRule out", () => {
     registerBuiltInButtons();
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

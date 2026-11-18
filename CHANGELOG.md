@@ -82,6 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to apply to pasted text whatever `linkProtocols` said, and the server then dropped the
   link on save. Stored output is unchanged; the editor now shows what will be stored.
 
+### Fixed
+
+- **A non-string `TIPTAP_ASSET_MODE` raises `ImproperlyConfigured`.** A list or dict (any
+  unhashable value) raised a bare `TypeError` from the membership check instead of the
+  settings error every other bad value gets.
+
 ## [0.14.0] — 2026-11-13
 
 ### Added

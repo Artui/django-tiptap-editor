@@ -172,9 +172,12 @@ tokens, never the private ones.
 
 ### Shadow roots
 
-Custom properties inherit into a shadow root, so an editor inside one (with the
-stylesheet loaded in the shadow root) follows the page's `data-tiptap-theme` like any
-other. A token set on the host element still beats it there.
+Custom properties inherit into a shadow root, but the scheme rules key on the page's
+`<html data-tiptap-theme>`, and a rule in a stylesheet loaded inside a shadow root never
+matches `<html>`. An editor in a shadow root therefore follows the page's scheme only when the
+document itself loads the stylesheet: the widget's form Media already does, and a hand-built
+page must link `tiptap.bundle.css` in the document too, besides any copy inside the shadow
+root. Otherwise set the tokens on the host element, which beats the scheme there.
 
 ### Content colours
 
@@ -216,7 +219,8 @@ moves. Its accessible name is the `fontSizeValue` string (`"{name}: {value}"`, e
 A button given a [`toolbarLabels`](configuration.md) entry carries
 `.django-tiptap__btn--labelled` and its text in `.django-tiptap__btn-label`, after the
 glyph and before a dropdown's caret. The span does not wrap and ends in an ellipsis past
-`16em`; the button grows to fit it, and the toolbar still wraps by group. On `fontSize`
+`16em`; the button grows to fit it. The toolbar wraps by group, and a group's own buttons
+wrap too, so a narrow field never pushes one out of reach. On `fontSize`
 the label takes the readout's place.
 
 ## Region renderers (tier 2, semi-stable)
@@ -240,7 +244,7 @@ overlays):
 | --- | --- |
 | `ctx.editor` | the live TipTap `Editor` — read state, run commands, subscribe with `editor.on(...)` |
 | `ctx.config` | the resolved per-editor config |
-| `ctx.t` | the active translator (`ctx.t("bold")`) |
+| `ctx.t` | the active translator (`ctx.t("bold")`; with named parameters, `ctx.t("fontSizeValue", { name: ctx.t("fontSize"), value: "16" })`, which fills `{name}` and `{value}`) |
 | `ctx.getButton(key)` | resolve a registered toolbar button spec, to reuse built-in controls |
 
 ```js
