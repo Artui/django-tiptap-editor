@@ -60,9 +60,9 @@ describe("submitting with source view open", () => {
     const { form, textarea, editor } = mount("sv-html", {}, "<p>hello</p>");
     toggleSourceView(editor);
     typeSource(RAW);
-    // Un-normalised markup must not reach the field just because it was typed.
+    // Typing writes through, but only what the schema produces from the source.
     expect(textarea.value).not.toContain("script");
-    expect(textarea.value).toContain("hello");
+    expect(textarea.value).toContain("edited");
 
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 

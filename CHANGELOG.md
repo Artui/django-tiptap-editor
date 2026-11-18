@@ -36,6 +36,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nothing. A non-boolean value raises `ImproperlyConfigured`. See
   [Configuration](https://artui.github.io/django-tiptap-editor/configuration/).
 
+- **The bound textarea fires `input` and `change`.** Every mounted field now dispatches a
+  bubbling `input` on its textarea once per edit that changes the stored value, toolbar
+  edits included, and `change` when focus leaves the editor with the value changed, so an
+  auto-mounted field works with htmx `hx-trigger="input changed"`, a form autosave or a
+  dirty-form check. Mounting, and opening or closing source view without an edit, fire
+  nothing. While source view is open each keystroke now updates the bound value. The
+  editor's native events keep bubbling to the form, so a form-level listener filters on
+  `event.target`. `onChange` is unchanged. See
+  [Events on the bound textarea](https://artui.github.io/django-tiptap-editor/api/#events-on-the-bound-textarea).
+
 ### Changed
 
 - **Pasted plain URLs outside `linkProtocols` no longer become links in the editor.**
