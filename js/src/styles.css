@@ -294,15 +294,20 @@
   visibility: hidden;
 }
 
-/* An open panel is portaled to the trigger's root node (body or the shadow
-   root) and placed inline by the JS, so the shell's overflow cannot clip it.
-   It inherits nothing from the shell: the JS forwards the shell's tokens and
-   font onto it, and color / color-scheme are set here. Portaled, it competes
-   with the host page's stacks like the image picker, so it shares that knob. */
+/* An open panel stays in its dropdown and is shown as a popover, in the top
+   layer, so the shell's overflow cannot clip it; the JS places it inline. The
+   right / bottom / margin resets undo the UA popover's centring. Without the
+   popover API it is portaled (a dialog container, body or the shadow root) and
+   inherits nothing from the shell: the JS forwards the shell's tokens and font
+   onto it, and color / color-scheme are set here. Portaled, it competes with
+   the host page's stacks like the image picker, so it shares that knob. */
 .django-tiptap__panel {
   position: absolute;
   top: 0;
   left: 0;
+  right: auto;
+  bottom: auto;
+  margin: 0;
   z-index: var(--tiptap-modal-z, 2000);
   min-width: 140px;
   max-height: 280px;

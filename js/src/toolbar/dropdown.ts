@@ -1,8 +1,11 @@
-// Toolbar dropdown: a trigger button plus a panel. The open panel is portaled to
-// the trigger's root node (the document's body, or the shadow root holding the
-// editor), so the shell's overflow: hidden cannot clip it, and is placed in the
-// viewport beside the trigger. Closes on outside-click, Escape, the panel
-// signalling done, or the editor's destruction. One panel is open at a time.
+// Toolbar dropdown: a trigger button plus a panel. The open panel stays in the
+// dropdown, right after the trigger, and is shown as a manual popover: the top
+// layer escapes the shell's overflow: hidden while the panel stays a DOM
+// descendant of any modal or focus trap around the editor. Without the popover
+// API it is portaled into the nearest dialog container, else the trigger's root
+// node. Either way it is placed in the viewport beside the trigger. Closes on
+// outside-click, Escape, the panel signalling done, or the editor's destruction.
+// One panel is open at a time.
 import type { Editor } from "../tiptap-runtime";
 import { forwardTheme } from "./forward-theme";
 import { applyLabel } from "./label";
@@ -23,13 +26,13 @@ export interface DropdownOptions {
   buildPanel: (close: () => void) => HTMLElement;
 }
 
-// Marks a portaled panel, so the DOM observer can skip it like a shell.
+// Marks a panel, so the DOM observer can skip a portaled one like a shell.
 export const PANEL_ATTR = "data-tiptap-panel";
 
 const openPanels = new Set<() => void>();
 
-// The shell's focusout handler and its open panel: a portaled panel is outside
-// the shell, and focus moving between the two must count as staying inside.
+// The shell's focusout handler and its open panel: a portaled panel can be
+// outside the shell, and focus moving between the two must count as staying inside.
 const leaveHandlers = new WeakMap<HTMLElement, (event: FocusEvent) => void>();
 const shellPanels = new WeakMap<HTMLElement, HTMLElement>();
 
@@ -64,6 +67,30 @@ function tabbables(root: ParentNode): HTMLElement[] {
   );
 }
 
+const DIALOG = "dialog[open], [role=dialog], [aria-modal=true], .modal";
+
+function portalTarget(trigger: HTMLElement): ParentNode {
+  const dialog = trigger.closest(DIALOG);
+  if (dialog) {
+    return dialog;
+  }
+  const root = trigger.getRootNode();
+  return root instanceof ShadowRoot ? root : document.body;
+}
+
+// The <dialog> around a node, looking through shadow hosts.
+function dialogOf(node: Element): HTMLDialogElement | null {
+  for (let at: Element | null = node; at; ) {
+    const dialog = at.closest("dialog");
+    if (dialog) {
+      return dialog;
+    }
+    const root = at.getRootNode();
+    at = root instanceof ShadowRoot ? root.host : null;
+  }
+  return null;
+}
+
 function activeElementOf(node: Node): Element | null {
   const root = node.getRootNode();
   return root instanceof Document || root instanceof ShadowRoot ? root.activeElement : null;
@@ -90,7 +117,11 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   panel.setAttribute(PANEL_ATTR, "");
 
   let isOpen = false;
+  let popped = false;
+  let leaveFrom: ((event: FocusEvent) => void) | null = null;
   let shell: HTMLElement | null = null;
+  let host: HTMLDialogElement | null = null;
+  let watcher: ResizeObserver | null = null;
   let frame = 0;
 
   function close(): void {
@@ -106,6 +137,10 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
       cancelAnimationFrame(frame);
       frame = 0;
     }
+    if (popped) {
+      popped = false;
+      panel.hidePopover();
+    }
     panel.remove();
     trigger.classList.remove("is-open");
     trigger.setAttribute("aria-expanded", "false");
@@ -115,11 +150,15 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     document.removeEventListener("scroll", schedule, true);
     window.removeEventListener("resize", schedule);
     opts.editor?.off("destroy", close);
+    host?.removeEventListener("close", close);
+    host = null;
+    watcher?.disconnect();
+    watcher = null;
+    if (leaveFrom) {
+      panel.removeEventListener("focusout", leaveFrom);
+      leaveFrom = null;
+    }
     if (shell) {
-      const onLeave = leaveHandlers.get(shell);
-      if (onLeave) {
-        panel.removeEventListener("focusout", onLeave);
-      }
       if (shellPanels.get(shell) === panel) {
         shellPanels.delete(shell);
       }
@@ -134,8 +173,11 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     }
   }
 
+  // Escape closes the panel only, not a Bootstrap modal or native dialog around it.
   function onKey(event: KeyboardEvent): void {
     if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
       close();
     }
   }
@@ -181,14 +223,22 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     }
     panel.replaceChildren(opts.buildPanel(close));
     shell = shellOf(el);
-    forwardTheme(shell ?? el, panel);
-    const root = trigger.getRootNode();
-    (root instanceof ShadowRoot ? root : document.body).appendChild(panel);
+    if (typeof panel.showPopover === "function") {
+      panel.setAttribute("popover", "manual");
+      el.appendChild(panel);
+      panel.showPopover();
+      popped = true;
+    } else {
+      panel.removeAttribute("popover");
+      forwardTheme(shell ?? el, panel);
+      portalTarget(trigger).appendChild(panel);
+    }
     isOpen = true;
     if (shell) {
       shellPanels.set(shell, panel);
       const onLeave = leaveHandlers.get(shell);
-      if (onLeave) {
+      if (onLeave && !shell.contains(panel)) {
+        leaveFrom = onLeave;
         panel.addEventListener("focusout", onLeave);
       }
     }
@@ -200,11 +250,22 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     document.addEventListener("scroll", schedule, true);
     window.addEventListener("resize", schedule);
     opts.editor?.on("destroy", close);
+    host = dialogOf(trigger);
+    host?.addEventListener("close", close);
+    // A trigger that stops rendering (a host modal hidden by script) takes its panel with it.
+    if (typeof ResizeObserver === "function") {
+      watcher = new ResizeObserver(() => {
+        if (trigger.getClientRects().length === 0) {
+          close();
+        }
+      });
+      watcher.observe(trigger);
+    }
     place();
   }
 
-  // The panel is not after the trigger in DOM order, so Tab is bridged by hand
-  // into it and back out to the control after the trigger.
+  // A portaled panel is not after the trigger in DOM order, so Tab is bridged by
+  // hand into it and back out to the control after the trigger.
   trigger.addEventListener("keydown", (event) => {
     if (!isOpen || event.key !== "Tab" || event.shiftKey) {
       return;

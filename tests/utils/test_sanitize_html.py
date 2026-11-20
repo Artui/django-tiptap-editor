@@ -981,3 +981,9 @@ def test_a_quoted_font_family_survives_byte_identically(html: str) -> None:
 def test_an_unsafe_font_family_is_dropped(value: str) -> None:
     html = f'<p><span style="font-family: {value}">x</span></p>'
     assert str(sanitize_html(html)) == "<p><span>x</span></p>"
+
+
+@pytest.mark.parametrize("space", ["\x1f", "\xa0", "\u3000"])
+def test_drops_a_font_family_that_starts_with_non_ascii_whitespace(space: str) -> None:
+    html = f'<p><span style="font-family:{space}Arial">x</span></p>'
+    assert "font-family" not in sanitize_html(html)

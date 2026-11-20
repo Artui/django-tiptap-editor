@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] — 2026-11-20
+
+### Fixed
+
+- **A toolbar dropdown works again inside a modal, including a native `<dialog>`.** 0.16.0
+  moved the open panel to `<body>` (or the shadow root) so the editor's edge could not cut
+  it off, which took it out of any modal around the editor: in a Bootstrap modal, Tab from
+  an open dropdown's trigger sent focus to the modal's first control instead of into the
+  panel, and in a `<dialog>` opened with `showModal()` every panel was dead to mouse and
+  keyboard. The open panel now stays inside its dropdown, right after the trigger, and is
+  shown as a popover in the top layer, so nothing clips it and a modal's focus trap sees
+  it as inside. In a browser without the popover API it is portaled into the nearest
+  `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal`, else to `<body>` or the
+  shadow root, and only there does `--tiptap-modal-z` still apply to it. Escape on an open
+  panel now closes the panel only, not the modal around it, and a panel closes when the
+  `<dialog>` it sits in is closed (also through a shadow host) or when its trigger stops
+  rendering, as when a script hides the Bootstrap modal around it.
+- **`font-family` whitespace is ASCII only.** The 0.16.0 grammar matched `\s`, which in Python
+  also takes U+000B, U+001C to U+001F, U+0085, U+00A0, U+1680, U+2000 to U+200A, U+2028,
+  U+2029, U+202F, U+205F and U+3000 around a comma and inside `var()`; a value holding any of
+  them was kept. Only space, tab, CR, LF and form feed separate items now, and the rest drop
+  the whole value. The same holds at either end: a value that starts or ends with one of the
+  others (`"\u00a0Arial"`) is dropped instead of kept with it stripped.
+
 ## [0.16.0] — 2026-11-20
 
 ### Changed
@@ -1260,7 +1284,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.13.0...v0.14.0
