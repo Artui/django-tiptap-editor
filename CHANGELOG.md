@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it as inside. In a browser without the popover API it is portaled into the nearest
   `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal`, else to `<body>` or the
   shadow root, and only there does `--tiptap-modal-z` still apply to it.
+- **`font-family` whitespace is ASCII only.** The 0.16.0 grammar matched `\s`, which in Python
+  also takes U+000B, U+001C to U+001F, U+0085, U+00A0, U+1680, U+2000 to U+200A, U+2028,
+  U+2029, U+202F, U+205F and U+3000 around a comma and inside `var()`; a value holding any of
+  them was kept. Only space, tab, CR, LF and form feed separate items now, and the rest drop
+  the whole value.
 
 ## [0.16.0] — 2026-11-20
 
