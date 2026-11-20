@@ -147,6 +147,69 @@ describe.each(["popover", "portal"])("inside a modal, on the %s path", (path) =>
   });
 });
 
+describe.each(["popover", "portal"])("Escape inside a modal, on the %s path", (path) => {
+  it.each(["modal", "dialog"] as const)("closes the panel but not the %s", (kind) => {
+    if (path === "popover") {
+      installPopover();
+    }
+    const host = container(kind);
+    const shell = mountIn(host);
+    const seen: string[] = [];
+    host.addEventListener("keydown", (event) => seen.push(event.key));
+    const button = fontSize(shell);
+    button.click();
+    const item = openPanel().querySelector("button")!;
+    item.focus();
+    const event = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+    item.dispatchEvent(event);
+    expect(seen).toEqual([]);
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(button);
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("closes the panel when its dialog closes", () => {
+    if (path === "popover") {
+      installPopover();
+    }
+    const host = container("dialog");
+    const shell = mountIn(host);
+    const button = fontSize(shell);
+    button.click();
+    const panel = openPanel();
+    host.removeAttribute("open");
+    host.dispatchEvent(new Event("close"));
+    expect(panel.isConnected).toBe(false);
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("the portal path picks the nearest dialog container by any one marker", () => {
+  function single(marker: "role" | "aria" | "class"): HTMLElement {
+    const box = document.createElement("div");
+    if (marker === "role") {
+      box.setAttribute("role", "dialog");
+    } else if (marker === "aria") {
+      box.setAttribute("aria-modal", "true");
+    } else {
+      box.className = "modal";
+    }
+    return box;
+  }
+
+  it.each(["role", "aria", "class"] as const)("portals into a container marked by %s", (marker) => {
+    const box = single(marker);
+    const shell = mountIn(box);
+    fontSize(shell).click();
+    expect(openPanel().parentElement).toBe(box);
+  });
+});
+
 describe("the portal path outside any modal", () => {
   it("still portals to document.body", () => {
     const host = document.createElement("div");

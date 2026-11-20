@@ -84,7 +84,9 @@ viewport runs out, and follows it on scroll and resize. In a browser without the
 API (before Chrome 114, Safari 17, Firefox 125) the panel is portaled instead: into the
 nearest `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal` around the editor,
 else to `<body>` or the shadow root that holds the editor, and there it takes the same
-`z-index` as the picker.
+`z-index` as the picker. A native `<dialog>` scrolls its own overflow, so a portaled
+panel near the dialog's edge can be clipped there. Escape on an open panel closes the
+panel only, not the modal around it.
 
 If your app embeds the editor inside a modal that stacks even higher, raise the knob —
 no `!important` needed:

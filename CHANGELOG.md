@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shown as a popover in the top layer, so nothing clips it and a modal's focus trap sees
   it as inside. In a browser without the popover API it is portaled into the nearest
   `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal`, else to `<body>` or the
-  shadow root, and only there does `--tiptap-modal-z` still apply to it.
+  shadow root, and only there does `--tiptap-modal-z` still apply to it. Escape on an open
+  panel now closes the panel only, not the modal around it, and a panel closes when the
+  `<dialog>` it sits in is closed.
 - **`font-family` whitespace is ASCII only.** The 0.16.0 grammar matched `\s`, which in Python
   also takes U+000B, U+001C to U+001F, U+0085, U+00A0, U+1680, U+2000 to U+200A, U+2028,
   U+2029, U+202F, U+205F and U+3000 around a comma and inside `var()`; a value holding any of

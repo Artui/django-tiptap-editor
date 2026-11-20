@@ -107,6 +107,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   let popped = false;
   let leaveFrom: ((event: FocusEvent) => void) | null = null;
   let shell: HTMLElement | null = null;
+  let host: HTMLDialogElement | null = null;
   let frame = 0;
 
   function close(): void {
@@ -135,6 +136,8 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     document.removeEventListener("scroll", schedule, true);
     window.removeEventListener("resize", schedule);
     opts.editor?.off("destroy", close);
+    host?.removeEventListener("close", close);
+    host = null;
     if (leaveFrom) {
       panel.removeEventListener("focusout", leaveFrom);
       leaveFrom = null;
@@ -154,8 +157,11 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     }
   }
 
+  // Escape closes the panel only, not a Bootstrap modal or native dialog around it.
   function onKey(event: KeyboardEvent): void {
     if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
       close();
     }
   }
@@ -228,6 +234,8 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     document.addEventListener("scroll", schedule, true);
     window.addEventListener("resize", schedule);
     opts.editor?.on("destroy", close);
+    host = trigger.closest("dialog");
+    host?.addEventListener("close", close);
     place();
   }
 
