@@ -15,5 +15,5 @@ def get_font_family(value: object) -> str:
     """Return a font-family list as written if every item is a safe name, else ``""``."""
     if not isinstance(value, str):
         return ""
-    token = value.strip()
+    token = value.strip(" \t\r\n\f")
     return token if _FONT_FAMILY_RE.match(token) else ""

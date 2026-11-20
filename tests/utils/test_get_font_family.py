@@ -148,13 +148,24 @@ def test_refuses_a_percent_sign(value: str) -> None:
     assert get_font_family(value) == ""
 
 
-@pytest.mark.parametrize(
-    "space",
-    ["\x0b", "\x1c", "\x85", "\xa0", " ", " ", " ", " ", " ", "　"],
-)
+_NON_ASCII_SPACES = ["\x0b", "\x1c", "\x85", "\xa0", " ", " ", " ", " ", " ", "　"]
+
+
+@pytest.mark.parametrize("space", _NON_ASCII_SPACES)
 @pytest.mark.parametrize(
     "template",
     ["a{s},b", "a,{s}b", "var(--a{s},b)", "var(--a,{s}b)", "var(--a, b{s})", "a, var(--b){s},c"],
 )
 def test_refuses_non_ascii_whitespace_around_a_separator(space: str, template: str) -> None:
     assert get_font_family(template.format(s=space)) == ""
+
+
+@pytest.mark.parametrize("space", _NON_ASCII_SPACES)
+@pytest.mark.parametrize("template", ["{s}Arial", "Arial{s}", "{s}var(--a){s}"])
+def test_refuses_non_ascii_whitespace_at_either_end(space: str, template: str) -> None:
+    assert get_font_family(template.format(s=space)) == ""
+
+
+@pytest.mark.parametrize("value", [" Arial", "Arial\t", "\r\n\fArial, serif \n"])
+def test_strips_ascii_whitespace_at_either_end(value: str) -> None:
+    assert get_font_family(value) == value.strip(" \t\r\n\f")

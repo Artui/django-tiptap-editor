@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   also takes U+000B, U+001C to U+001F, U+0085, U+00A0, U+1680, U+2000 to U+200A, U+2028,
   U+2029, U+202F, U+205F and U+3000 around a comma and inside `var()`; a value holding any of
   them was kept. Only space, tab, CR, LF and form feed separate items now, and the rest drop
-  the whole value.
+  the whole value. The same holds at either end: a value that starts or ends with one of the
+  others (`"\u00a0Arial"`) is dropped instead of kept with it stripped.
 
 ## [0.16.0] — 2026-11-20
 
