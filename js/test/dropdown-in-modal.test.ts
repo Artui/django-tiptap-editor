@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DjangoTipTap from "../src/index";
 import { installPopover, removePopover } from "./popover-stub";
@@ -101,6 +101,8 @@ afterEach(() => {
   }
   document.body.innerHTML = "";
   removePopover();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe.each(["popover", "portal"])("inside a modal, on the %s path", (path) => {
@@ -186,6 +188,59 @@ describe.each(["popover", "portal"])("Escape inside a modal, on the %s path", (p
     host.dispatchEvent(new Event("close"));
     expect(panel.isConnected).toBe(false);
     expect(button.getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe.each(["popover", "portal"])("a hidden host, on the %s path", (path) => {
+  it("closes the panel when a dialog around the editor's shadow host closes", () => {
+    if (path === "popover") {
+      installPopover();
+    }
+    const dialog = container("dialog");
+    const hostEl = document.createElement("div");
+    dialog.appendChild(hostEl);
+    document.body.appendChild(dialog);
+    const root = hostEl.attachShadow({ mode: "open" });
+    const textarea = document.createElement("textarea");
+    textarea.id = `modal-${++seq}`;
+    root.appendChild(textarea);
+    DjangoTipTap.init(textarea, { toolbar: [["bold", "fontSize"]] });
+    mounted.push(textarea.id);
+    const button = fontSize(textarea.nextElementSibling as HTMLElement);
+    button.click();
+    dialog.dispatchEvent(new Event("close"));
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(root.querySelector(".django-tiptap__panel")).toBeNull();
+  });
+
+  it("closes the panel once its trigger stops rendering", () => {
+    if (path === "popover") {
+      installPopover();
+    }
+    const watched: Array<() => void> = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(private readonly callback: () => void) {}
+        observe(): void {
+          watched.push(this.callback);
+        }
+        disconnect(): void {
+          watched.splice(watched.indexOf(this.callback), 1);
+        }
+      },
+    );
+    const shell = mountIn(container("modal"));
+    const button = fontSize(shell);
+    const rects = vi.spyOn(button, "getClientRects");
+    rects.mockReturnValue([{}] as unknown as DOMRectList);
+    button.click();
+    watched.forEach((run) => run());
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    rects.mockReturnValue([] as unknown as DOMRectList);
+    watched.slice().forEach((run) => run());
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(watched).toEqual([]);
   });
 });
 

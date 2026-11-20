@@ -78,6 +78,19 @@ function portalTarget(trigger: HTMLElement): ParentNode {
   return root instanceof ShadowRoot ? root : document.body;
 }
 
+// The <dialog> around a node, looking through shadow hosts.
+function dialogOf(node: Element): HTMLDialogElement | null {
+  for (let at: Element | null = node; at; ) {
+    const dialog = at.closest("dialog");
+    if (dialog) {
+      return dialog;
+    }
+    const root = at.getRootNode();
+    at = root instanceof ShadowRoot ? root.host : null;
+  }
+  return null;
+}
+
 function activeElementOf(node: Node): Element | null {
   const root = node.getRootNode();
   return root instanceof Document || root instanceof ShadowRoot ? root.activeElement : null;
@@ -108,6 +121,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   let leaveFrom: ((event: FocusEvent) => void) | null = null;
   let shell: HTMLElement | null = null;
   let host: HTMLDialogElement | null = null;
+  let watcher: ResizeObserver | null = null;
   let frame = 0;
 
   function close(): void {
@@ -138,6 +152,8 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     opts.editor?.off("destroy", close);
     host?.removeEventListener("close", close);
     host = null;
+    watcher?.disconnect();
+    watcher = null;
     if (leaveFrom) {
       panel.removeEventListener("focusout", leaveFrom);
       leaveFrom = null;
@@ -234,8 +250,17 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     document.addEventListener("scroll", schedule, true);
     window.addEventListener("resize", schedule);
     opts.editor?.on("destroy", close);
-    host = trigger.closest("dialog");
+    host = dialogOf(trigger);
     host?.addEventListener("close", close);
+    // A trigger that stops rendering (a host modal hidden by script) takes its panel with it.
+    if (typeof ResizeObserver === "function") {
+      watcher = new ResizeObserver(() => {
+        if (trigger.getClientRects().length === 0) {
+          close();
+        }
+      });
+      watcher.observe(trigger);
+    }
     place();
   }
 
