@@ -121,6 +121,24 @@ describe("optional color picker", () => {
     editor.destroy();
   });
 
+  // A <label> row lost its layout to host label rules (Django admin's .aligned label).
+  it("renders the custom row as a div whose input is named and covers the row", async () => {
+    const m = await load();
+    m.registerBuiltInButtons();
+    const editor = makeEditor(m);
+    m.setEditorConfig(editor, { colorPicker: true });
+
+    for (const key of ["color", "highlight"]) {
+      const input = pickerInput(m, key, editor);
+      const panel = input!.closest(".django-tiptap__panel");
+      expect(panel!.querySelector("label")).toBeNull();
+      expect(input!.getAttribute("aria-label")).toBe("Custom\u2026");
+      expect(input!.parentElement!.classList.contains("django-tiptap__picker")).toBe(true);
+    }
+
+    editor.destroy();
+  });
+
   it("applies the picked value as a textStyle mark on change", async () => {
     const m = await load();
     m.registerBuiltInButtons();

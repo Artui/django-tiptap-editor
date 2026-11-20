@@ -173,9 +173,14 @@ const HEX6_RE = /^#[0-9a-f]{6}$/i;
 // one transaction per pick instead of one per drag step.
 //
 // The native control is styled out of the way rather than shown raw: it sits at
-// opacity 0 over a rainbow chip sized like a swatch, so the row reads as one
-// more entry in the panel instead of an OS widget dropped into it. The chip is
-// the affordance; the input underneath is what the click actually lands on.
+// opacity 0 over the whole row, beside a rainbow chip sized like a swatch, so the
+// row reads as one more entry in the panel instead of an OS widget dropped into
+// it. The chip is the affordance; the input on top is what the click lands on.
+//
+// The row is a div, not a <label>: host label rules (Django admin's
+// `.aligned label`) outrank a single class and broke its layout. The input is
+// named with aria-label instead, and covering the row keeps the whole row
+// clickable as the label made it.
 function pickerRow(
   editor: Editor,
   attr: string,
@@ -183,7 +188,7 @@ function pickerRow(
   current: string,
   close: () => void,
 ): HTMLElement {
-  const row = document.createElement("label");
+  const row = document.createElement("div");
   row.className = "django-tiptap__picker";
   row.title = label;
   const chip = document.createElement("span");
@@ -191,12 +196,12 @@ function pickerRow(
   const input = document.createElement("input");
   input.type = "color";
   input.className = "django-tiptap__picker-input";
+  input.setAttribute("aria-label", label);
   input.value = HEX6_RE.test(current) ? current : "#000000";
-  chip.appendChild(input);
   const text = document.createElement("span");
   text.className = "django-tiptap__picker-label";
   text.textContent = label;
-  row.append(chip, text);
+  row.append(chip, text, input);
   // No preventDefault on mousedown here, unlike every other control: that is
   // what would stop the native picker from opening. Losing DOM focus is safe —
   // the ProseMirror selection lives in editor state, and applyTextStyle's

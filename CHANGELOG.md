@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The colour picker's "Custom…" row renders in the Django admin.** The row was a
+  `<label>`, and the admin's `.aligned label` rules (display, padding, width and an
+  `::after` pseudo) outranked its styling, collapsing the chip to its border and widening
+  the panel. The row is now a `<div>`: no host label rule reaches it. The native input is
+  named with `aria-label` (the translated "Custom…") and covers the whole row, so a click
+  on the text still opens the picker. Class names are unchanged; a host selector written
+  as `label.django-tiptap__picker` no longer matches.
+
 ## [0.15.0] — 2026-11-18
 
 ### Added
