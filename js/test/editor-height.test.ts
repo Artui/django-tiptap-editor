@@ -141,7 +141,12 @@ describe("design tokens", () => {
   it("declares no --tiptap-* default on the shell or inside it", () => {
     const rules = stylesheet();
     const shell = mount({ height: "200px" });
-    const inside = [shell, ...Array.from(shell.querySelectorAll("*"))];
+    // An open dropdown panel is portaled out of the shell, so it is checked too.
+    const withPanel = mount({ toolbar: [["fontSize"]] });
+    withPanel.querySelector<HTMLButtonElement>(".django-tiptap__dropdown-trigger")!.click();
+    const panel = document.querySelector(".django-tiptap__panel");
+    expect(panel?.querySelector(".django-tiptap__menu-item")).toBeTruthy();
+    const inside = [shell, panel!, ...shell.querySelectorAll("*"), ...panel!.querySelectorAll("*")];
     const shadowing = rules
       .filter((rule) => declared(rule).some((name) => name.startsWith("--tiptap-")))
       .filter((rule) => inside.some((el) => el.matches(withoutHost(rule.selectorText))))

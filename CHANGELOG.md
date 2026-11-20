@@ -21,6 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A toolbar dropdown is no longer cut off by the editor's edge.** On a narrow field
+  the font-size, colour and other panels ran past the shell's right edge, and on a
+  short one past its bottom, where they were clipped and could not be clicked. The open
+  panel now moves to `<body>` (or to the shadow root holding the editor), takes the
+  editor's tokens, font and direction with it, and is placed beside its trigger:
+  end-aligned at the right edge of the viewport, above the trigger when there is more
+  room there, and re-placed on scroll and resize. Tab still runs trigger, panel, next
+  control; Escape and every other close return focus to the trigger; the textarea's
+  `change` still fires once when focus leaves the editor and its panel together. A
+  mousedown on a panel item inside a shadow root no longer closes the panel before the
+  click lands. The panel stacks at `--tiptap-modal-z` (default `2000`), like the image
+  picker.
+
 - **The colour picker's "Custom…" row renders in the Django admin.** The row was a
   `<label>`, and the admin's `.aligned label` rules (display, padding, width and an
   `::after` pseudo) outranked its styling, collapsing the chip to its border and widening
