@@ -47,3 +47,29 @@ def test_refuses_an_unsafe_list(value: str) -> None:
 
 def test_refuses_a_non_string() -> None:
     assert get_font_family(3) == ""
+
+
+def test_keeps_a_value_with_surrounding_line_breaks() -> None:
+    assert get_font_family("Arial\r\n") == "Arial"
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        '"a\\b"',
+        "'a\\b'",
+        '"\\75 rl(x)"',
+        '"a\\", "b url(x) c"',
+        "'a;b'",
+        '"a<b"',
+        "'a<b'",
+        '"a>b"',
+        "'a>b'",
+        '"a\rb"',
+        "'a\rb'",
+        '"a\nb"',
+        "'a\nb'",
+    ],
+)
+def test_refuses_each_character_a_quoted_name_may_not_hold(value: str) -> None:
+    assert get_font_family(value) == ""

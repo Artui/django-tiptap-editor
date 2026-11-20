@@ -571,7 +571,19 @@ def test_a_quoted_font_family_is_rendered_unchanged(family: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "family", ['"a;b"', '"a"b"', "'a\\'b'", "url(x)", "'a' 'b'", "a,,b", "a\nb"]
+    "family",
+    [
+        '"a;b"',
+        '"a"b"',
+        "'a\\'b'",
+        "url(x)",
+        "'a' 'b'",
+        "a,,b",
+        "a\nb",
+        '"a\\\\b"',
+        "'a\\\\b'",
+        '"\\\\75 rl(x)"',
+    ],
 )
 def test_an_unsafe_font_family_is_not_rendered(family: str) -> None:
     mark = {"type": "textStyle", "attrs": {"fontFamily": family}}

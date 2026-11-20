@@ -68,7 +68,7 @@ development dependency only; the package still depends on Django alone.
 | Images | `img` with `src` (allowlisted protocols), `alt`, `title`, `width`, `height`, and layout `style` (`float`, `display`, `vertical-align`, `margin`/`padding` and their per-side forms, `border`, `border-radius`, `width`, `height`) |
 | Tables | `table`, `colgroup`, `col`, `tbody`, `tr`, `th`/`td` with `colspan`, `rowspan`, `colwidth`, `background-color`, `text-align` |
 
-Quoted font-family names, such as `'Times New Roman', serif`, are kept exactly as written. A quoted name that contains a comma, a semicolon, a backslash or a second quote is refused, and so is the whole value.
+Quoted font-family names, such as `'Times New Roman', serif`, are kept exactly as written. A quoted name that contains a comma, a quote of its own kind, `;`, `\`, `<`, `>` or a line break is refused, and so is the whole value.
 
 Everything else is unwrapped: the tag goes, the text inside it stays. A sanitiser that
 deleted what it did not recognise could quietly empty half a document, so it never

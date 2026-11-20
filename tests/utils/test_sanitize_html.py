@@ -963,6 +963,9 @@ def test_a_quoted_font_family_survives_byte_identically(html: str) -> None:
         "'a' 'b'",
         "a,,b",
         "a&#10;b",
+        "&quot;a\\b&quot;",
+        "'a\\b'",
+        "&quot;\\75 rl(x)&quot;",
     ],
 )
 def test_an_unsafe_font_family_is_dropped(value: str) -> None:
