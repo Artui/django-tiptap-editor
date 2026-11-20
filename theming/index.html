@@ -1231,7 +1231,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 </tr>
 <tr>
 <td><code>--tiptap-border</code></td>
-<td>Border colour</td>
+<td>Border colour: the editor's edge, the toolbar and group separators, the menu and panel borders, the footer, the source note, the modal header and the image picker (light <code>#858b97</code>, dark <code>#7a8190</code>)</td>
 </tr>
 <tr>
 <td><code>--tiptap-radius</code></td>
@@ -1263,7 +1263,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 </tr>
 <tr>
 <td><code>--tiptap-content-border</code></td>
-<td>Table cell borders in the editing area (light default: <code>--tiptap-border</code>)</td>
+<td>Table cell borders in the editing area (light default: <code>#d0d5dd</code>, dark <code>#858d9b</code>)</td>
 </tr>
 <tr>
 <td><code>--tiptap-highlight-ink</code></td>
@@ -1291,7 +1291,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 </tr>
 <tr>
 <td><code>--tiptap-modal-z</code></td>
-<td>Image-picker overlay <code>z-index</code> (default <code>2000</code>)</td>
+<td><code>z-index</code> of the image-picker overlay and the open dropdown panels (default <code>2000</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1324,9 +1324,13 @@ the host element, so a token set on the document's <code>:root</code> (including
 </span></code></pre></div>
 <h3 id="stacking-the-picker-over-host-modals">Stacking the picker over host modals<a class="headerlink" href="#stacking-the-picker-over-host-modals" title="Permanent link">&para;</a></h3>
 <p>The image-picker overlay is portaled to <code>&lt;body&gt;</code>, so it sits outside the editor's
-stacking context. It defaults to <code>z-index: 2000</code>, which clears common modal stacks
-(Bootstrap 3/4/5 use 1050–1060). If your app embeds the editor inside a modal that
-stacks even higher, raise the knob — no <code>!important</code> needed:</p>
+stacking context. An open toolbar dropdown (font size, colour, table and the rest) is
+portaled too, to <code>&lt;body&gt;</code> or to the shadow root that holds the editor, so the shell's
+rounded, clipped edge cannot cut it off on a narrow or short field; it is placed beside
+its trigger, flips above it or aligns to its end where the viewport runs out, and
+follows it on scroll and resize. Both default to <code>z-index: 2000</code>, which clears common
+modal stacks (Bootstrap 3/4/5 use 1050–1060). If your app embeds the editor inside a
+modal that stacks even higher, raise the knob — no <code>!important</code> needed:</p>
 <div class="language-css highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">:</span><span class="nd">root</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nv">--tiptap-modal-z</span><span class="p">:</span><span class="w"> </span><span class="mi">12000</span><span class="p">;</span><span class="w"> </span><span class="c">/* above your host modal&#39;s z-index */</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="p">}</span>
@@ -1336,6 +1340,13 @@ because the overlay is appended to <code>&lt;body&gt;</code>, it does not inheri
 declared on the editor element. The same holds for the overlay's colours, border and
 radius: a token set on <code>:root</code> themes the picker as well as the editors, one set on
 <code>.django-tiptap</code> only the editors.</p>
+<p>The dropdown panels are themed like the editor they belong to: each time one opens,
+the editor's resolved tokens, font, direction and language are copied onto it, so a
+token set on <code>.django-tiptap</code> or on a wrapper reaches the panel too. The copy is taken
+at open, so a <code>setTokens</code> call or a scheme switch while a panel is open shows the next
+time it opens. Inside a shadow root the panel is a child of the shadow root, so an
+<code>overflow</code> or <code>contain</code> on the shadow host itself still clips it; nothing inside the
+component can escape the host.</p>
 <h3 id="in-js">In JS<a class="headerlink" href="#in-js" title="Permanent link">&para;</a></h3>
 <div class="language-js highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">DjangoTipTap</span><span class="p">.</span><span class="nx">ui</span><span class="p">.</span><span class="nx">setTokens</span><span class="p">({</span><span class="w"> </span><span class="nx">accent</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;#0b7285&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">radius</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;12px&quot;</span><span class="w"> </span><span class="p">});</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1">// bare keys are prefixed with --tiptap-; or pass full &quot;--tiptap-…&quot; names.</span>
@@ -1432,8 +1443,15 @@ rewritten: the HTML a field posts is the same in both schemes. Two things follow
   the dark scheme by setting <code>--tiptap-content-bg</code> and <code>--tiptap-content-fg</code> (as a pair)
   to light values.</li>
 </ul>
-<p>The editor's outer border plays the same role in both schemes; neither scheme claims a
-contrast ratio for it.</p>
+<p>The editor's border marks where the editable field ends, so it meets WCAG 1.4.11 non-text
+contrast (3:1) against the editor's own surfaces in both schemes: light <code>#858b97</code> (3.42 on
+the shell, 3.22 on the toolbar), dark <code>#7a8190</code> (4.23 on the shell, 3.69 on the toolbar,
+3.20 on the editing area). Against the page around it the ratio depends on the page. The
+separators, menus, panels, footer, source note, modal header and image picker share the
+token. Table cells do not: they read <code>--tiptap-content-border</code>, so a project that sets
+<code>--tiptap-border</code> and wants tables to match sets <code>--tiptap-content-border</code> too. A project
+that sets <code>--tiptap-border</code> keeps its value in both schemes, and the 3:1 is then its to
+keep.</p>
 <h2 id="targeting-parts">Targeting parts<a class="headerlink" href="#targeting-parts" title="Permanent link">&para;</a></h2>
 <p>The shell uses stable, namespaced classes you can style directly: <code>.django-tiptap</code>
 (shell), <code>.django-tiptap__toolbar</code>, <code>.django-tiptap__group</code>, <code>.django-tiptap__btn</code>

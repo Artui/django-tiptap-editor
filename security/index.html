@@ -1103,6 +1103,7 @@ development dependency only; the package still depends on Django alone.</p>
 </tr>
 </tbody>
 </table>
+<p>Quoted font-family names, such as <code>'Times New Roman', serif</code>, and <code>var(--name)</code> items are kept exactly as written. A quoted name that contains a quote of its own kind, <code>;</code>, <code>\</code>, <code>&lt;</code>, <code>&gt;</code> or a line break is refused, and so is the whole value.</p>
 <p>Everything else is unwrapped: the tag goes, the text inside it stays. A sanitiser that
 deleted what it did not recognise could quietly empty half a document, so it never
 deletes visible text — the one exception is <code>script</code> and <code>style</code>, whose bodies are
