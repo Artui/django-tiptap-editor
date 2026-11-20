@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] — 2026-11-20
+
 ### Fixed
 
 - **A toolbar dropdown works again inside a modal, including a native `<dialog>`.** 0.16.0
@@ -1282,7 +1284,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.13.0...v0.14.0
