@@ -941,6 +941,11 @@ _QUOTED_FONTS = [
     "<p><span style=\"font-family: 'Times New Roman', serif\">x</span></p>",
     "<p><span style=\"font-family: 'Courier New', monospace\">x</span></p>",
     "<p><span style=\"font-family: 'Expression Pro', 'url(x)'\">x</span></p>",
+    '<p><span style="font-family: var(--brand-font)">x</span></p>',
+    '<p><span style="font-family: var(--brand-font, Arial)">x</span></p>',
+    '<p><span style="font-family: var(--x, &quot;Times New Roman&quot;, serif)">x</span></p>',
+    '<p><span style="font-family: Arial,\n  sans-serif">x</span></p>',
+    '<p><span style="font-family: &quot;Foo, Inc&quot;, serif">x</span></p>',
 ]
 
 
@@ -963,6 +968,11 @@ def test_a_quoted_font_family_survives_byte_identically(html: str) -> None:
         "'a' 'b'",
         "a,,b",
         "a&#10;b",
+        "Times&#10;New Roman",
+        "var(x)",
+        "var(--a, url(x))",
+        "var(--a, var(--b))",
+        "var(--a",
         "&quot;a\\b&quot;",
         "'a\\b'",
         "&quot;\\75 rl(x)&quot;",

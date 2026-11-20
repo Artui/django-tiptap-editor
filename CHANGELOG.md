@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   longer follow `--tiptap-border`; a project that sets `--tiptap-border` and wants tables
   to match sets `--tiptap-content-border` as well. A project that sets `--tiptap-border`
   keeps its value in both schemes, and the 3:1 is then the project's to keep.
+- **`font-family` is validated by its own grammar, stricter than before.** Values that 0.15.0
+  kept and that are now dropped: a dotted name (`Font.Name`), a value holding `#` or `%`, an
+  empty item or trailing comma (`a,,b`, `a,`), and a newline between bare words
+  (`Times\nNew Roman`). Quoted names, `var(--name)` and a line break at a comma are kept.
 
 ### Fixed
 
@@ -44,7 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quoted `font-family` names are kept.** `sanitize_html` and the JSON mirror dropped any family
   containing a quote, including the built-in Times New Roman and Courier New presets and the
   double-quoted form browsers write. They are now kept as written. A quoted name containing a
-  comma, a quote of its own kind, `;`, `\`, `<`, `>` or a line break is still refused.
+  quote of its own kind, `;`, `\`, `<`, `>` or a line break is still refused. `var(--name)` and
+  `var(--name, fallback)` are kept as one item, and a list may break across lines at a comma.
 
 ## [0.15.0] — 2026-11-18
 

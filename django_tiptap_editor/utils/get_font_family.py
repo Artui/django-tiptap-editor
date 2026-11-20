@@ -5,7 +5,9 @@ import re
 _NAME = (
     r"""(?:"[^"\\;<>\r\n]+"|'[^'\\;<>\r\n]+'|[-\w]+(?:[ \t]+[-\w]+)*)"""  # quoted, or bare words
 )
-_FONT_FAMILY_RE = re.compile(rf"^{_NAME}(?:[ \t]*,[ \t]*{_NAME})*$")
+_LIST = rf"{_NAME}(?:\s*,\s*{_NAME})*"
+_ITEM = rf"(?:{_NAME}|var\(--[-\w]+(?:\s*,\s*{_LIST}\s*)?\))"
+_FONT_FAMILY_RE = re.compile(rf"^{_ITEM}(?:\s*,\s*{_ITEM})*$")
 
 
 def get_font_family(value: object) -> str:

@@ -561,7 +561,16 @@ def test_no_grant_renders_no_class() -> None:
 
 @pytest.mark.parametrize(
     "family",
-    ["'Times New Roman', serif", '"Times New Roman", Times, serif', "Arial, sans-serif"],
+    [
+        "'Times New Roman', serif",
+        '"Times New Roman", Times, serif',
+        "Arial, sans-serif",
+        "var(--brand-font)",
+        "var(--brand-font, Arial)",
+        'var(--x, "Times New Roman", serif)',
+        "Arial,\n  sans-serif",
+        '"Foo, Inc", serif',
+    ],
 )
 def test_a_quoted_font_family_is_rendered_unchanged(family: str) -> None:
     mark = {"type": "textStyle", "attrs": {"fontFamily": family}}

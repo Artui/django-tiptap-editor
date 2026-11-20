@@ -14,6 +14,12 @@ from django_tiptap_editor.utils.get_font_family import get_font_family
         '"Times New Roman", Times, serif',
         "Segoe UI",
         '"Expression Pro", "url(x)"',
+        "var(--brand-font)",
+        "var(--brand-font, Arial)",
+        'var(--x, "Times New Roman", serif)',
+        "var(--a), serif",
+        "Arial,\n  sans-serif",
+        '"Foo, Inc", serif',
     ],
 )
 def test_keeps_a_safe_list_as_written(value: str) -> None:
@@ -39,6 +45,14 @@ def test_keeps_a_safe_list_as_written(value: str) -> None:
         "",
         "   ",
         '"a<b"',
+        "var(x)",
+        "var(--a;b)",
+        "var(--a, url(x))",
+        "var(--a, var(--b))",
+        "var(--a",
+        "var(--a, expression(x))",
+        "var(--a, )",
+        "Times\nNew Roman",
     ],
 )
 def test_refuses_an_unsafe_list(value: str) -> None:
