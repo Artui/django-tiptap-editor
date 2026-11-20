@@ -35,7 +35,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-shadow-color` | Shadow of the dropdown panels and the floating menus |
 | `--tiptap-modal-shadow-color` / `--tiptap-overlay-bg` | Image-picker modal shadow and the overlay behind it |
 | `--tiptap-color-scheme` | `color-scheme` of the shell and the picker modal, so the source textarea, the colour input and the focus ring follow the scheme (light default: unset, so they inherit the page's) |
-| `--tiptap-modal-z` | `z-index` of the image-picker overlay and the open dropdown panels (default `2000`) |
+| `--tiptap-modal-z` | `z-index` of the image-picker overlay, and of the open dropdown panels in a browser without the popover API (default `2000`) |
 
 The defaults are declared on the document root with zero specificity
 (`:where(:root, :host)`), and every editor inherits them. So a token set anywhere above an
@@ -71,13 +71,23 @@ the host element, so a token set on the document's `:root` (including with
 ### Stacking the picker over host modals
 
 The image-picker overlay is portaled to `<body>`, so it sits outside the editor's
-stacking context. An open toolbar dropdown (font size, colour, table and the rest) is
-portaled too, to `<body>` or to the shadow root that holds the editor, so the shell's
-rounded, clipped edge cannot cut it off on a narrow or short field; it is placed beside
-its trigger, flips above it or aligns to its end where the viewport runs out, and
-follows it on scroll and resize. Both default to `z-index: 2000`, which clears common
-modal stacks (Bootstrap 3/4/5 use 1050–1060). If your app embeds the editor inside a
-modal that stacks even higher, raise the knob — no `!important` needed:
+stacking context, at `z-index: 2000`, which clears common modal stacks (Bootstrap 3/4/5
+use 1050–1060).
+
+An open toolbar dropdown (font size, colour, table and the rest) stays inside the editor,
+right after its trigger, and is shown as a popover in the browser's top layer, so the
+shell's rounded, clipped edge cannot cut it off on a narrow or short field and no
+`z-index` is involved. Because it stays a descendant of the editor, a modal's focus trap
+(Bootstrap's, a native `<dialog>` opened with `showModal()`) treats it as inside the
+modal. It is placed beside its trigger, flips above it or aligns to its end where the
+viewport runs out, and follows it on scroll and resize. In a browser without the popover
+API (before Chrome 114, Safari 17, Firefox 125) the panel is portaled instead: into the
+nearest `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal` around the editor,
+else to `<body>` or the shadow root that holds the editor, and there it takes the same
+`z-index` as the picker.
+
+If your app embeds the editor inside a modal that stacks even higher, raise the knob —
+no `!important` needed:
 
 ```css
 :root {
@@ -91,13 +101,13 @@ declared on the editor element. The same holds for the overlay's colours, border
 radius: a token set on `:root` themes the picker as well as the editors, one set on
 `.django-tiptap` only the editors.
 
-The dropdown panels are themed like the editor they belong to: each time one opens,
-the editor's resolved tokens, font, direction and language are copied onto it, so a
-token set on `.django-tiptap` or on a wrapper reaches the panel too. The copy is taken
-at open, so a `setTokens` call or a scheme switch while a panel is open shows the next
-time it opens. Inside a shadow root the panel is a child of the shadow root, so an
-`overflow` or `contain` on the shadow host itself still clips it; nothing inside the
-component can escape the host.
+The dropdown panels are themed like the editor they belong to: a panel inherits the
+editor's tokens, font, direction and language from the element it sits in, so a token
+set on `.django-tiptap` or on a wrapper reaches the panel too. Where a panel is portaled
+(no popover API), those values are copied onto it each time it opens instead, so a
+`setTokens` call or a scheme switch while it is open shows the next time it opens; inside
+a shadow root it is then a child of the shadow root, so an `overflow` or `contain` on the
+shadow host itself still clips it.
 
 ### In JS
 

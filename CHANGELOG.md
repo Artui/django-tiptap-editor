@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A toolbar dropdown works again inside a modal, including a native `<dialog>`.** 0.16.0
+  moved the open panel to `<body>` (or the shadow root) so the editor's edge could not cut
+  it off, which took it out of any modal around the editor: in a Bootstrap modal, Tab from
+  an open dropdown's trigger sent focus to the modal's first control instead of into the
+  panel, and in a `<dialog>` opened with `showModal()` every panel was dead to mouse and
+  keyboard. The open panel now stays inside its dropdown, right after the trigger, and is
+  shown as a popover in the top layer, so nothing clips it and a modal's focus trap sees
+  it as inside. In a browser without the popover API it is portaled into the nearest
+  `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal`, else to `<body>` or the
+  shadow root, and only there does `--tiptap-modal-z` still apply to it.
+
 ## [0.16.0] — 2026-11-20
 
 ### Changed

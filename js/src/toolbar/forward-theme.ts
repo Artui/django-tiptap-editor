@@ -1,5 +1,5 @@
-// A portaled panel no longer inherits from the editor shell, so the shell's
-// resolved theme is copied onto it inline at each open. A computed custom
+// A portaled panel (no popover API) no longer inherits from the editor shell, so
+// the shell's resolved theme is copied onto it inline at each open. A computed custom
 // property already has var() substituted, so the private --_tiptap-* scheme
 // values arrive resolved and need no copying of their own. The font is copied
 // too: --tiptap-font defaults to inherit, which in a portal means <body>.
