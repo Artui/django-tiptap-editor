@@ -113,7 +113,7 @@ describe("input on the bound textarea", () => {
     });
     editor.commands.setTextSelection(6);
     button(shell, "Merge tags").click();
-    shell.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")?.click();
+    document.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")?.click();
     await tick();
     expect(textarea.value).toContain("{{ name }}");
     expect(events).toEqual(["input"]);
@@ -303,7 +303,7 @@ describe("change on the bound textarea", () => {
     button(shell, "Bold").focus();
     editor.chain().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
     button(shell, "Text color").click();
-    const picker = shell.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
+    const picker = document.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
     expect(picker).not.toBeNull();
     picker?.focus();
     await tick();

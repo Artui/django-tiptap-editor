@@ -380,7 +380,7 @@ describe("the toolbar of a restricted field", () => {
     document.body.appendChild(toolbar.el);
     editor.commands.focus("end");
     toolbar.el.querySelector<HTMLButtonElement>('[data-key="mergeTags"] button')!.click();
-    toolbar.el.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")!.click();
+    document.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")!.click();
     expect(editor.getHTML()).toBe("<p>Hello <strong>there</strong></p>");
   });
 

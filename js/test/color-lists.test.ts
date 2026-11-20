@@ -37,7 +37,7 @@ function swatchColors(m: Loaded, key: string, editor: unknown): string[] {
   const { el } = spec.render(editor as never);
   document.body.appendChild(el);
   el.querySelector<HTMLButtonElement>(".django-tiptap__dropdown-trigger")?.click();
-  const swatches = Array.from(el.querySelectorAll<HTMLElement>(".django-tiptap__swatch"));
+  const swatches = Array.from(document.querySelectorAll<HTMLElement>(".django-tiptap__swatch"));
   return swatches.map((s) => s.title);
 }
 
@@ -94,7 +94,7 @@ function pickerInput(m: Loaded, key: string, editor: unknown): HTMLInputElement 
   const { el } = spec.render(editor as never);
   document.body.appendChild(el);
   el.querySelector<HTMLButtonElement>(".django-tiptap__dropdown-trigger")?.click();
-  return el.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
+  return document.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
 }
 
 describe("optional color picker", () => {

@@ -51,6 +51,7 @@ export function selectControl(opts: {
       const options = typeof opts.options === "function" ? opts.options(editor) : opts.options;
       const label = toolbarLabel(configFor(editor), opts.title);
       const dd = createDropdown({
+        editor,
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
         label,
@@ -130,6 +131,7 @@ export function commandMenuControl(opts: {
     render(editor: Editor): RenderedControl {
       const t = translatorFor(editor);
       const dd = createDropdown({
+        editor,
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
         label: toolbarLabel(configFor(editor), opts.title),
@@ -227,6 +229,7 @@ export function colorControl(opts: {
       const t = translatorFor(editor);
       const swatches = typeof opts.swatches === "function" ? opts.swatches(editor) : opts.swatches;
       const dd = createDropdown({
+        editor,
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
         label: toolbarLabel(configFor(editor), opts.title),
