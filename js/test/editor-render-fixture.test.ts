@@ -52,6 +52,9 @@ const block = (type: string, attrs: Json): Json =>
   doc({ type, attrs, content: [text()] });
 const link = (attrs: Json): Json => doc(paragraph(text([{ type: "link", attrs }])));
 
+const font = (fontFamily: string): Json =>
+  doc(paragraph(text([{ type: "textStyle", attrs: { fontFamily } }])));
+
 const CASES: Case[] = [
   {
     name: "link with a title",
@@ -77,6 +80,11 @@ const CASES: Case[] = [
     target: { node: "tableCell" },
     doc: table("tableCell", { align: "justify" }),
   },
+  ...["'Times New Roman', serif", "'Courier New', monospace", "Arial, sans-serif"].map((family) => ({
+    name: `font family ${family}`,
+    target: { mark: "textStyle" },
+    doc: font(family),
+  })),
   // The grant the harness editor mounts; render_doc is given the same one.
   ...[
     ["plain class", { class: "lead" }],

@@ -934,3 +934,37 @@ _CLOSING_INPUTS = {
 def test_closing_tags_clean_in_linear_time(html: str, features: list[str] | None) -> None:
     schema = get_html_schema({"features": features} if features is not None else None)
     _within_bound(lambda: sanitize_html(html, schema=schema))
+
+
+_QUOTED_FONTS = [
+    '<p><span style="font-family: &quot;Times New Roman&quot;, Times, serif;">x</span></p>',
+    "<p><span style=\"font-family: 'Times New Roman', serif\">x</span></p>",
+    "<p><span style=\"font-family: 'Courier New', monospace\">x</span></p>",
+    "<p><span style=\"font-family: 'Expression Pro', 'url(x)'\">x</span></p>",
+]
+
+
+@pytest.mark.parametrize("html", _QUOTED_FONTS)
+def test_a_quoted_font_family_survives_byte_identically(html: str) -> None:
+    assert str(sanitize_html(html)) == html
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "&quot;a;b&quot;",
+        "&quot;a&quot;b&quot;",
+        "'a'b'",
+        "&quot;a\\&quot;b&quot;",
+        "\\75 rl(x)",
+        "&quot;unterminated",
+        "url(x)",
+        "expression(x)",
+        "'a' 'b'",
+        "a,,b",
+        "a&#10;b",
+    ],
+)
+def test_an_unsafe_font_family_is_dropped(value: str) -> None:
+    html = f'<p><span style="font-family: {value}">x</span></p>'
+    assert str(sanitize_html(html)) == "<p><span>x</span></p>"
