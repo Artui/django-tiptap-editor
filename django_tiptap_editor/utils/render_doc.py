@@ -12,6 +12,7 @@ from django_tiptap_editor.constants import (
 )
 from django_tiptap_editor.utils.escape_html import escape_html
 from django_tiptap_editor.utils.get_css_value import get_css_value
+from django_tiptap_editor.utils.get_font_family import get_font_family
 from django_tiptap_editor.utils.get_link_attributes import get_link_attributes
 from django_tiptap_editor.utils.sanitize_doc import sanitize_doc
 
@@ -107,7 +108,11 @@ def _image_style(attrs: dict[str, Any]) -> str:
 
 def _style_attr(pairs: list[tuple[str, object]]) -> str:
     """Build ``style="..."`` from (prop, value) pairs, dropping empty and unsafe values."""
-    decls = [f"{prop}: {safe}" for prop, value in pairs if (safe := get_css_value(value))]
+    decls = [
+        f"{prop}: {safe}"
+        for prop, value in pairs
+        if (safe := (get_font_family if prop == "font-family" else get_css_value)(value))
+    ]
     return f' style="{escape_html("; ".join(decls), quote=True)}"' if decls else ""
 
 

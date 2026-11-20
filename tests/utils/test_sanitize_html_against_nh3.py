@@ -95,6 +95,10 @@ _STYLES = [
     "background-image: url(javascript:alert(1))",
     "font-size: 12px; behavior: url(x)",
     "margin: expression(alert(1))",
+    "font-family: 'Times New Roman', serif",
+    "font-family: &quot;Times New Roman&quot;, Times, serif",
+    "font-family: 'a;b', url(x)",
+    "font-family: &quot;a\\&quot;, expression(x)",
 ]
 _ATTRIBUTES = [
     "href",

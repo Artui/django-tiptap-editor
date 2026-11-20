@@ -11,6 +11,7 @@ from django_tiptap_editor.constants import MAX_DOCUMENT_DEPTH, PARAGRAPH_BLOCK_T
 from django_tiptap_editor.types.html_schema import HtmlSchema
 from django_tiptap_editor.utils.escape_html import escape_html
 from django_tiptap_editor.utils.get_css_value import get_css_value
+from django_tiptap_editor.utils.get_font_family import get_font_family
 from django_tiptap_editor.utils.get_html_schema import get_html_schema
 from django_tiptap_editor.utils.get_link_attributes import get_link_attributes
 from django_tiptap_editor.utils.is_allowed_url import is_allowed_url
@@ -260,7 +261,9 @@ class _Sanitizer(HTMLParser):
             name, separator, value = declaration.partition(":")
             if not separator:
                 continue
-            if name.strip().lower() in properties and get_css_value(value):
+            prop = name.strip().lower()
+            check = get_font_family if prop == "font-family" else get_css_value
+            if prop in properties and check(value):
                 kept.append(declaration.strip())
         if not kept:
             return ""

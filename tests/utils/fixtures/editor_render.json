@@ -411,6 +411,135 @@
       "attributes": []
     },
     {
+      "name": "font family 'Times New Roman', serif",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": null
+            },
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "textStyle",
+                    "attrs": {
+                      "fontFamily": "'Times New Roman', serif",
+                      "color": null,
+                      "backgroundColor": null,
+                      "fontSize": null
+                    }
+                  }
+                ],
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p><span style=\"font-family: &quot;Times New Roman&quot;, serif;\">x</span></p>",
+      "tag": "span",
+      "attributes": [
+        [
+          "style",
+          "font-family: 'Times New Roman', serif"
+        ]
+      ]
+    },
+    {
+      "name": "font family 'Courier New', monospace",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": null
+            },
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "textStyle",
+                    "attrs": {
+                      "fontFamily": "'Courier New', monospace",
+                      "color": null,
+                      "backgroundColor": null,
+                      "fontSize": null
+                    }
+                  }
+                ],
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p><span style=\"font-family: &quot;Courier New&quot;, monospace;\">x</span></p>",
+      "tag": "span",
+      "attributes": [
+        [
+          "style",
+          "font-family: 'Courier New', monospace"
+        ]
+      ]
+    },
+    {
+      "name": "font family Arial, sans-serif",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "attrs": {
+              "margin": null,
+              "marginBlockEnd": null,
+              "paddingLeft": null,
+              "textAlign": null,
+              "class": null
+            },
+            "content": [
+              {
+                "type": "text",
+                "marks": [
+                  {
+                    "type": "textStyle",
+                    "attrs": {
+                      "fontFamily": "Arial, sans-serif",
+                      "color": null,
+                      "backgroundColor": null,
+                      "fontSize": null
+                    }
+                  }
+                ],
+                "text": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<p><span style=\"font-family: Arial, sans-serif;\">x</span></p>",
+      "tag": "span",
+      "attributes": [
+        [
+          "style",
+          "font-family: Arial, sans-serif"
+        ]
+      ]
+    },
+    {
       "name": "paragraph with plain class",
       "doc": {
         "type": "doc",

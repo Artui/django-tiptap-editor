@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named with `aria-label` (the translated "Custom…") and covers the whole row, so a click
   on the text still opens the picker. Class names are unchanged; a host selector written
   as `label.django-tiptap__picker` no longer matches.
+- **Quoted `font-family` names are kept.** `sanitize_html` and the JSON mirror dropped any family
+  containing a quote, including the built-in Times New Roman and Courier New presets and the
+  double-quoted form browsers write. They are now kept as written. A quoted name containing a
+  comma, semicolon, backslash or a second quote is still refused.
 
 ## [0.15.0] — 2026-11-18
 
