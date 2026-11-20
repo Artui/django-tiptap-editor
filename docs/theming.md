@@ -20,7 +20,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-max-height` | Editing-area max-height; the content scrolls past it (default `none`) |
 | `--tiptap-font` | Font family |
 | `--tiptap-fg` / `--tiptap-bg` | Text / surface colour |
-| `--tiptap-border` | Border colour |
+| `--tiptap-border` | Border colour: the editor's edge, the toolbar and group separators, the menu and panel borders, the footer, the source note, the modal header and the image picker (light `#858b97`, dark `#7a8190`) |
 | `--tiptap-radius` | Corner radius |
 | `--tiptap-toolbar-bg` | Toolbar background |
 | `--tiptap-btn-fg` | Toolbar button colour |
@@ -28,7 +28,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-btn-active-bg` / `--tiptap-btn-active-fg` | Active button colours |
 | `--tiptap-accent` | Links, focus, selected-image outline |
 | `--tiptap-content-bg` / `--tiptap-content-fg` | Editing area and source view (light default: unset, so the area shows the shell's `--tiptap-bg` / `--tiptap-fg`) |
-| `--tiptap-content-border` | Table cell borders in the editing area (light default: `--tiptap-border`) |
+| `--tiptap-content-border` | Table cell borders in the editing area (light default: `#d0d5dd`, dark `#858d9b`) |
 | `--tiptap-highlight-ink` | Text colour of a highlighted run that has no colour of its own (light default: unset, so it inherits) |
 | `--tiptap-highlight-glyph-bg` / `--tiptap-highlight-glyph-fg` | The highlight button's glyph (light: `#fff3a3`, text inherits the button's) |
 | `--tiptap-swatch-border` / `--tiptap-swatch-border-hover` | Colour swatch and custom-colour chip outline, and its hover |
@@ -194,8 +194,15 @@ rewritten: the HTML a field posts is the same in both schemes. Two things follow
   the dark scheme by setting `--tiptap-content-bg` and `--tiptap-content-fg` (as a pair)
   to light values.
 
-The editor's outer border plays the same role in both schemes; neither scheme claims a
-contrast ratio for it.
+The editor's border marks where the editable field ends, so it meets WCAG 1.4.11 non-text
+contrast (3:1) against the editor's own surfaces in both schemes: light `#858b97` (3.42 on
+the shell, 3.22 on the toolbar), dark `#7a8190` (4.23 on the shell, 3.69 on the toolbar,
+3.20 on the editing area). Against the page around it the ratio depends on the page. The
+separators, menus, panels, footer, source note, modal header and image picker share the
+token. Table cells do not: they read `--tiptap-content-border`, so a project that sets
+`--tiptap-border` and wants tables to match sets `--tiptap-content-border` too. A project
+that sets `--tiptap-border` keeps its value in both schemes, and the 3:1 is then its to
+keep.
 
 ## Targeting parts
 

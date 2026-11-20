@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The editor's border is darker, so the field's edge meets WCAG 1.4.11 non-text
+  contrast (3:1) in both schemes.** `--tiptap-border` is `#858b97` in light (was
+  `#d0d5dd`) and `#7a8190` in dark (was `#5b6270`). The toolbar and group separators, the
+  menu and panel borders, the source note, the footer, the modal header and the image
+  picker share the token and darken with it. Table cells in the editing area keep
+  `#d0d5dd` in light: `--tiptap-content-border` now has that light default, so they no
+  longer follow `--tiptap-border`; a project that sets `--tiptap-border` and wants tables
+  to match sets `--tiptap-content-border` as well. A project that sets `--tiptap-border`
+  keeps its value in both schemes, and the 3:1 is then the project's to keep.
+
 ### Fixed
 
 - **The colour picker's "Custom…" row renders in the Django admin.** The row was a
