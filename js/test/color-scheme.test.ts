@@ -224,6 +224,9 @@ describe("contrast", () => {
     ["accent", "bg"],
     ["accent", "toolbar-bg"],
     ["accent", "content-bg"],
+    ["border", "bg"],
+    ["border", "toolbar-bg"],
+    ["border", "content-bg"],
   ];
 
   it.each(["light", "dark"] as const)("meets 4.5:1 for text and 3:1 for the rest (%s)", (scheme) => {
@@ -251,6 +254,28 @@ describe("contrast", () => {
     expect(luminance(dark["content-bg"])).toBeGreaterThan(luminance(dark["toolbar-bg"]));
     expect(luminance(dark["content-bg"])).toBeGreaterThan(luminance(dark.bg));
     expect(luminance(dark["content-bg"])).toBeLessThan(0.1);
+  });
+
+  it("repeats the light border at the modal header's and picker item's fallbacks", () => {
+    const border = palette("light").border;
+    const sites = [
+      ...declaredOn(".django-tiptap__modal-header", "border-bottom"),
+      ...declaredOn(".django-tiptap__picker-item", "border"),
+    ];
+    expect(sites).toHaveLength(2);
+    for (const site of sites) {
+      expect(/(#[0-9a-f]{6})\)\)$/i.exec(site)?.[1], site).toBe(border);
+    }
+  });
+
+  it("keeps light table cells at #d0d5dd and leaves both borders to a host's override", () => {
+    expect(palette("light")["content-border"]).toBe("#d0d5dd");
+    const root = declarations(schemeRule(":where(:root, :host)").rule);
+    expect(root.get("--tiptap-content-border")).not.toContain("--tiptap-border");
+    const declaring = rules().filter(({ rule }) =>
+      ["--tiptap-border", "--tiptap-content-border"].some((name) => rule.style.getPropertyValue(name)),
+    );
+    expect(declaring.map(({ rule }) => rule.selectorText)).toEqual([":where(:root, :host)"]);
   });
 });
 
@@ -351,7 +376,7 @@ describe("use sites jsdom cannot resolve through var()", () => {
     ]);
   });
 
-  it("borders table cells with the content border, falling back to the chrome border", () => {
+  it("borders table cells with the content border, which has a default in every scheme", () => {
     for (const cell of [".django-tiptap .ProseMirror th", ".django-tiptap .ProseMirror td"]) {
       expect(declaredOn(cell, "border")).toEqual([
         "1px solid var(--tiptap-content-border, var(--tiptap-border))",
