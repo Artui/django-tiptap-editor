@@ -133,6 +133,16 @@ describe("outside click", () => {
     expect(button.getAttribute("aria-expanded")).toBe("true");
   });
 
+  it("closes on a mousedown and click on the open trigger", () => {
+    const { shell } = mount();
+    const button = trigger(shell, "Font size");
+    button.click();
+    button.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, composed: true }));
+    button.click();
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(openPanel(document)).toBeUndefined();
+  });
+
   it("closes on a mousedown elsewhere", () => {
     const { shell } = mount();
     const button = trigger(shell, "Font size");

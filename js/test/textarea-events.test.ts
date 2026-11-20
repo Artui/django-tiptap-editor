@@ -298,7 +298,16 @@ describe("change on the bound textarea", () => {
     expect(events).toEqual([]);
   });
 
-  it("does not fire when focus moves to the colour picker inside the shell", async () => {
+  it("does not fire when focus moves between two controls inside the shell", async () => {
+    const { editor, shell, events } = mount("html");
+    button(shell, "Bold").focus();
+    editor.chain().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
+    button(shell, "Italic").focus();
+    await tick();
+    expect(events).toEqual(["input"]);
+  });
+
+  it("does not fire when focus moves from the shell into its open colour panel", async () => {
     const { editor, shell, events } = mount("html", { colorPicker: true } as TipTapConfig);
     button(shell, "Bold").focus();
     editor.chain().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
