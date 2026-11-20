@@ -20,7 +20,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-max-height` | Editing-area max-height; the content scrolls past it (default `none`) |
 | `--tiptap-font` | Font family |
 | `--tiptap-fg` / `--tiptap-bg` | Text / surface colour |
-| `--tiptap-border` | Border colour |
+| `--tiptap-border` | Border colour: the editor's edge, the toolbar and group separators, the menu and panel borders, the footer, the source note, the modal header and the image picker (light `#858b97`, dark `#7a8190`) |
 | `--tiptap-radius` | Corner radius |
 | `--tiptap-toolbar-bg` | Toolbar background |
 | `--tiptap-btn-fg` | Toolbar button colour |
@@ -28,14 +28,14 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-btn-active-bg` / `--tiptap-btn-active-fg` | Active button colours |
 | `--tiptap-accent` | Links, focus, selected-image outline |
 | `--tiptap-content-bg` / `--tiptap-content-fg` | Editing area and source view (light default: unset, so the area shows the shell's `--tiptap-bg` / `--tiptap-fg`) |
-| `--tiptap-content-border` | Table cell borders in the editing area (light default: `--tiptap-border`) |
+| `--tiptap-content-border` | Table cell borders in the editing area (light default: `#d0d5dd`, dark `#858d9b`) |
 | `--tiptap-highlight-ink` | Text colour of a highlighted run that has no colour of its own (light default: unset, so it inherits) |
 | `--tiptap-highlight-glyph-bg` / `--tiptap-highlight-glyph-fg` | The highlight button's glyph (light: `#fff3a3`, text inherits the button's) |
 | `--tiptap-swatch-border` / `--tiptap-swatch-border-hover` | Colour swatch and custom-colour chip outline, and its hover |
 | `--tiptap-shadow-color` | Shadow of the dropdown panels and the floating menus |
 | `--tiptap-modal-shadow-color` / `--tiptap-overlay-bg` | Image-picker modal shadow and the overlay behind it |
 | `--tiptap-color-scheme` | `color-scheme` of the shell and the picker modal, so the source textarea, the colour input and the focus ring follow the scheme (light default: unset, so they inherit the page's) |
-| `--tiptap-modal-z` | Image-picker overlay `z-index` (default `2000`) |
+| `--tiptap-modal-z` | `z-index` of the image-picker overlay and the open dropdown panels (default `2000`) |
 
 The defaults are declared on the document root with zero specificity
 (`:where(:root, :host)`), and every editor inherits them. So a token set anywhere above an
@@ -71,9 +71,13 @@ the host element, so a token set on the document's `:root` (including with
 ### Stacking the picker over host modals
 
 The image-picker overlay is portaled to `<body>`, so it sits outside the editor's
-stacking context. It defaults to `z-index: 2000`, which clears common modal stacks
-(Bootstrap 3/4/5 use 1050–1060). If your app embeds the editor inside a modal that
-stacks even higher, raise the knob — no `!important` needed:
+stacking context. An open toolbar dropdown (font size, colour, table and the rest) is
+portaled too, to `<body>` or to the shadow root that holds the editor, so the shell's
+rounded, clipped edge cannot cut it off on a narrow or short field; it is placed beside
+its trigger, flips above it or aligns to its end where the viewport runs out, and
+follows it on scroll and resize. Both default to `z-index: 2000`, which clears common
+modal stacks (Bootstrap 3/4/5 use 1050–1060). If your app embeds the editor inside a
+modal that stacks even higher, raise the knob — no `!important` needed:
 
 ```css
 :root {
@@ -86,6 +90,14 @@ because the overlay is appended to `<body>`, it does not inherit custom properti
 declared on the editor element. The same holds for the overlay's colours, border and
 radius: a token set on `:root` themes the picker as well as the editors, one set on
 `.django-tiptap` only the editors.
+
+The dropdown panels are themed like the editor they belong to: each time one opens,
+the editor's resolved tokens, font, direction and language are copied onto it, so a
+token set on `.django-tiptap` or on a wrapper reaches the panel too. The copy is taken
+at open, so a `setTokens` call or a scheme switch while a panel is open shows the next
+time it opens. Inside a shadow root the panel is a child of the shadow root, so an
+`overflow` or `contain` on the shadow host itself still clips it; nothing inside the
+component can escape the host.
 
 ### In JS
 
@@ -194,8 +206,15 @@ rewritten: the HTML a field posts is the same in both schemes. Two things follow
   the dark scheme by setting `--tiptap-content-bg` and `--tiptap-content-fg` (as a pair)
   to light values.
 
-The editor's outer border plays the same role in both schemes; neither scheme claims a
-contrast ratio for it.
+The editor's border marks where the editable field ends, so it meets WCAG 1.4.11 non-text
+contrast (3:1) against the editor's own surfaces in both schemes: light `#858b97` (3.42 on
+the shell, 3.22 on the toolbar), dark `#7a8190` (4.23 on the shell, 3.69 on the toolbar,
+3.20 on the editing area). Against the page around it the ratio depends on the page. The
+separators, menus, panels, footer, source note, modal header and image picker share the
+token. Table cells do not: they read `--tiptap-content-border`, so a project that sets
+`--tiptap-border` and wants tables to match sets `--tiptap-content-border` too. A project
+that sets `--tiptap-border` keeps its value in both schemes, and the 3:1 is then its to
+keep.
 
 ## Targeting parts
 

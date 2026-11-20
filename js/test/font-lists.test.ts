@@ -37,7 +37,7 @@ function presetLabels(m: Loaded, key: string, editor: unknown): string[] {
   document.body.appendChild(el);
   const trigger = el.querySelector<HTMLButtonElement>(".django-tiptap__dropdown-trigger");
   trigger?.click();
-  const items = Array.from(el.querySelectorAll(".django-tiptap__menu-item"));
+  const items = Array.from(document.querySelectorAll(".django-tiptap__menu-item"));
   return items.map((i) => i.textContent ?? "").slice(1);
 }
 
@@ -47,7 +47,7 @@ function presetStyles(m: Loaded, key: string, editor: unknown): string[] {
   const { el } = spec!.render!(editor as never);
   document.body.appendChild(el);
   el.querySelector<HTMLButtonElement>(".django-tiptap__dropdown-trigger")?.click();
-  const items = Array.from(el.querySelectorAll<HTMLElement>(".django-tiptap__menu-item"));
+  const items = Array.from(document.querySelectorAll<HTMLElement>(".django-tiptap__menu-item"));
   return items.map((i) => i.style.fontFamily).slice(1);
 }
 

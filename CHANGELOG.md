@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-11-20
+
+### Changed
+
+- **The editor's border is darker, so the field's edge meets WCAG 1.4.11 non-text
+  contrast (3:1) in both schemes.** `--tiptap-border` is `#858b97` in light (was
+  `#d0d5dd`) and `#7a8190` in dark (was `#5b6270`). The toolbar and group separators, the
+  menu and panel borders, the source note, the footer, the modal header and the image
+  picker share the token and darken with it. Table cells in the editing area keep
+  `#d0d5dd` in light: `--tiptap-content-border` now has that light default, so they no
+  longer follow `--tiptap-border`; a project that sets `--tiptap-border` and wants tables
+  to match sets `--tiptap-content-border` as well. A project that sets `--tiptap-border`
+  keeps its value in both schemes, and the 3:1 is then the project's to keep.
+- **`font-family` is validated by its own grammar, stricter than before.** Values that 0.15.0
+  kept and that are now dropped: a dotted name (`Font.Name`), a value holding `#` or `%`, an
+  empty item or trailing comma (`a,,b`, `a,`), and a newline between bare words
+  (`Times\nNew Roman`). Quoted names, `var(--name)` and a line break at a comma are kept.
+
+### Fixed
+
+- **A toolbar dropdown is no longer cut off by the editor's edge.** On a narrow field
+  the font-size, colour and other panels ran past the shell's right edge, and on a
+  short one past its bottom, where they were clipped and could not be clicked. The open
+  panel now moves to `<body>` (or to the shadow root holding the editor), takes the
+  editor's tokens, font and direction with it, and is placed beside its trigger:
+  end-aligned at the right edge of the viewport, above the trigger when there is more
+  room there, and re-placed on scroll and resize. Tab still runs trigger, panel, next
+  control; Escape and every other close return focus to the trigger; the textarea's
+  `change` still fires once when focus leaves the editor and its panel together. A
+  mousedown on a panel item inside a shadow root no longer closes the panel before the
+  click lands. The panel stacks at `--tiptap-modal-z` (default `2000`), like the image
+  picker.
+
+- **The colour picker's "Custom…" row renders in the Django admin.** The row was a
+  `<label>`, and the admin's `.aligned label` rules (display, padding, width and an
+  `::after` pseudo) outranked its styling, collapsing the chip to its border and widening
+  the panel. The row is now a `<div>`: no host label rule reaches it. The native input is
+  named with `aria-label` (the translated "Custom…") and covers the whole row, so a click
+  on the text still opens the picker. Class names are unchanged; a host selector written
+  as `label.django-tiptap__picker` no longer matches.
+- **Quoted `font-family` names are kept.** `sanitize_html` and the JSON mirror dropped any family
+  containing a quote, including the built-in Times New Roman and Courier New presets and the
+  double-quoted form browsers write. They are now kept as written. A quoted name containing a
+  quote of its own kind, `;`, `\`, `<`, `>` or a line break is still refused. `var(--name)` and
+  `var(--name, fallback)` are kept as one item, and a list may break across lines at a comma.
+
 ## [0.15.0] — 2026-11-18
 
 ### Added
@@ -1214,7 +1260,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.12.0...v0.13.0

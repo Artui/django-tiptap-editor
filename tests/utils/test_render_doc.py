@@ -557,3 +557,44 @@ def test_a_heading_grant_renders_at_its_level() -> None:
 def test_no_grant_renders_no_class() -> None:
     doc = {"type": "doc", "content": [{"type": "paragraph", "attrs": {"class": "lead"}}]}
     assert render_doc(doc) == "<p></p>"
+
+
+@pytest.mark.parametrize(
+    "family",
+    [
+        "'Times New Roman', serif",
+        '"Times New Roman", Times, serif',
+        "Arial, sans-serif",
+        "var(--brand-font)",
+        "var(--brand-font, Arial)",
+        'var(--x, "Times New Roman", serif)',
+        "Arial,\n  sans-serif",
+        '"Foo, Inc", serif',
+    ],
+)
+def test_a_quoted_font_family_is_rendered_unchanged(family: str) -> None:
+    mark = {"type": "textStyle", "attrs": {"fontFamily": family}}
+    doc = {"type": "doc", "content": [{"type": "paragraph", "content": [_text("x", [mark])]}]}
+    expected = family.replace('"', "&quot;")
+    assert str(render_doc(doc)) == f'<p><span style="font-family: {expected}">x</span></p>'
+
+
+@pytest.mark.parametrize(
+    "family",
+    [
+        '"a;b"',
+        '"a"b"',
+        "'a\\'b'",
+        "url(x)",
+        "'a' 'b'",
+        "a,,b",
+        "a\nb",
+        '"a\\\\b"',
+        "'a\\\\b'",
+        '"\\\\75 rl(x)"',
+    ],
+)
+def test_an_unsafe_font_family_is_not_rendered(family: str) -> None:
+    mark = {"type": "textStyle", "attrs": {"fontFamily": family}}
+    doc = {"type": "doc", "content": [{"type": "paragraph", "content": [_text("x", [mark])]}]}
+    assert str(render_doc(doc)) == "<p>x</p>"

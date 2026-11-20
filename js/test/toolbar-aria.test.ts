@@ -147,7 +147,7 @@ describe("aria-expanded on dropdown triggers", () => {
     const { bar } = mount([["fontSize"]], "<p>ab</p>");
     mounted = bar;
     btn(bar, "fontSize").click();
-    bar.el.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")?.click();
+    document.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")?.click();
     expect(btn(bar, "fontSize").getAttribute("aria-expanded")).toBe("false");
   });
 

@@ -17,6 +17,7 @@ import { registerExtension } from "./registry";
 import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
+import { openPanelIn, PANEL_ATTR, registerShell } from "./toolbar/dropdown";
 import { flushSourceView, setSourceWriter } from "./toolbar/source-view";
 import {
   createDocument,
@@ -183,13 +184,15 @@ type Doc = Editor["state"]["doc"];
 // Both are deferred to a microtask: a listener reads the written value, a command
 // it runs does not re-enter the editor's update, a FormData it builds during the
 // submit flush is not built inside the formdata handler, and input precedes change.
-// change fires when focus leaves the shell (not Tiptap's blur: the colour input
-// and source view take focus inside it) with the value differing from the last change.
+// change fires when focus leaves the shell and its open dropdown panel (not Tiptap's
+// blur: the colour input and source view take focus there) with the value differing
+// from the last change. The panel is portaled outside the shell and carries the same
+// handler, so focus moving between the two is not a leave.
 function bindValueEvents(
   element: HTMLTextAreaElement,
   editor: Editor,
   json: boolean,
-): { store: (doc: Doc) => void; onFocusOut: (event: FocusEvent) => void } {
+): { store: (doc: Doc) => void; onFocusOut: (event: FocusEvent, shell: HTMLElement) => void } {
   const serialise = (doc: Doc): string => {
     const html = getHTMLFromFragment(doc.content, editor.schema);
     return json ? JSON.stringify({ doc: doc.toJSON(), html }) : html;
@@ -206,9 +209,9 @@ function bindValueEvents(
       element.value = next;
       queueMicrotask(() => element.dispatchEvent(new Event("input", { bubbles: true })));
     },
-    onFocusOut(event) {
+    onFocusOut(event, shell) {
       const to = event.relatedTarget;
-      if (to instanceof Node && (event.currentTarget as HTMLElement).contains(to)) {
+      if (to instanceof Node && (shell.contains(to) || openPanelIn(shell)?.contains(to))) {
         return;
       }
       if (last !== committed) {
@@ -306,7 +309,9 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   // Default chrome, or a consumer's region / shell override (see build-shell).
   const shell = buildShell(editor, config, content, t);
   shell.el.setAttribute(SHELL_ATTR, id);
-  shell.el.addEventListener("focusout", value.onFocusOut);
+  const onLeave = (event: FocusEvent): void => value.onFocusOut(event, shell.el);
+  shell.el.addEventListener("focusout", onLeave);
+  registerShell(shell.el, onLeave);
   applyLengths(shell.el, config);
 
   element.style.display = "none";
@@ -392,24 +397,25 @@ function autoScan(root: ParentNode = document): void {
 // hand-rolled JS — so no per-framework event wiring is needed. Added subtrees are
 // scanned for unmounted editors; removed subtrees have their editors torn down.
 // Mutations inside an editor's own shell (ProseMirror's DOM churn on every
-// keystroke) are skipped, so the observer stays cheap on a live page.
+// keystroke) and its portaled dropdown panels are skipped, so the observer stays
+// cheap on a live page.
 function observeDom(): void {
   const observer = new MutationObserver((records) => {
     const added: Element[] = [];
     const removed: Element[] = [];
     for (const record of records) {
       const target = record.target;
-      if (target instanceof Element && target.closest(`[${SHELL_ATTR}]`)) {
+      if (target instanceof Element && target.closest(`[${SHELL_ATTR}], [${PANEL_ATTR}]`)) {
         continue; // a mutation inside an editor — not a mount/unmount site
       }
       record.removedNodes.forEach((node) => {
-        if (node instanceof Element) {
+        if (node instanceof Element && !node.hasAttribute(PANEL_ATTR)) {
           removed.push(node);
         }
       });
       record.addedNodes.forEach((node) => {
-        if (node instanceof Element && !node.hasAttribute(SHELL_ATTR)) {
-          added.push(node); // skip our own shells; they hold no unmounted editor
+        if (node instanceof Element && !node.hasAttribute(SHELL_ATTR) && !node.hasAttribute(PANEL_ATTR)) {
+          added.push(node); // skip our own shells and panels; they hold no unmounted editor
         }
       });
     }

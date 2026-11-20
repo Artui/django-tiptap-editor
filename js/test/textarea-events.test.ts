@@ -113,7 +113,7 @@ describe("input on the bound textarea", () => {
     });
     editor.commands.setTextSelection(6);
     button(shell, "Merge tags").click();
-    shell.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")?.click();
+    document.querySelector<HTMLButtonElement>(".django-tiptap__menu-item")?.click();
     await tick();
     expect(textarea.value).toContain("{{ name }}");
     expect(events).toEqual(["input"]);
@@ -298,12 +298,21 @@ describe("change on the bound textarea", () => {
     expect(events).toEqual([]);
   });
 
-  it("does not fire when focus moves to the colour picker inside the shell", async () => {
+  it("does not fire when focus moves between two controls inside the shell", async () => {
+    const { editor, shell, events } = mount("html");
+    button(shell, "Bold").focus();
+    editor.chain().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
+    button(shell, "Italic").focus();
+    await tick();
+    expect(events).toEqual(["input"]);
+  });
+
+  it("does not fire when focus moves from the shell into its open colour panel", async () => {
     const { editor, shell, events } = mount("html", { colorPicker: true } as TipTapConfig);
     button(shell, "Bold").focus();
     editor.chain().setTextSelection({ from: 1, to: 6 }).toggleBold().run();
     button(shell, "Text color").click();
-    const picker = shell.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
+    const picker = document.querySelector<HTMLInputElement>(".django-tiptap__picker-input");
     expect(picker).not.toBeNull();
     picker?.focus();
     await tick();
