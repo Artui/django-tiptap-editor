@@ -87,3 +87,74 @@ def test_keeps_a_value_with_surrounding_line_breaks() -> None:
 )
 def test_refuses_each_character_a_quoted_name_may_not_hold(value: str) -> None:
     assert get_font_family(value) == ""
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "a ,b",
+        "a\t,\tb",
+        "var(--a ,b)",
+        "var(--a, b ,c)",
+        "var(--a, b )",
+        "var(--a,b)",
+        "var(--a, b)",
+        "var(--a,\n b)",
+        "var(--a,b ),c",
+        "var(--a) ,b",
+        "var(--a)\f,\rb",
+    ],
+)
+def test_keeps_ascii_whitespace_around_commas_and_inside_var(value: str) -> None:
+    assert get_font_family(value) == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "var(--)",
+        "var(-x)",
+        "var(-)",
+        "Var(--a)",
+        "xvar(--a)",
+        "var (--a)",
+        "var(--a b)",
+        "var(--a))",
+        "var--a)",
+        "ar(--a)",
+        "vxr(--a)",
+        "vax(--a)",
+        "va(--a)",
+        "var(--a ,)",
+        "var(--a, ,b)",
+    ],
+)
+def test_refuses_a_malformed_var(value: str) -> None:
+    assert get_font_family(value) == ""
+
+
+@pytest.mark.parametrize("value", ["Font.Name", "a.b, serif", "'Font.Name'x", "var(--a, b.c)"])
+def test_refuses_a_dot_in_a_bare_word(value: str) -> None:
+    assert get_font_family(value) == ""
+
+
+@pytest.mark.parametrize("value", ["Font#Name", "#fff", "a, b#", "var(--a, b#c)"])
+def test_refuses_a_hash(value: str) -> None:
+    assert get_font_family(value) == ""
+
+
+@pytest.mark.parametrize("value", ["Font%Name", "100%", "a, b%", "var(--a, b%c)"])
+def test_refuses_a_percent_sign(value: str) -> None:
+    assert get_font_family(value) == ""
+
+
+@pytest.mark.parametrize(
+    "space",
+    ["\x0b", "\x1c", "\x85", "\xa0", " ", " ", " ", " ", " ", "　"],
+)
+@pytest.mark.parametrize(
+    "template",
+    ["a{s},b", "a,{s}b", "var(--a{s},b)", "var(--a,{s}b)", "var(--a, b{s})", "a, var(--b){s},c"],
+)
+def test_refuses_non_ascii_whitespace_around_a_separator(space: str, template: str) -> None:
+    assert get_font_family(template.format(s=space)) == ""

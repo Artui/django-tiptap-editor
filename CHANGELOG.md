@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`font-family` whitespace is ASCII only.** The 0.16.0 grammar matched `\s`, which in Python
+  also takes U+000B, U+001C to U+001F, U+0085, U+00A0, U+1680, U+2000 to U+200A, U+2028,
+  U+2029, U+202F, U+205F and U+3000 around a comma and inside `var()`; a value holding any of
+  them was kept. Only space, tab, CR, LF and form feed separate items now, and the rest drop
+  the whole value.
+
 ## [0.16.0] — 2026-11-20
 
 ### Changed
