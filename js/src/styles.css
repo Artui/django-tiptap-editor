@@ -348,6 +348,18 @@
   color: var(--tiptap-btn-active-fg);
 }
 
+/* Keyboard focus is a ring, the current value a fill, so the two never read alike.
+   Two rules: a browser without :has() drops a whole selector list it cannot parse. */
+.django-tiptap__menu-item:focus-visible {
+  outline: 2px solid var(--tiptap-accent);
+  outline-offset: -2px;
+}
+
+.django-tiptap__picker:has(.django-tiptap__picker-input:focus-visible) {
+  outline: 2px solid var(--tiptap-accent);
+  outline-offset: -2px;
+}
+
 .django-tiptap__sep {
   height: 1px;
   margin: 4px 6px;
@@ -373,6 +385,16 @@
 .django-tiptap__swatch.is-active {
   outline: 2px solid var(--tiptap-accent);
   outline-offset: 1px;
+}
+
+/* Inside the swatch, so it shows beside the current colour's outer outline. */
+.django-tiptap__swatch:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--tiptap-bg), inset 0 0 0 3px var(--tiptap-fg);
+}
+
+.django-tiptap__swatch.is-active:focus-visible {
+  outline: 2px solid var(--tiptap-accent);
 }
 
 /* Custom-color row: menu-item vertical metrics, but indented to the swatch

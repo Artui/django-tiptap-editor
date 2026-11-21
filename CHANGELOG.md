@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-11-21
+
+### Added
+
+- **The toolbar dropdowns work from the keyboard, as WAI-ARIA menus and dialogs.** Font
+  size and font family open as menus of radio items (`role="menu"`, `menuitemradio` with
+  `aria-checked` on the current value); image, merge tags and table as menus of actions
+  (`menuitem`, the table's groups divided by `role="separator"`); text color and highlight
+  as non-modal dialogs (`role="dialog"`, swatches with `aria-pressed` on the current
+  colour). Enter, Space, ArrowDown or ArrowUp on a trigger opens its panel and moves focus
+  into it (the current value, else the first entry; ArrowUp the last action). In a menu,
+  ArrowDown and ArrowUp move and wrap, Home and End go to the ends, a letter or digit
+  jumps to the next item starting with it, and one item is tabbable at a time, so Tab
+  closes the menu and moves on and Shift+Tab closes it and returns to the trigger; a
+  colour dialog stays open on Shift+Tab and closes when focus leaves it for another part
+  of the page. After a pick focus is in the editor, also when the image URL prompt is
+  cancelled or the file dialog or library opens; Escape returns it to the trigger. A mouse
+  open still leaves focus, and the editor's selection, where it was. Menu items, swatches
+  and the custom colour row show a `:focus-visible` ring distinct from the current-value
+  marking. [Theming](https://artui.github.io/django-tiptap-editor/theming/#dropdowns-and-the-keyboard)
+  names the keyboard model.
+
+### Changed
+
+- **`aria-haspopup` on the dropdown triggers names the popup**: `"menu"` on font size,
+  font family, image, merge tags and table, `"dialog"` on text color and highlight (it was
+  `"true"` on all seven). A stylesheet or test that selects `[aria-haspopup="true"]` needs
+  the new values.
+
 ## [0.16.1] — 2026-11-20
 
 ### Fixed
@@ -1284,7 +1313,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.14.0...v0.15.0

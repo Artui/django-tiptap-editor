@@ -5,10 +5,14 @@
 // API it is portaled into the nearest dialog container, else the trigger's root
 // node. Either way it is placed in the viewport beside the trigger. Closes on
 // outside-click, Escape, the panel signalling done, or the editor's destruction.
-// One panel is open at a time.
+// One panel is open at a time. A keyboard open (Enter or Space, which reach the
+// trigger as a click with detail 0, or ArrowDown/ArrowUp) moves focus into the
+// panel; a mouse open leaves it where it was. A pick puts focus in the editor,
+// Escape puts it on the trigger.
 import type { Editor } from "../tiptap-runtime";
 import { forwardTheme } from "./forward-theme";
 import { applyLabel } from "./label";
+import { focusItem, itemsOf } from "./menu-keys";
 import { placePanel } from "./place-panel";
 
 export interface Dropdown {
@@ -23,7 +27,8 @@ export interface DropdownOptions {
   triggerHTML: string;
   label?: string;
   editor?: Editor;
-  buildPanel: (close: () => void) => HTMLElement;
+  popup: "menu" | "dialog";
+  buildPanel: (done: () => void) => HTMLElement;
 }
 
 // Marks a panel, so the DOM observer can skip a portaled one like a shell.
@@ -105,7 +110,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   trigger.className = "django-tiptap__btn django-tiptap__dropdown-trigger";
   trigger.title = opts.title;
   trigger.setAttribute("aria-label", opts.title);
-  trigger.setAttribute("aria-haspopup", "true");
+  trigger.setAttribute("aria-haspopup", opts.popup);
   trigger.setAttribute("aria-expanded", "false");
   trigger.innerHTML = opts.triggerHTML;
   if (opts.label) {
@@ -154,6 +159,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     host = null;
     watcher?.disconnect();
     watcher = null;
+    panel.removeEventListener("focusout", onPanelLeave);
     if (leaveFrom) {
       panel.removeEventListener("focusout", leaveFrom);
       leaveFrom = null;
@@ -163,6 +169,41 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
         shellPanels.delete(shell);
       }
       shell = null;
+    }
+  }
+
+  // A pick: focus still in the panel (or lost to the body) goes to the editor before the
+  // panel closes, so it never stops on the trigger; focus the command moved elsewhere stays.
+  function done(): void {
+    const active = activeElementOf(panel);
+    if (!active || active === document.body || panel.contains(active)) {
+      opts.editor?.view.focus();
+    }
+    close();
+  }
+
+  // Keyboard open: the checked or pressed entry, else the first (ArrowUp: the last).
+  function focusInside(last: boolean): void {
+    const menu = panel.querySelector<HTMLElement>("[role=menu]");
+    if (menu) {
+      const items = itemsOf(menu);
+      const checked = items.find((item) => item.getAttribute("aria-checked") === "true");
+      const to = checked ?? (last ? items[items.length - 1] : items[0]);
+      if (to) {
+        focusItem(menu, to);
+      }
+      return;
+    }
+    const pressed = panel.querySelector<HTMLElement>("[aria-pressed=true]");
+    (pressed ?? tabbables(panel)[0])?.focus();
+  }
+
+  // Focus leaving a dialog panel for a node outside the dropdown (a screen reader,
+  // F6, script) closes it; null (the native colour picker, window blur) does not.
+  function onPanelLeave(event: FocusEvent): void {
+    const to = event.relatedTarget;
+    if (to instanceof Node && !el.contains(to) && !panel.contains(to)) {
+      close();
     }
   }
 
@@ -221,7 +262,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     for (const closeOther of Array.from(openPanels)) {
       closeOther();
     }
-    panel.replaceChildren(opts.buildPanel(close));
+    panel.replaceChildren(opts.buildPanel(done));
     shell = shellOf(el);
     if (typeof panel.showPopover === "function") {
       panel.setAttribute("popover", "manual");
@@ -250,6 +291,9 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     document.addEventListener("scroll", schedule, true);
     window.addEventListener("resize", schedule);
     opts.editor?.on("destroy", close);
+    if (opts.popup === "dialog") {
+      panel.addEventListener("focusout", onPanelLeave);
+    }
     host = dialogOf(trigger);
     host?.addEventListener("close", close);
     // A trigger that stops rendering (a host modal hidden by script) takes its panel with it.
@@ -265,8 +309,17 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   }
 
   // A portaled panel is not after the trigger in DOM order, so Tab is bridged by
-  // hand into it and back out to the control after the trigger.
+  // hand into it and back out to the control after the trigger. Shift+Tab off a
+  // menu also closes it (APG); a dialog panel stays open.
   trigger.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!isOpen) {
+        open();
+      }
+      focusInside(event.key === "ArrowUp");
+      return;
+    }
     if (!isOpen || event.key !== "Tab" || event.shiftKey) {
       return;
     }
@@ -284,6 +337,9 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     if (event.shiftKey && event.target === inside[0]) {
       event.preventDefault();
       trigger.focus();
+      if (opts.popup === "menu") {
+        close();
+      }
     } else if (!event.shiftKey && event.target === inside[inside.length - 1]) {
       event.preventDefault();
       const order = tabbables(trigger.getRootNode() as ParentNode).filter((n) => !panel.contains(n));
@@ -301,6 +357,9 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
       close();
     } else {
       open();
+      if (event.detail === 0) {
+        focusInside(false);
+      }
     }
   });
 

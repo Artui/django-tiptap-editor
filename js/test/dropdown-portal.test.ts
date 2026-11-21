@@ -217,20 +217,20 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
     });
 
     it("Tab on the last item closes and focuses the control after the trigger", () => {
-      const { shell } = mount();
-      const button = trigger(shell, "Font size");
+      const { shell } = mount({ toolbar: [["highlight", "fontSize"]] });
+      const button = trigger(shell, "Highlight");
       button.click();
       const list = items(openPanel(document)!);
       list[list.length - 1].focus();
       const event = key(list[list.length - 1], "Tab");
       expect(button.getAttribute("aria-expanded")).toBe("false");
-      expect(document.activeElement).toBe(trigger(shell, "Highlight"));
+      expect(document.activeElement).toBe(trigger(shell, "Font size"));
       expect(event.defaultPrevented).toBe(true);
     });
 
     it("Shift+Tab on the first item focuses the trigger and leaves the panel open", () => {
       const { shell } = mount();
-      const button = trigger(shell, "Font size");
+      const button = trigger(shell, "Highlight");
       button.click();
       const first = items(openPanel(document)!)[0];
       first.focus();
@@ -260,6 +260,68 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
       key(items(panel)[1], "Escape");
       expect(root.activeElement).toBe(button);
       expect(panel.isConnected).toBe(false);
+    });
+
+    it("Tab on a closed trigger is left to the browser", () => {
+      const { shell } = mount();
+      const button = trigger(shell, "Font size");
+      button.click();
+      button.click();
+      button.focus();
+      const event = key(button, "Tab");
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(button);
+    });
+
+    it("Shift+Tab on the open trigger is left to the browser", () => {
+      const { shell } = mount();
+      const button = trigger(shell, "Font size");
+      button.click();
+      button.focus();
+      const event = key(button, "Tab", true);
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(button);
+    });
+
+    it("Shift+Tab on a later item is left to the browser and keeps the panel open", () => {
+      const { shell } = mount();
+      const button = trigger(shell, "Highlight");
+      button.click();
+      const second = items(openPanel(document)!)[1];
+      second.focus();
+      const event = key(second, "Tab", true);
+      expect(event.defaultPrevented).toBe(false);
+      expect(button.getAttribute("aria-expanded")).toBe("true");
+      expect(document.activeElement).toBe(second);
+    });
+
+    it("Tab on a non-last item is left to the browser and keeps the panel open", () => {
+      const { shell } = mount();
+      const button = trigger(shell, "Highlight");
+      button.click();
+      const first = items(openPanel(document)!)[0];
+      first.focus();
+      const event = key(first, "Tab");
+      expect(event.defaultPrevented).toBe(false);
+      expect(button.getAttribute("aria-expanded")).toBe("true");
+      expect(document.activeElement).toBe(first);
+    });
+
+    it("Tab on the last item with nothing after the trigger lands back on the trigger", () => {
+      const { shell, outside } = mount({ toolbar: [["highlight"]] });
+      outside.remove();
+      shell.querySelectorAll<HTMLElement>("[contenteditable]").forEach((node) => {
+        node.setAttribute("tabindex", "-1");
+      });
+      const button = trigger(shell, "Highlight");
+      button.click();
+      const list = items(openPanel(document)!);
+      const refocused = vi.spyOn(list[0], "focus");
+      list[list.length - 1].focus();
+      key(list[list.length - 1], "Tab");
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      expect(refocused).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(button);
     });
   });
 
@@ -373,5 +435,77 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
       expect(button.getAttribute("aria-expanded")).toBe("false");
       expect(panel.isConnected).toBe(false);
     });
+    it.each([
+      ["below the viewport", () => rect(100, window.innerHeight + 10)],
+      ["right of the viewport", () => rect(window.innerWidth + 10, 100)],
+      ["left of the viewport", () => rect(-100, 100)],
+    ])("closes once the trigger is %s", async (_name, next) => {
+      let at = rect(100, 100);
+      stubRects(() => at);
+      const { shell } = mount();
+      const button = trigger(shell, "Font size");
+      button.click();
+      const panel = openPanel(document)!;
+      at = next();
+      window.dispatchEvent(new Event("resize"));
+      await frame();
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      expect(panel.isConnected).toBe(false);
+    });
+
+    it("closes once the trigger is no longer connected", async () => {
+      stubRects(() => rect(100, 100));
+      const { shell } = mount();
+      const button = trigger(shell, "Font size");
+      button.click();
+      const panel = openPanel(document)!;
+      button.remove();
+      window.dispatchEvent(new Event("resize"));
+      await frame();
+      expect(panel.isConnected).toBe(false);
+    });
+
+    it("ignores a scroll inside the panel but follows one elsewhere", async () => {
+      let at = rect(100, 10);
+      stubRects(() => at);
+      const { shell } = mount();
+      trigger(shell, "Font size").click();
+      const panel = openPanel(document)!;
+      at = rect(200, 10);
+      items(panel)[1].dispatchEvent(new Event("scroll"));
+      await frame();
+      expect(panel.style.left).toBe("100px");
+      document.dispatchEvent(new Event("scroll"));
+      await frame();
+      expect(panel.style.left).toBe("200px");
+    });
+  });
+});
+
+describe("the DOM observer and a portaled panel", () => {
+  it("does not mount a field added inside the open panel", async () => {
+    const { shell } = mount();
+    trigger(shell, "Font size").click();
+    const panel = openPanel(document)!;
+    const field = document.createElement("textarea");
+    field.setAttribute("data-tiptap-config", "{}");
+    panel.appendChild(field);
+    await tick();
+    expect(field.nextElementSibling).toBeNull();
+    expect(field.hasAttribute("data-tiptap-bound")).toBe(false);
+  });
+
+  it("does not look for editors inside a panel that was removed", async () => {
+    const { shell } = mount();
+    const button = trigger(shell, "Font size");
+    button.click();
+    const panel = openPanel(document)!;
+    await tick();
+    const contains = vi.spyOn(panel, "contains");
+    button.click();
+    contains.mockClear();
+    await tick();
+    expect(panel.isConnected).toBe(false);
+    expect(contains).not.toHaveBeenCalled();
   });
 });

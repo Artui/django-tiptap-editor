@@ -240,6 +240,33 @@ Toggle buttons (those with an active state, including `link` and any `ui.registe
 spec with `isActive`) carry `aria-pressed` alongside `.is-active`; dropdown triggers carry
 `aria-expanded` alongside `.is-open`. Either attribute is a styling hook as good as the class.
 
+### Dropdowns and the keyboard
+
+The built-in dropdowns follow the WAI-ARIA Authoring Practices. Font size and font family
+are menus of radio items (`role="menu"`, items `role="menuitemradio"` with `aria-checked` on
+the current value, `Default` when none is set). Image, merge tags and table are menus of
+actions (`role="menuitem"`, the table's groups divided by `role="separator"`). Text color
+and highlight are non-modal dialogs (`role="dialog"`) because they hold the native colour
+input: the swatches are buttons with `aria-pressed` on the current colour. Each trigger's
+`aria-haspopup` names its popup, `"menu"` or `"dialog"`.
+
+| Key | Where | What it does |
+| --- | --- | --- |
+| Enter, Space, ArrowDown | trigger | opens the panel and focuses the checked item (a size or family), the pressed swatch, else the first entry |
+| ArrowUp | trigger | the same, but an action menu focuses its last item |
+| ArrowDown, ArrowUp | menu | next or previous item, wrapping |
+| Home, End | menu | first or last item |
+| a letter or digit | menu | the next item whose label starts with it |
+| Enter, Space | item | picks it; focus goes to the editor |
+| Tab | panel | closes a menu and moves to the control after the trigger; walks a dialog's swatches, custom colour and Remove, and leaves it from the last |
+| Shift+Tab | panel | back to the trigger: a menu closes, a dialog stays open |
+| Escape | anywhere | closes the panel; focus goes back to the trigger if it was in the panel |
+
+A menu keeps one item tabbable at a time (roving `tabindex`). Opening a panel with the
+mouse leaves focus, and the editor's visible selection, where it was. A focused item
+or swatch shows a `:focus-visible` ring in `--tiptap-accent` or `--tiptap-fg`, unlike the
+fill (`.is-active`) or outline that marks the current value.
+
 The font-size trigger shows the current size as text (`Default`, `16`) rather than a glyph:
 `.django-tiptap__value-text` is the visible value and `.django-tiptap__value-sizer` an
 invisible stack of every label in the same grid cell, which keeps the trigger as wide as

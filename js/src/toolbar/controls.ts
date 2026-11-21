@@ -7,6 +7,7 @@ import type { Editor } from "../tiptap-runtime";
 import type { ButtonSpec, RenderedControl } from "./button-registry";
 import { createDropdown } from "./dropdown";
 import { toolbarLabel } from "./label";
+import { menuKeys } from "./menu-keys";
 
 function applyTextStyle(editor: Editor, attr: string, value: string | null): void {
   editor.chain().focus().setMark("textStyle", { [attr]: value }).run();
@@ -35,7 +36,7 @@ export type SelectOptions =
   | Array<{ label: string; value: string }>
   | ((editor: Editor) => Array<{ label: string; value: string }>);
 
-// Font size / family: a list of presets plus "Default".
+// Font size / family: a menu of radio items, the presets plus "Default".
 export function selectControl(opts: {
   title: string;
   attr: string;
@@ -55,15 +56,26 @@ export function selectControl(opts: {
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
         label,
+        popup: "menu",
         buildPanel(close) {
           const list = document.createElement("div");
           list.className = "django-tiptap__menu";
+          list.setAttribute("role", "menu");
+          list.setAttribute("aria-label", t(opts.title));
           const current = (editor.getAttributes("textStyle")[opts.attr] as string) ?? null;
+          const radio = (item: HTMLButtonElement, checked: boolean): HTMLButtonElement => {
+            item.setAttribute("role", "menuitemradio");
+            item.setAttribute("aria-checked", String(checked));
+            return item;
+          };
           list.appendChild(
-            menuItem(t("default"), !current, () => {
-              applyTextStyle(editor, opts.attr, null);
-              close();
-            }),
+            radio(
+              menuItem(t("default"), !current, () => {
+                applyTextStyle(editor, opts.attr, null);
+                close();
+              }),
+              !current,
+            ),
           );
           for (const opt of options) {
             const item = menuItem(opt.label, current === opt.value, () => {
@@ -73,8 +85,9 @@ export function selectControl(opts: {
             if (opts.styleOption) {
               item.style.fontFamily = opt.value;
             }
-            list.appendChild(item);
+            list.appendChild(radio(item, current === opt.value));
           }
+          menuKeys(list);
           return list;
         },
       });
@@ -135,23 +148,32 @@ export function commandMenuControl(opts: {
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
         label: toolbarLabel(configFor(editor), opts.title),
+        popup: "menu",
         buildPanel(close) {
           const menu = document.createElement("div");
           menu.className = "django-tiptap__menu";
-          for (const entry of opts.items(editor)) {
+          const entries = opts.items(editor);
+          // An empty menu (mergeTags unset) is no menu: a keyboard open leaves focus on the trigger.
+          if (entries.length) {
+            menu.setAttribute("role", "menu");
+            menu.setAttribute("aria-label", t(opts.title));
+          }
+          for (const entry of entries) {
             if (entry === "separator") {
               const sep = document.createElement("div");
               sep.className = "django-tiptap__sep";
+              sep.setAttribute("role", "separator");
               menu.appendChild(sep);
               continue;
             }
-            menu.appendChild(
-              menuItem(t(entry.label), false, () => {
-                entry.run();
-                close();
-              }),
-            );
+            const item = menuItem(t(entry.label), false, () => {
+              entry.run();
+              close();
+            });
+            item.setAttribute("role", "menuitem");
+            menu.appendChild(item);
           }
+          menuKeys(menu);
           return menu;
         },
       });
@@ -215,7 +237,8 @@ function pickerRow(
   return row;
 }
 
-// Text color / highlight: a swatch grid, an optional native picker, "Remove".
+// Text color / highlight: a non-modal dialog of a swatch grid, an optional native
+// picker and "Remove" (an <input> cannot live in a menu); Tab walks it in DOM order.
 export function colorControl(opts: {
   title: string;
   attr: string;
@@ -233,8 +256,11 @@ export function colorControl(opts: {
         title: t(opts.title),
         triggerHTML: opts.triggerHTML,
         label: toolbarLabel(configFor(editor), opts.title),
+        popup: "dialog",
         buildPanel(close) {
           const panel = document.createElement("div");
+          panel.setAttribute("role", "dialog");
+          panel.setAttribute("aria-label", t(opts.title));
           const grid = document.createElement("div");
           grid.className = "django-tiptap__swatches";
           const current = ((editor.getAttributes("textStyle")[opts.attr] as string) ?? "").toLowerCase();
@@ -245,9 +271,9 @@ export function colorControl(opts: {
             sw.style.backgroundColor = color;
             sw.title = color;
             sw.setAttribute("aria-label", color);
-            if (current === color.toLowerCase()) {
-              sw.classList.add("is-active");
-            }
+            const pressed = current === color.toLowerCase();
+            sw.classList.toggle("is-active", pressed);
+            sw.setAttribute("aria-pressed", String(pressed));
             sw.addEventListener("mousedown", (e) => e.preventDefault());
             sw.addEventListener("click", (e) => {
               e.preventDefault();
