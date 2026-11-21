@@ -45,6 +45,11 @@ describe("placePanel", () => {
     expect(placed.maxHeight).toBe(300 - 130 - PANEL_GAP - PANEL_MARGIN);
   });
 
+  it("stays below when the panel fits below even though there is more room above", () => {
+    const placed = placePanel(trigger(100, 500), { width: 150, height: 200 }, VIEWPORT);
+    expect(placed).toMatchObject({ side: "below", top: 530 + PANEL_GAP });
+  });
+
   it("caps maxHeight to the larger side when neither fits", () => {
     const placed = placePanel(trigger(100, 200), { width: 150, height: 280 }, { width: 1000, height: 300 });
     const above = 200 - PANEL_GAP - PANEL_MARGIN;
