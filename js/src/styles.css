@@ -348,8 +348,13 @@
   color: var(--tiptap-btn-active-fg);
 }
 
-/* Keyboard focus is a ring, the current value a fill, so the two never read alike. */
-.django-tiptap__menu-item:focus-visible,
+/* Keyboard focus is a ring, the current value a fill, so the two never read alike.
+   Two rules: a browser without :has() drops a whole selector list it cannot parse. */
+.django-tiptap__menu-item:focus-visible {
+  outline: 2px solid var(--tiptap-accent);
+  outline-offset: -2px;
+}
+
 .django-tiptap__picker:has(.django-tiptap__picker-input:focus-visible) {
   outline: 2px solid var(--tiptap-accent);
   outline-offset: -2px;

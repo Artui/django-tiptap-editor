@@ -172,13 +172,14 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     }
   }
 
-  // A pick: the command may not have focused the editor (a cancelled prompt, a file dialog).
+  // A pick: focus still in the panel (or lost to the body) goes to the editor before the
+  // panel closes, so it never stops on the trigger; focus the command moved elsewhere stays.
   function done(): void {
-    close();
-    const view = opts.editor?.view;
-    if (view && !view.dom.contains(activeElementOf(view.dom))) {
-      opts.editor?.commands.focus();
+    const active = activeElementOf(panel);
+    if (!active || active === document.body || panel.contains(active)) {
+      opts.editor?.view.focus();
     }
+    close();
   }
 
   // Keyboard open: the checked or pressed entry, else the first (ArrowUp: the last).

@@ -315,6 +315,30 @@ describe.each(["popover", "portal"])("on the %s path", (path) => {
       expect(active()).toBe(items()[items().length - 1]);
     });
 
+    it("ArrowDown steps over a separator to the next item", () => {
+      const { shell } = mount(
+        "<table><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr></tbody></table>",
+      );
+      click(trigger(shell, "Table"), 0);
+      key(item("Insert table"), "ArrowDown");
+      expect(active()).toBe(item("Add row above"));
+    });
+
+    it("a named key such as Delete is not typeahead", () => {
+      const { shell } = mount(
+        "<table><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr></tbody></table>",
+      );
+      click(trigger(shell, "Table"), 0);
+      expect(key(item("Insert table"), "Delete").defaultPrevented).toBe(false);
+      expect(active()).toBe(item("Insert table"));
+    });
+
+    it("a mouse-opened action menu has exactly one tabbable item, the first", () => {
+      const { shell } = mount();
+      click(trigger(shell, "Insert image"), 1);
+      expect(items().filter((node) => node.tabIndex === 0)).toEqual([item("Insert by URL")]);
+    });
+
     it("Insert by URL with the prompt cancelled leaves focus in the editor", async () => {
       vi.spyOn(window, "prompt").mockReturnValue(null);
       const { shell, editor } = mount();
@@ -324,6 +348,70 @@ describe.each(["popover", "portal"])("on the %s path", (path) => {
       expect(panel()).toBeNull();
       await frame();
       expect(active()).toBe(editor.view.dom);
+    });
+
+    it("a keyboard pick moves focus straight to the editor, never via the trigger", async () => {
+      const { shell, editor } = mount();
+      click(trigger(shell, "Font size"), 0);
+      const seen: Element[] = [];
+      const record = (event: Event): void => void seen.push(event.target as Element);
+      document.addEventListener("focusin", record);
+      click(item("30"), 0);
+      await frame();
+      document.removeEventListener("focusin", record);
+      expect(seen).not.toContain(trigger(shell, "Font size"));
+      expect(active()).toBe(editor.view.dom);
+    });
+
+    it("a pick leaves focus where the command put it outside the panel", async () => {
+      const { shell, outside } = mount();
+      vi.spyOn(window, "prompt").mockImplementation(() => {
+        outside.focus();
+        return null;
+      });
+      click(trigger(shell, "Insert image"), 0);
+      click(item("Insert by URL"), 0);
+      await frame();
+      expect(active()).toBe(outside);
+    });
+
+    it("a pick whose command drops focus to the body puts it in the editor", async () => {
+      const { shell, editor } = mount();
+      vi.spyOn(window, "prompt").mockImplementation(() => {
+        (document.activeElement as HTMLElement).blur();
+        return null;
+      });
+      click(trigger(shell, "Insert image"), 0);
+      click(item("Insert by URL"), 0);
+      await frame();
+      expect(active()).toBe(editor.view.dom);
+    });
+
+    it("in a shadow root, a pick whose command drops focus puts it in the editor", async () => {
+      // jsdom reports Safari, whose shadow-root selection path in ProseMirror needs execCommand.
+      Object.defineProperty(document, "execCommand", { value: () => false, configurable: true });
+      const host = document.createElement("div");
+      document.body.appendChild(host);
+      const root = host.attachShadow({ mode: "open" });
+      const textarea = document.createElement("textarea");
+      textarea.id = `menus-${++seq}`;
+      root.appendChild(textarea);
+      const editor = DjangoTipTap.init(textarea, CONFIG);
+      mounted.push(textarea.id);
+      vi.spyOn(window, "prompt").mockImplementation(() => {
+        (root.activeElement as HTMLElement).blur();
+        return null;
+      });
+      const shell = textarea.nextElementSibling as HTMLElement;
+      const button = trigger(shell, "Insert image");
+      button.focus();
+      click(button, 0);
+      const first = root.querySelector<HTMLElement>("[role=menuitem]")!;
+      expect(root.activeElement).toBe(first);
+      click(first, 0);
+      await frame();
+      expect(root.activeElement).toBe(editor.view.dom);
+      delete (document as Partial<Document>).execCommand;
     });
 
     it("an empty merge-tag panel is no menu and leaves focus on the trigger", () => {
