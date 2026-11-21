@@ -109,6 +109,7 @@ afterEach(() => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
   removePopover();
+  delete (document as Partial<Document>).execCommand;
 });
 
 describe.each(["popover", "portal"])("on the %s path", (path) => {
@@ -411,7 +412,6 @@ describe.each(["popover", "portal"])("on the %s path", (path) => {
       click(first, 0);
       await frame();
       expect(root.activeElement).toBe(editor.view.dom);
-      delete (document as Partial<Document>).execCommand;
     });
 
     it("an empty merge-tag panel is no menu and leaves focus on the trigger", () => {
