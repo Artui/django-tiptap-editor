@@ -217,14 +217,14 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
     });
 
     it("Tab on the last item closes and focuses the control after the trigger", () => {
-      const { shell } = mount();
-      const button = trigger(shell, "Font size");
+      const { shell } = mount({ toolbar: [["highlight", "fontSize"]] });
+      const button = trigger(shell, "Highlight");
       button.click();
       const list = items(openPanel(document)!);
       list[list.length - 1].focus();
       const event = key(list[list.length - 1], "Tab");
       expect(button.getAttribute("aria-expanded")).toBe("false");
-      expect(document.activeElement).toBe(trigger(shell, "Highlight"));
+      expect(document.activeElement).toBe(trigger(shell, "Font size"));
       expect(event.defaultPrevented).toBe(true);
     });
 
@@ -297,7 +297,7 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
 
     it("Tab on a non-last item is left to the browser and keeps the panel open", () => {
       const { shell } = mount();
-      const button = trigger(shell, "Font size");
+      const button = trigger(shell, "Highlight");
       button.click();
       const first = items(openPanel(document)!)[0];
       first.focus();
@@ -308,12 +308,12 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
     });
 
     it("Tab on the last item with nothing after the trigger lands back on the trigger", () => {
-      const { shell, outside } = mount({ toolbar: [["fontSize"]] });
+      const { shell, outside } = mount({ toolbar: [["highlight"]] });
       outside.remove();
       shell.querySelectorAll<HTMLElement>("[contenteditable]").forEach((node) => {
         node.setAttribute("tabindex", "-1");
       });
-      const button = trigger(shell, "Font size");
+      const button = trigger(shell, "Highlight");
       button.click();
       const list = items(openPanel(document)!);
       const refocused = vi.spyOn(list[0], "focus");
