@@ -230,7 +230,7 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
 
     it("Shift+Tab on the first item focuses the trigger and leaves the panel open", () => {
       const { shell } = mount();
-      const button = trigger(shell, "Font size");
+      const button = trigger(shell, "Highlight");
       button.click();
       const first = items(openPanel(document)!)[0];
       first.focus();
@@ -285,7 +285,7 @@ describe.each(["popover", "portal"])("with the %s path", (path) => {
 
     it("Shift+Tab on a later item is left to the browser and keeps the panel open", () => {
       const { shell } = mount();
-      const button = trigger(shell, "Font size");
+      const button = trigger(shell, "Highlight");
       button.click();
       const second = items(openPanel(document)!)[1];
       second.focus();
