@@ -729,6 +729,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Targeting parts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dropdowns-and-the-keyboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dropdowns and the keyboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1095,6 +1112,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Targeting parts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dropdowns-and-the-keyboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dropdowns and the keyboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1471,6 +1505,74 @@ classes.</p>
 <p>Toggle buttons (those with an active state, including <code>link</code> and any <code>ui.registerButton</code>
 spec with <code>isActive</code>) carry <code>aria-pressed</code> alongside <code>.is-active</code>; dropdown triggers carry
 <code>aria-expanded</code> alongside <code>.is-open</code>. Either attribute is a styling hook as good as the class.</p>
+<h3 id="dropdowns-and-the-keyboard">Dropdowns and the keyboard<a class="headerlink" href="#dropdowns-and-the-keyboard" title="Permanent link">&para;</a></h3>
+<p>The built-in dropdowns follow the WAI-ARIA Authoring Practices. Font size and font family
+are menus of radio items (<code>role="menu"</code>, items <code>role="menuitemradio"</code> with <code>aria-checked</code> on
+the current value, <code>Default</code> when none is set). Image, merge tags and table are menus of
+actions (<code>role="menuitem"</code>, the table's groups divided by <code>role="separator"</code>). Text color
+and highlight are non-modal dialogs (<code>role="dialog"</code>) because they hold the native colour
+input: the swatches are buttons with <code>aria-pressed</code> on the current colour. Each trigger's
+<code>aria-haspopup</code> names its popup, <code>"menu"</code> or <code>"dialog"</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Where</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Enter, Space, ArrowDown</td>
+<td>trigger</td>
+<td>opens the panel and focuses the checked item (a size or family), the pressed swatch, else the first entry</td>
+</tr>
+<tr>
+<td>ArrowUp</td>
+<td>trigger</td>
+<td>the same, but an action menu focuses its last item</td>
+</tr>
+<tr>
+<td>ArrowDown, ArrowUp</td>
+<td>menu</td>
+<td>next or previous item, wrapping</td>
+</tr>
+<tr>
+<td>Home, End</td>
+<td>menu</td>
+<td>first or last item</td>
+</tr>
+<tr>
+<td>a letter or digit</td>
+<td>menu</td>
+<td>the next item whose label starts with it</td>
+</tr>
+<tr>
+<td>Enter, Space</td>
+<td>item</td>
+<td>picks it; focus goes to the editor</td>
+</tr>
+<tr>
+<td>Tab</td>
+<td>panel</td>
+<td>closes a menu and moves to the control after the trigger; walks a dialog's swatches, custom colour and Remove, and leaves it from the last</td>
+</tr>
+<tr>
+<td>Shift+Tab</td>
+<td>panel</td>
+<td>back to the trigger: a menu closes, a dialog stays open</td>
+</tr>
+<tr>
+<td>Escape</td>
+<td>anywhere</td>
+<td>closes the panel; focus goes back to the trigger if it was in the panel</td>
+</tr>
+</tbody>
+</table>
+<p>A menu keeps one item tabbable at a time (roving <code>tabindex</code>). Opening a panel with the
+mouse leaves focus, and the editor's visible selection, where it was. A focused item
+or swatch shows a <code>:focus-visible</code> ring in <code>--tiptap-accent</code> or <code>--tiptap-fg</code>, unlike the
+fill (<code>.is-active</code>) or outline that marks the current value.</p>
 <p>The font-size trigger shows the current size as text (<code>Default</code>, <code>16</code>) rather than a glyph:
 <code>.django-tiptap__value-text</code> is the visible value and <code>.django-tiptap__value-sizer</code> an
 invisible stack of every label in the same grid cell, which keeps the trigger as wide as
