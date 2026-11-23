@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] — 2026-11-23
+
+### Added
+
+- **Ruled tables.** Inside a table, the table menu's **Table lines** item (a
+  `menuitemcheckbox`, checked while the table is ruled; Swedish: *Tabellinjer*) rules it
+  with `1px solid #d0d5dd`, and unchecking it takes the rules off it and every cell. Two
+  toolbar controls follow `table` in the default toolbar: `tableBorderColor`, a swatch
+  dialog like text color (presets from the new `tableBorderColors` config key, the custom
+  colour under `colorPicker`, and **Remove** to take the lines off), and
+  `tableBorderWidth`, a radio menu like font size whose trigger shows the table's width
+  (presets from the new `tableBorderWidths` key). Each keeps the other half of the border
+  and writes `<width> solid <colour>`; a border in another form reads as `1px` and
+  `#d0d5dd`. They are disabled unless the caret is in a ruled table or while the editor is
+  locked, and need the `table` feature. A ruled table is stored as `<table border="1">`
+  with `border-collapse: collapse` merged into its width or min-width, and a literal
+  inline `border` on every `th` and `td` (the colour in `rgb(...)` form), so it renders
+  ruled with no stylesheet, in email too. Rows and columns added to it come out ruled. The
+  editor commands are `setTableBorder(value)` and `unsetTableBorder()`. Tables start
+  unruled, and an unruled table's markup is unchanged. Markup that arrives ruled now keeps
+  its rules: a `<table border="1">` (any whole number above 0) loads ruled with its first
+  cell's `border`, or the default lines when that cell has none, and a legacy `border="2"`
+  is written back as `border="1"`; a cell's own `border` on an unruled table is kept. A
+  document stored as JSON gains `"border": null` on every table, cell and header it saves.
+- **The sanitiser keeps a table's rules.** The vocabulary gains `table[border]`, kept only
+  as a whole number in ASCII digits (`border="2"` survives, `border="1px"` is dropped),
+  `border-collapse` on `table`, and `border` on `th` and `td`. A `border` declaration on
+  the `table` itself is still dropped: the rules live on the cells. `render_doc` rules a
+  table as the editor does, `border="1"` and `border-collapse: collapse` on the table and
+  each cell's `border` after its `text-align`; as before, it writes no table width or
+  column sizes. The editor stores a cell's colour in the `rgb(...)` form the browser
+  writes (`1px solid rgb(208, 213, 221)`), as it does text colour; JSON keeps the
+  value as set.
+- **`--tiptap-content-weight` sets the font weight of the editing area and the source
+  view** (default `400`). Bold text is relative to it: `strong` and `b` take the browser's
+  `bolder`, so a host that raises the token to `600` gets `900` bold.
+
+### Changed
+
+- **An unruled table's guide lines in the editor are dashed.** They were solid, which made
+  a table look ruled in the editor that had no lines in the stored HTML. They keep the
+  `--tiptap-content-border` colour, and a ruled table's own solid lines draw over them.
+- **The editing area and the source view no longer inherit the host page's font weight.**
+  On a page whose body weight was `500` or `600`, body text took that weight (bold rose to
+  `900` at `600`), and headings at `700` barely stood out from `600` text. Both now sit at
+  `--tiptap-content-weight`; the toolbar, menus and image picker still inherit the host's.
+  A host whose body weight is below `400`, such as a light brand font at `300`, sees the
+  content get heavier and restores it with `--tiptap-content-weight: 300`.
+
+### Fixed
+
+- **A field inside `<fieldset disabled>` mounts a locked editor.** The browser disables such
+  a textarea (it matches `:disabled` and is not submitted) without setting its own
+  `disabled`, so its editor stayed editable and announced no `aria-disabled`. The lock now
+  reads `:disabled`, so a disabled fieldset at any depth locks the editor exactly as the
+  field's own `disabled` does (toolbar disabled, `aria-disabled="true"`, out of the tab
+  order, a label click does not focus it), while a field in the fieldset's first `<legend>`
+  stays editable, as the browser leaves it enabled. Setting or clearing `disabled` on an
+  ancestor fieldset later is followed both ways, and so is moving the field into or out of
+  a disabled fieldset or inserting a `<legend>` ahead of the one that holds it.
+- **A saved colour shows as the current one in the colour dropdowns.** The browser stores a
+  colour as `rgb(...)`, so after a save and reload the text colour, highlight and table line
+  colour dropdowns pressed no swatch and the custom colour input opened on black. Swatches
+  now compare as hex, and an `rgb()` colour seeds the custom input.
+- **Each image in the library picker is announced once (WCAG 2.2 4.1.2, 1.1.1).** A picker
+  item read its title twice, as "Team photo Team photo": the thumbnail's `alt` repeated the
+  caption beside it. The thumbnail is now decorative (`alt=""`) and the caption names the
+  item; its `title` tooltip stays for a caption cut short.
+
 ## [0.18.0] — 2026-11-23
 
 ### Fixed
@@ -1373,7 +1442,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...v0.17.0

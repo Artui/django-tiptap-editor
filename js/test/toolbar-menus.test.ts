@@ -325,6 +325,23 @@ describe.each(["popover", "portal"])("on the %s path", (path) => {
       expect(active()).toBe(item("Add row above"));
     });
 
+    it("one checkbox item adds the table's lines, and then removes them", async () => {
+      const { shell, editor } = mount(
+        "<table><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr></tbody></table>",
+      );
+      click(trigger(shell, "Table"), 0);
+      expect(item("Table lines").getAttribute("aria-checked")).toBe("false");
+      click(item("Table lines"), 0);
+      await frame();
+      expect(editor.getJSON().content?.[0].attrs?.border).toBe("1px solid #d0d5dd");
+      editor.commands.setTextSelection(3);
+      click(trigger(shell, "Table"), 0);
+      expect(item("Table lines").getAttribute("aria-checked")).toBe("true");
+      click(item("Table lines"), 0);
+      await frame();
+      expect(editor.getHTML()).not.toContain("border");
+    });
+
     it("a named key such as Delete is not typeahead", () => {
       const { shell } = mount(
         "<table><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr></tbody></table>",

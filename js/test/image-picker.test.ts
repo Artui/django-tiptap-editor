@@ -75,3 +75,32 @@ describe("image picker lifecycle", () => {
     expect(overlay()).toBeNull();
   });
 });
+
+// The accname content walk for these tiles: text, plus each image's alt.
+function contentName(el: Element): string {
+  const parts: string[] = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node instanceof HTMLImageElement) {
+      parts.push(node.alt);
+    } else if (node.nodeType === Node.TEXT_NODE) {
+      parts.push(node.nodeValue ?? "");
+    }
+  }
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+describe("image picker items", () => {
+  it("are named by their caption once, the thumbnail decorative", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ json: async () => [{ title: "Team photo", value: "/t.png" }] })),
+    );
+    const editor = makeEditor({ imageListUrl: "/images/" });
+    await openImagePicker(editor);
+    const tile = document.querySelector(".django-tiptap__picker-item") as HTMLButtonElement;
+    expect(tile.querySelector("img")?.getAttribute("alt")).toBe("");
+    expect(contentName(tile)).toBe("Team photo");
+    editor.destroy();
+  });
+});

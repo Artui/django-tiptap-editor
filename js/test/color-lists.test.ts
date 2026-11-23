@@ -158,7 +158,7 @@ describe("optional color picker", () => {
     editor.destroy();
   });
 
-  it("seeds from the current color, falling back to black for non-hex values", async () => {
+  it("seeds from the current color, rgb() as hex, falling back to black for named values", async () => {
     const m = await load();
     m.registerBuiltInButtons();
     const editor = makeEditor(m);
@@ -168,8 +168,10 @@ describe("optional color picker", () => {
     editor.chain().setMark("textStyle", { color: "#abcdef" }).run();
     expect(pickerInput(m, "color", editor)?.value).toBe("#abcdef");
 
-    // rgb() / named colors can't seed a native picker — it opens on black.
+    // rgb(), the form a saved colour comes back in, seeds as hex; a named colour opens on black.
     editor.chain().setMark("textStyle", { color: "rgb(1, 2, 3)" }).run();
+    expect(pickerInput(m, "color", editor)?.value).toBe("#010203");
+    editor.chain().setMark("textStyle", { color: "red" }).run();
     expect(pickerInput(m, "color", editor)?.value).toBe("#000000");
 
     editor.destroy();

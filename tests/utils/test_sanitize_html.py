@@ -577,6 +577,49 @@ def test_a_newline_that_becomes_first_in_a_declared_listing_is_kept_visible() ->
     assert str(sanitize_html("<listing>\nx</listing>", schema=schema)) == "<listing>\nx</listing>"
 
 
+def test_a_hand_written_ruled_table_keeps_its_rules() -> None:
+    markup = (
+        '<table border="1" style="border-collapse: collapse; border: 1px solid #000; width: 100%">'
+        '<tbody><tr><th style="border: 1px solid #000">A</th>'
+        '<td style="border: 1px solid #000; text-align: left">1</td></tr></tbody></table>'
+    )
+    assert str(sanitize_html(markup)) == (
+        '<table border="1" style="border-collapse: collapse; width: 100%">'
+        '<tbody><tr><th style="border: 1px solid #000">A</th>'
+        '<td style="border: 1px solid #000; text-align: left">1</td></tr></tbody></table>'
+    )
+
+
+@pytest.mark.parametrize(
+    ("attribute", "kept"),
+    [
+        ('border="1"', ' border="1"'),
+        ('border="2"', ' border="2"'),
+        ('border="0"', ' border="0"'),
+        ('border="12"', ' border="12"'),
+        ('border=""', ""),
+        ("border", ""),
+        ('border="1.5"', ""),
+        ('border="-1"', ""),
+        ('border=" 1"', ""),
+        ('border="1px"', ""),
+        ('border="\u00b2"', ""),
+        ('border="\u0661"', ""),
+    ],
+)
+def test_a_table_border_survives_only_as_a_whole_number(attribute: str, kept: str) -> None:
+    rest = "<tbody><tr><td>x</td></tr></tbody></table>"
+    assert str(sanitize_html(f"<table {attribute}>{rest}")) == f"<table{kept}>{rest}"
+
+
+@override_settings(
+    TIPTAP_EXTRA_EXTENSIONS={"frame": {"aside": {"attrs": ["border"], "styles": []}}}
+)
+def test_a_border_attribute_another_extension_declares_is_not_held_to_a_number() -> None:
+    markup = '<aside border="thin">x</aside>'
+    assert str(sanitize_html(markup, schema=get_html_schema())) == markup
+
+
 def test_style_property_outside_the_allowlist_is_dropped() -> None:
     assert str(sanitize_html('<p style="position: fixed; text-align: left">x</p>')) == (
         '<p style="text-align: left">x</p>'

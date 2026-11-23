@@ -192,10 +192,22 @@ def _cell(tag: str, node: dict[str, Any], grant: _Grant) -> str:
             [
                 ("background-color", attrs.get("backgroundColor")),
                 ("text-align", align if align in _CELL_ALIGNMENTS else None),
+                ("border", attrs.get("border")),
             ]
         )
     )
     return f"<{tag}{rendered}>{_render_children(node, grant)}</{tag}>"
+
+
+def _table(node: dict[str, Any], grant: _Grant) -> str:
+    """Render a table, ruled as the editor rules it when its ``border`` is a non-empty string."""
+    border = _attrs(node).get("border")
+    ruled = (
+        ' border="1" style="border-collapse: collapse"'
+        if isinstance(border, str) and border
+        else ""
+    )
+    return f"<table{ruled}><tbody>{_render_children(node, grant)}</tbody></table>"
 
 
 def _render_node(node: dict[str, Any], grant: _Grant) -> str:
@@ -241,7 +253,7 @@ def _render_node(node: dict[str, Any], grant: _Grant) -> str:
         )
         return f"<img{rendered}>"
     if kind == "table":
-        return f"<table><tbody>{_render_children(node, grant)}</tbody></table>"
+        return _table(node, grant)
     if kind == "tableRow":
         return f"<tr>{_render_children(node, grant)}</tr>"
     if kind == "tableHeader":

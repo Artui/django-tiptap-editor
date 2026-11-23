@@ -110,7 +110,7 @@ export async function openImagePicker(editor: Editor): Promise<void> {
       tile.title = item.title;
       const thumb = document.createElement("img");
       thumb.src = item.value;
-      thumb.alt = item.title;
+      thumb.alt = "";
       const label = document.createElement("span");
       label.textContent = item.title;
       tile.appendChild(thumb);

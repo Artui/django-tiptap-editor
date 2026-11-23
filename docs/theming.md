@@ -28,7 +28,8 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-btn-active-bg` / `--tiptap-btn-active-fg` | Active button colours |
 | `--tiptap-accent` | Links, focus, selected-image outline |
 | `--tiptap-content-bg` / `--tiptap-content-fg` | Editing area and source view (light default: unset, so the area shows the shell's `--tiptap-bg` / `--tiptap-fg`) |
-| `--tiptap-content-border` | Table cell borders in the editing area (light default: `#d0d5dd`, dark `#858d9b`) |
+| `--tiptap-content-weight` | Font weight of the editing area and source view (default `400`); `strong` and `b` are relative (`bolder`), so raising it to `600` makes bold text `900` |
+| `--tiptap-content-border` | The dashed guide lines of an unruled table's cells in the editing area (light default: `#d0d5dd`, dark `#858d9b`) |
 | `--tiptap-highlight-ink` | Text colour of a highlighted run that has no colour of its own (light default: unset, so it inherits) |
 | `--tiptap-highlight-glyph-bg` / `--tiptap-highlight-glyph-fg` | The highlight button's glyph (light: `#fff3a3`, text inherits the button's) |
 | `--tiptap-swatch-border` / `--tiptap-swatch-border-hover` | Colour swatch and custom-colour chip outline, and its hover |
@@ -227,7 +228,10 @@ the shell, 3.22 on the toolbar), dark `#7a8190` (4.23 on the shell, 3.69 on the 
 3.20 on the editing area). Against the page around it the ratio depends on the page. The
 separators, menus, panels, footer, source note, modal header and image picker share the
 token. Table cells do not: they read `--tiptap-content-border`, so a project that sets
-`--tiptap-border` and wants tables to match sets `--tiptap-content-border` too. A project
+`--tiptap-border` and wants tables to match sets `--tiptap-content-border` too. Those cell
+lines are dashed, because they are only an editing guide and are not part of the stored
+HTML. A ruled table's cells carry their own solid `border` inline, which wins over the
+guide, so what the editor shows solid is what a reader sees. A project
 that sets `--tiptap-border` keeps its value in both schemes, and the 3:1 is then its to
 keep.
 
@@ -247,17 +251,22 @@ spec with `isActive`) carry `aria-pressed` alongside `.is-active`; dropdown trig
 
 The editable takes its accessible name, description and invalid/required state from the
 textarea (its labels, `aria-label`, `aria-describedby`, `aria-invalid`, `required`). A
-`disabled` or `readonly` textarea locks the editor: every built-in toolbar control, and the
-control a `ui.registerButton` `render` button returns, gets `disabled`. A custom toolbar
-region or shell is yours to lock: read `editor.isEditable` (it follows the textarea both ways).
+`disabled` or `readonly` textarea, or one inside a `<fieldset disabled>` (outside its first
+`<legend>`), locks the editor: every built-in toolbar control, and the control a
+`ui.registerButton` `render` button returns, gets `disabled`. A custom toolbar region or
+shell is yours to lock: read `editor.isEditable` (it follows the textarea and its fieldsets
+both ways).
 
 ### Dropdowns and the keyboard
 
 The built-in dropdowns follow the WAI-ARIA Authoring Practices. Font size and font family
 are menus of radio items (`role="menu"`, items `role="menuitemradio"` with `aria-checked` on
 the current value, `Default` when none is set). Image, merge tags and table are menus of
-actions (`role="menuitem"`, the table's groups divided by `role="separator"`). Text color
-and highlight are non-modal dialogs (`role="dialog"`) because they hold the native colour
+actions (`role="menuitem"`, the table's groups divided by `role="separator"`); the
+table's **Table lines** is a `role="menuitemcheckbox"` with `aria-checked` on while the
+table is ruled, and a keyboard open still starts on the first item. Table line width is a
+menu of radio items like font size, with no `Default`. Text color, highlight and table
+line colour are non-modal dialogs (`role="dialog"`) because they hold the native colour
 input: the swatches are buttons with `aria-pressed` on the current colour. Each trigger's
 `aria-haspopup` names its popup, `"menu"` or `"dialog"`.
 
@@ -290,7 +299,8 @@ The font-size trigger shows the current size as text (`Default`, `16`) rather th
 invisible stack of every label in the same grid cell, which keeps the trigger as wide as
 its widest label (in the active locale and `fontSizes`) so it does not shift as the caret
 moves. Its accessible name is the `fontSizeValue` string (`"{name}: {value}"`, e.g.
-`Font size: 16`); a locale registered with `registerLocale` can reword it.
+`Font size: 16`); a locale registered with `registerLocale` can reword it. The table line
+width trigger shows the table's width the same way, named by `tableBorderWidthValue`.
 
 A button given a [`toolbarLabels`](configuration.md) entry carries
 `.django-tiptap__btn--labelled` and its text in `.django-tiptap__btn-label`, after the

@@ -3,7 +3,12 @@
 // treats it as both first and last; Up/Down wrap, Home/End, and a printable key
 // moves to the next item whose label starts with it. Enter and Space are left to
 // the native button click; Left/Right and Tab pass through untouched.
-const MENU_ITEM = "[role=menuitem], [role=menuitemradio]";
+const MENU_ITEM = "[role=menuitem], [role=menuitemradio], [role=menuitemcheckbox]";
+
+// A checked radio opens the menu; a checked checkbox is an action like the rest.
+export function isCheckedRadio(item: HTMLElement): boolean {
+  return item.matches("[role=menuitemradio][aria-checked=true]");
+}
 
 export function itemsOf(menu: HTMLElement): HTMLElement[] {
   return Array.from(menu.children).filter(
@@ -24,7 +29,7 @@ export function focusItem(menu: HTMLElement, to: HTMLElement): void {
 
 export function menuKeys(menu: HTMLElement): void {
   const items = itemsOf(menu);
-  const start = items.find((item) => item.getAttribute("aria-checked") === "true") ?? items[0];
+  const start = items.find(isCheckedRadio) ?? items[0];
   if (start) {
     rove(menu, start);
   }

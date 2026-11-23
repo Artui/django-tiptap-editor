@@ -80,7 +80,15 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
             f"Invalid TipTap enterKey {enter_key!r}. Allowed: {sorted(ENTER_KEY_MODES)}."
         )
 
-    for key in ("fontFamilies", "fontSizes", "textColors", "highlightColors", "features"):
+    for key in (
+        "fontFamilies",
+        "fontSizes",
+        "textColors",
+        "highlightColors",
+        "tableBorderColors",
+        "tableBorderWidths",
+        "features",
+    ):
         value = config.get(key)
         if value is not None and (
             not isinstance(value, list) or not all(isinstance(item, str) for item in value)
