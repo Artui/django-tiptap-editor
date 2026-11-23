@@ -66,6 +66,10 @@ interface SelectedImage {
 // means the overlay hides. Read structurally so the module needs no
 // prosemirror-state import of its own.
 function selectedImage(editor: Editor): SelectedImage | null {
+  // A locked editor still selects an image on mousedown, but offers no way to change it.
+  if (!editor.isEditable) {
+    return null;
+  }
   const selection = editor.state.selection as unknown as {
     node?: { type: { name: string }; attrs: Record<string, unknown> };
     from: number;
@@ -189,11 +193,17 @@ export function createImageResizeOverlay(editor: Editor): ImageResizeOverlay {
   const onWindowResize = (): void => sync();
   window.addEventListener("resize", onWindowResize);
 
+  // setEditable dispatches no transaction and emits nothing without emitUpdate, so
+  // ProseMirror's contenteditable flip is the only signal that the lock changed.
+  const editability = new MutationObserver(() => sync());
+  editability.observe(editor.view.dom, { attributes: true, attributeFilter: ["contenteditable"] });
+
   return {
     sync,
     destroy: () => {
       stopDrag?.();
       window.removeEventListener("resize", onWindowResize);
+      editability.disconnect();
       root.remove();
     },
   };

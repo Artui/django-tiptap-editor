@@ -35,6 +35,42 @@ function makeEditor(config: TipTapConfig, content = "<p></p>"): Editor {
   return editor;
 }
 
+const IMAGE_FILE = new File(["x"], "x.png", { type: "image/png" });
+
+function stubUpload() {
+  const fetchMock = vi.fn(async () => ({
+    ok: true,
+    json: async () => ({ location: "https://example.com/up.png" }),
+  }));
+  vi.stubGlobal("fetch", fetchMock);
+  // ProseMirror's own drop handler asks where the drop landed; jsdom has no
+  // layout, so answer "nowhere" and let it bow out.
+  Object.defineProperty(document, "elementFromPoint", { value: () => null, configurable: true });
+  return fetchMock;
+}
+
+function dropFile(editor: Editor): Event {
+  const event = new Event("drop", { bubbles: true, cancelable: true });
+  Object.defineProperty(event, "dataTransfer", { value: { files: [IMAGE_FILE] } });
+  editor.view.dom.dispatchEvent(event);
+  return event;
+}
+
+function pasteFile(editor: Editor): Event {
+  const event = new Event("paste", { bubbles: true, cancelable: true });
+  // getData answers ProseMirror's own paste handler, which reads the text.
+  Object.defineProperty(event, "clipboardData", { value: { files: [IMAGE_FILE], getData: () => "" } });
+  editor.view.dom.dispatchEvent(event);
+  return event;
+}
+
+// Wait for the upload's promise chain (fetch, json, insert) to settle.
+async function settleUpload(): Promise<void> {
+  for (let i = 0; i < 10; i++) {
+    await Promise.resolve();
+  }
+}
+
 // What the browser does for a printable key: offer it to handleTextInput (where
 // input rules live) and insert it only when nothing claimed it.
 function typeText(editor: Editor, text: string): void {
@@ -133,39 +169,12 @@ describe("a restricted field has no route to an excluded feature", () => {
   });
 
   it("a dropped or pasted image file is neither uploaded nor inserted", async () => {
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ location: "https://example.com/up.png" }),
-    }));
-    vi.stubGlobal("fetch", fetchMock);
-    // ProseMirror's own drop handler asks where the drop landed; jsdom has no
-    // layout, so answer "nowhere" and let it bow out.
-    Object.defineProperty(document, "elementFromPoint", { value: () => null, configurable: true });
-    const file = new File(["x"], "x.png", { type: "image/png" });
-    const drop = (editor: Editor): Event => {
-      const event = new Event("drop", { bubbles: true, cancelable: true });
-      Object.defineProperty(event, "dataTransfer", { value: { files: [file] } });
-      editor.view.dom.dispatchEvent(event);
-      return event;
-    };
-    const pasteFile = (editor: Editor): Event => {
-      const event = new Event("paste", { bubbles: true, cancelable: true });
-      // getData answers ProseMirror's own paste handler, which reads the text.
-      Object.defineProperty(event, "clipboardData", { value: { files: [file], getData: () => "" } });
-      editor.view.dom.dispatchEvent(event);
-      return event;
-    };
-    // Wait for the upload's promise chain (fetch, json, insert) to settle.
-    const settle = async (): Promise<void> => {
-      for (let i = 0; i < 10; i++) {
-        await Promise.resolve();
-      }
-    };
+    const fetchMock = stubUpload();
 
     const full = makeEditor({ imageUploadUrl: "/upload/" }, "<p>a</p>");
     wireImageDropPaste(full);
-    drop(full);
-    await settle();
+    dropFile(full);
+    await settleUpload();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(full.getHTML()).toContain("<img");
 
@@ -173,11 +182,34 @@ describe("a restricted field has no route to an excluded feature", () => {
     const email = makeEditor({ ...EMAIL, imageUploadUrl: "/upload/" }, "<p>a</p>");
     wireImageDropPaste(email);
     // Not claimed either: the event is left for ProseMirror and the browser.
-    expect(drop(email).defaultPrevented).toBe(false);
+    expect(dropFile(email).defaultPrevented).toBe(false);
     expect(pasteFile(email).defaultPrevented).toBe(false);
-    await settle();
+    await settleUpload();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(email.getHTML()).toBe("<p>a</p>");
+  });
+
+  it("a dropped or pasted image file on a non-editable editor is neither uploaded nor inserted", async () => {
+    const fetchMock = stubUpload();
+
+    const control = makeEditor({ imageUploadUrl: "/upload/" }, "<p>a</p>");
+    wireImageDropPaste(control);
+    pasteFile(control);
+    await settleUpload();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(control.getHTML()).toContain("<img");
+
+    fetchMock.mockClear();
+    const locked = makeEditor({ imageUploadUrl: "/upload/" }, "<p>a</p>");
+    locked.setEditable(false, false);
+    wireImageDropPaste(locked);
+    // Left unclaimed, as for an editor without images: a locked editor is as inert as any
+    // non-editable element, and the browser cannot insert into it.
+    expect(dropFile(locked).defaultPrevented).toBe(false);
+    expect(pasteFile(locked).defaultPrevented).toBe(false);
+    await settleUpload();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(locked.getHTML()).toBe("<p>a</p>");
   });
 
   it("inserting an image by URL is inert rather than a TypeError", () => {

@@ -106,10 +106,17 @@ export function uploadViaFileDialog(editor: Editor): void {
 export function wireImageDropPaste(editor: Editor): void {
   const dom = editor.view.dom as HTMLElement;
   const onFiles = (files: FileList | undefined | null, event: Event): void => {
-    // Without an image node the event is not claimed (no preventDefault) and
-    // nothing is uploaded; "a dropped or pasted image file is neither uploaded
-    // nor inserted" in test/restrict-features.test.ts fails without that clause.
-    if (!configFor(editor).imageUploadUrl || !hasImageNode(editor) || !files || files.length === 0) {
+    // Without an image node, or while the editor is not editable, the event is not claimed (no
+    // preventDefault) and nothing is uploaded; "a dropped or pasted image file is neither uploaded
+    // nor inserted" and "... on a non-editable editor ..." in test/restrict-features.test.ts fail
+    // without their clauses, as does test/locked-image-edits.test.ts.
+    if (
+      !editor.isEditable ||
+      !configFor(editor).imageUploadUrl ||
+      !hasImageNode(editor) ||
+      !files ||
+      files.length === 0
+    ) {
       return;
     }
     const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
