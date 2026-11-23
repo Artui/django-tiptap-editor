@@ -19,22 +19,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (presets from the new `tableBorderWidths` key). Each keeps the other half of the border
   and writes `<width> solid <colour>`; a border in another form reads as `1px` and
   `#d0d5dd`. They are disabled unless the caret is in a ruled table or while the editor is
-  locked, and need the `table` feature. A ruled table is stored as
-  `<table border="1">` with `border-collapse: collapse` merged into its width or min-width,
-  and a literal inline `border` on every `th` and `td`, so it renders ruled with no
-  stylesheet, in email too. Rows and columns added to it come out ruled. The editor
-  commands are `setTableBorder(value)` and `unsetTableBorder()`. Tables start unruled, and
-  an unruled table's markup is unchanged. Markup that arrives ruled now keeps its rules: a
-  `<table border="1">` (any whole number above 0) loads ruled with its first cell's
-  `border`, or the default lines when that cell has none, and a legacy `border="2"` is
-  written back as `border="1"`; a cell's own `border` on an unruled table is kept. A
+  locked, and need the `table` feature. A ruled table is stored as `<table border="1">`
+  with `border-collapse: collapse` merged into its width or min-width, and a literal
+  inline `border` on every `th` and `td` (the colour in `rgb(...)` form), so it renders
+  ruled with no stylesheet, in email too. Rows and columns added to it come out ruled. The
+  editor commands are `setTableBorder(value)` and `unsetTableBorder()`. Tables start
+  unruled, and an unruled table's markup is unchanged. Markup that arrives ruled now keeps
+  its rules: a `<table border="1">` (any whole number above 0) loads ruled with its first
+  cell's `border`, or the default lines when that cell has none, and a legacy `border="2"`
+  is written back as `border="1"`; a cell's own `border` on an unruled table is kept. A
   document stored as JSON gains `"border": null` on every table, cell and header it saves.
 - **The sanitiser keeps a table's rules.** The vocabulary gains `table[border]`, kept only
   as a whole number in ASCII digits (`border="2"` survives, `border="1px"` is dropped),
   `border-collapse` on `table`, and `border` on `th` and `td`. A `border` declaration on
-  the `table` itself is still dropped: the rules live on the cells. `render_doc` writes a ruled table as the editor does:
-  `border="1"` and `border-collapse: collapse` on the table and each cell's `border` after
-  its `text-align`.
+  the `table` itself is still dropped: the rules live on the cells. `render_doc` rules a
+  table as the editor does, `border="1"` and `border-collapse: collapse` on the table and
+  each cell's `border` after its `text-align`; as before, it writes no table width or
+  column sizes. The editor stores a cell's colour in the `rgb(...)` form the browser
+  writes (`1px solid rgb(208, 213, 221)`), as it does text colour; JSON keeps the
+  value as set.
 - **`--tiptap-content-weight` sets the font weight of the editing area and the source
   view** (default `400`). Bold text is relative to it: `strong` and `b` take the browser's
   `bolder`, so a host that raises the token to `600` gets `900` bold.

@@ -363,6 +363,12 @@ describe("a colour saved in the rgb() form the browser writes", () => {
     expect(input?.value).toBe("#1f2329");
   });
 
+  it("presses a swatch configured in upper case", () => {
+    const { shell } = mount(RULED, { ...CONFIG, tableBorderColors: ["#1F2329"] });
+    open(shell, "tableBorderColor");
+    expect(swatch("#1F2329").getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("presses its hex swatch in the text colour", () => {
     const { editor, shell } = mount('<p><span style="color: rgb(224, 62, 45)">red</span></p>', {
       toolbar: [["color"]],

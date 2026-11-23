@@ -120,10 +120,11 @@ set the ruled table's line colour (from `tableBorderColors`, with the custom col
 `tableBorderWidths`). Each keeps the other half of the border and writes
 `<width> solid <colour>`; a border in another form, such as a hand-written
 `2px dotted red`, reads as `1px` and `#d0d5dd`. Both are disabled unless the caret is in
-a ruled table, and both need the `table` feature. A ruled table is stored as `<table border="1">` with `border-collapse: collapse`
-beside its width, and a literal `border: 1px solid #d0d5dd` on every `th` and `td`, so it
-shows its lines wherever the HTML is rendered, an email client included, with no
-stylesheet. Rows and columns added to it are ruled too. A table starts unruled. In code,
+a ruled table, and both need the `table` feature. A ruled table is stored as
+`<table border="1">` with `border-collapse: collapse` beside its width, and a literal
+`border` on every `th` and `td` (HTML storage writes the colour as the browser does,
+`1px solid rgb(208, 213, 221)`; JSON storage keeps the value as set), so it shows its
+lines wherever the HTML is rendered, an email client included, with no stylesheet. Rows and columns added to it are ruled too. A table starts unruled. In code,
 `editor.commands.setTableBorder("2px solid #000")` rules the table at the selection with
 any border shorthand and `editor.commands.unsetTableBorder()` clears it and its cells.
 Markup that arrives ruled, such as a hand-written `<table border="1">`, loads ruled, with

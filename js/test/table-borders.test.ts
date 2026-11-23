@@ -179,7 +179,7 @@ describe("parsing ruled markup", () => {
     expect(tableOf(html).getAttribute("border")).toBe("1");
   });
 
-  it.each(['border="0"', 'border="x"', 'border=""', "border"])("reads a table with %s as unruled", (attr) => {
+  it.each(['border="0"', 'border="x"', 'border=""', "border", 'border="1px"', 'border="-1"', 'border=" 1"'])("reads a table with %s as unruled", (attr) => {
     const html = make(`<table ${attr}><tbody><tr><td><p>a</p></td></tr></tbody></table>`).getHTML();
     expect(tableOf(html).hasAttribute("border")).toBe(false);
     expect(cells(html)[0].hasAttribute("style")).toBe(false);
