@@ -247,9 +247,11 @@ spec with `isActive`) carry `aria-pressed` alongside `.is-active`; dropdown trig
 
 The editable takes its accessible name, description and invalid/required state from the
 textarea (its labels, `aria-label`, `aria-describedby`, `aria-invalid`, `required`). A
-`disabled` or `readonly` textarea locks the editor: every built-in toolbar control, and the
-control a `ui.registerButton` `render` button returns, gets `disabled`. A custom toolbar
-region or shell is yours to lock: read `editor.isEditable` (it follows the textarea both ways).
+`disabled` or `readonly` textarea, or one inside a `<fieldset disabled>` (outside its first
+`<legend>`), locks the editor: every built-in toolbar control, and the control a
+`ui.registerButton` `render` button returns, gets `disabled`. A custom toolbar region or
+shell is yours to lock: read `editor.isEditable` (it follows the textarea and its fieldsets
+both ways).
 
 ### Dropdowns and the keyboard
 

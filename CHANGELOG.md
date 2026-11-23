@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A field inside `<fieldset disabled>` mounts a locked editor.** The browser disables such
+  a textarea (it matches `:disabled` and is not submitted) without setting its own
+  `disabled`, so its editor stayed editable and announced no `aria-disabled`. The lock now
+  reads `:disabled`, so a disabled fieldset at any depth locks the editor exactly as the
+  field's own `disabled` does (toolbar disabled, `aria-disabled="true"`, out of the tab
+  order, a label click does not focus it), while a field in the fieldset's first `<legend>`
+  stays editable, as the browser leaves it enabled. Setting or clearing `disabled` on an
+  ancestor fieldset later is followed both ways.
+
 ## [0.18.0] — 2026-11-23
 
 ### Fixed

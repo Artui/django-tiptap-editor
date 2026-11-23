@@ -153,7 +153,17 @@ function watchTextareaAttributes(
     attributes: true,
     attributeFilter: ["style", BOUND_ATTR, ...ARIA_SOURCE_ATTRIBUTES],
   });
+  // An ancestor fieldset's disabled disables the field without touching its own attributes.
+  for (let fieldset = element.parentElement?.closest("fieldset"); fieldset; ) {
+    observer.observe(fieldset, { attributes: true, attributeFilter: ["disabled"] });
+    fieldset = fieldset.parentElement?.closest("fieldset");
+  }
   return observer;
+}
+
+// :disabled, not .disabled: a disabled ancestor fieldset (outside its first legend) disables the field.
+function isDisabled(element: HTMLTextAreaElement): boolean {
+  return element.matches(":disabled");
 }
 
 // The textarea attributes the editable's ARIA is computed from (see editableAria).
@@ -219,7 +229,7 @@ function editableAria(element: HTMLTextAreaElement): Record<string, string> {
   if (element.required) {
     aria["aria-required"] = "true";
   }
-  if (element.disabled) {
+  if (isDisabled(element)) {
     aria["aria-disabled"] = "true";
   } else if (element.readOnly) {
     aria["aria-readonly"] = "true";
@@ -238,7 +248,7 @@ function watchLabelClicks(element: HTMLTextAreaElement, editor: Editor, shell: H
     }
     if (editor.isEditable) {
       editor.view.focus();
-    } else if (!element.disabled) {
+    } else if (!isDisabled(element)) {
       (editor.view.dom as HTMLElement).focus({ preventScroll: true });
     }
   };
@@ -386,7 +396,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const extensions = buildExtensions(config, ctx);
   let store: (doc: Doc) => void = () => {};
   let aria = editableAria(element);
-  const isLockedField = (): boolean => element.disabled || element.readOnly;
+  const isLockedField = (): boolean => isDisabled(element) || element.readOnly;
   let locked = isLockedField();
   const editor = new Editor({
     element: content,
