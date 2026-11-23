@@ -19,7 +19,7 @@ const HIGHLIGHTS = JSON.parse(
   (/const HIGHLIGHTS = (\[[^\]]*\]);/.exec(BUTTONS)?.[1] ?? "[]").replace(/'/g, '"'),
 ) as string[];
 
-const NOT_COLOURS = new Set(["height", "max-height", "font", "radius", "modal-z"]);
+const NOT_COLOURS = new Set(["height", "max-height", "font", "content-weight", "radius", "modal-z"]);
 const DARK = ':where(html[data-tiptap-theme="dark"])';
 const SYSTEM = ':where(html[data-tiptap-theme="system"])';
 const LIGHT = ':where(html[data-tiptap-theme="light"])';

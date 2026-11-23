@@ -28,6 +28,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-btn-active-bg` / `--tiptap-btn-active-fg` | Active button colours |
 | `--tiptap-accent` | Links, focus, selected-image outline |
 | `--tiptap-content-bg` / `--tiptap-content-fg` | Editing area and source view (light default: unset, so the area shows the shell's `--tiptap-bg` / `--tiptap-fg`) |
+| `--tiptap-content-weight` | Font weight of the editing area and source view (default `400`); `strong` and `b` are relative (`bolder`), so raising it to `600` makes bold text `900` |
 | `--tiptap-content-border` | Table cell borders in the editing area (light default: `#d0d5dd`, dark `#858d9b`) |
 | `--tiptap-highlight-ink` | Text colour of a highlighted run that has no colour of its own (light default: unset, so it inherits) |
 | `--tiptap-highlight-glyph-bg` / `--tiptap-highlight-glyph-fg` | The highlight button's glyph (light: `#fff3a3`, text inherits the button's) |

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`--tiptap-content-weight` sets the font weight of the editing area and the source
+  view** (default `400`). Bold text is relative to it: `strong` and `b` take the browser's
+  `bolder`, so a host that raises the token to `600` gets `900` bold.
+
+### Changed
+
+- **The editing area and the source view no longer inherit the host page's font weight.**
+  On a page whose body weight was `500` or `600`, body text took that weight, bold text
+  rose to `900`, and headings at `700` barely stood out from `600` text. Both now sit at
+  `--tiptap-content-weight`; the toolbar, menus and image picker still inherit the host's.
+  A host whose body weight is below `400`, such as a light brand font at `300`, sees the
+  content get heavier and restores it with `--tiptap-content-weight: 300`.
+
 ## [0.18.0] — 2026-11-23
 
 ### Fixed

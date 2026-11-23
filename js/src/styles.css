@@ -26,6 +26,7 @@
   --tiptap-height: 360px;
   --tiptap-max-height: none;
   --tiptap-font: inherit;
+  --tiptap-content-weight: 400;
   --tiptap-fg: var(--_tiptap-fg, #1f2329);
   --tiptap-bg: var(--_tiptap-bg, #ffffff);
   --tiptap-border: var(--_tiptap-border, #858b97);
@@ -514,12 +515,14 @@
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 13px;
   line-height: 1.5;
+  font-weight: var(--tiptap-content-weight, 400);
   color: var(--tiptap-content-fg, var(--tiptap-fg));
   background: var(--tiptap-content-bg, var(--tiptap-bg));
 }
 
 .django-tiptap .ProseMirror {
   min-height: var(--tiptap-height);
+  font-weight: var(--tiptap-content-weight, 400);
   color: var(--tiptap-content-fg, currentColor);
   background: var(--tiptap-content-bg, transparent);
   padding: 12px 14px;
