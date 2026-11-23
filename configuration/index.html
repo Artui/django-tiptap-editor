@@ -1057,9 +1057,19 @@ any omitted key.</p>
 <td>Swatches for the <code>highlight</code> (background) dropdown; each any CSS color. Omit for the built-in palette.</td>
 </tr>
 <tr>
+<td><code>tableBorderColors</code></td>
+<td>list[str]</td>
+<td>Swatches for the <code>tableBorderColor</code> (table line colour) dropdown; each any CSS color. Omit for the built-in palette, <code>#d0d5dd</code> <code>#858b97</code> <code>#5c6370</code> <code>#1f2329</code> <code>#000000</code>.</td>
+</tr>
+<tr>
+<td><code>tableBorderWidths</code></td>
+<td>list[str]</td>
+<td>Presets for the <code>tableBorderWidth</code> (table line width) dropdown; each a CSS length like <code>"2px"</code> (label = value without <code>px</code>); the trigger shows the label of the table's width. Omit for <code>1px</code> <code>2px</code> <code>3px</code>.</td>
+</tr>
+<tr>
 <td><code>colorPicker</code></td>
 <td>bool</td>
-<td>Adds a native color picker under both color swatch grids, for colors the palettes don't carry. Default <code>False</code>.</td>
+<td>Adds a native color picker under every color swatch grid (text color, highlight, table line colour), for colors the palettes don't carry. Default <code>False</code>.</td>
 </tr>
 <tr>
 <td><code>imageResize</code></td>
@@ -1090,11 +1100,13 @@ any omitted key.</p>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="s2">&quot;fontSizes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;12px&quot;</span><span class="p">,</span> <span class="s2">&quot;14px&quot;</span><span class="p">,</span> <span class="s2">&quot;16px&quot;</span><span class="p">,</span> <span class="s2">&quot;20px&quot;</span><span class="p">,</span> <span class="s2">&quot;28px&quot;</span><span class="p">],</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="s2">&quot;textColors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;#1f2329&quot;</span><span class="p">,</span> <span class="s2">&quot;#e03e2d&quot;</span><span class="p">,</span> <span class="s2">&quot;#3598db&quot;</span><span class="p">],</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="s2">&quot;highlightColors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;#fff3a3&quot;</span><span class="p">,</span> <span class="s2">&quot;#c8f7c5&quot;</span><span class="p">,</span> <span class="s2">&quot;#bfe3ff&quot;</span><span class="p">],</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s2">&quot;colorPicker&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="s2">&quot;imageResize&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="s2">&quot;mergeTags&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;{{ first_name }}&quot;</span><span class="p">}],</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="p">}</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s2">&quot;tableBorderColors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;#d0d5dd&quot;</span><span class="p">,</span> <span class="s2">&quot;#1f2329&quot;</span><span class="p">],</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="s2">&quot;tableBorderWidths&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;1px&quot;</span><span class="p">,</span> <span class="s2">&quot;2px&quot;</span><span class="p">],</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="s2">&quot;colorPicker&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        <span class="s2">&quot;imageResize&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="s2">&quot;mergeTags&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;{{ first_name }}&quot;</span><span class="p">}],</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="p">}</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="heights">Heights<a class="headerlink" href="#heights" title="Permanent link">&para;</a></h3>
 <p><code>height</code> and <code>maxHeight</code> size the editing area, the part under the toolbar.
@@ -1136,10 +1148,28 @@ so one bad field does not stop the rest of the page mounting.</p>
 <h3 id="toolbar-buttons">Toolbar buttons<a class="headerlink" href="#toolbar-buttons" title="Permanent link">&para;</a></h3>
 <p><code>undo</code> <code>redo</code> · <code>bold</code> <code>italic</code> <code>underline</code> <code>strike</code> <code>code</code> · <code>fontSize</code> <code>fontFamily</code>
 <code>color</code> <code>highlight</code> · <code>h1</code> <code>h2</code> <code>h3</code> <code>paragraph</code> · <code>bulletList</code> <code>orderedList</code>
-<code>blockquote</code> <code>horizontalRule</code> (opt-in) · <code>alignLeft</code> <code>alignCenter</code> <code>alignRight</code> <code>alignJustify</code> · <code>image</code> <code>table</code> ·
+<code>blockquote</code> <code>horizontalRule</code> (opt-in) · <code>alignLeft</code> <code>alignCenter</code> <code>alignRight</code> <code>alignJustify</code> · <code>image</code> <code>table</code>
+<code>tableBorderColor</code> <code>tableBorderWidth</code> ·
 <code>link</code> <code>unlink</code> <code>clearFormatting</code> · <code>sourceView</code> · <code>mergeTags</code> (opt-in).</p>
 <p>A group is an inner array; groups render with separators. Register your own buttons with
 <a href="../extending/#toolbar-buttons"><code>ui.registerButton</code></a>.</p>
+<p>Inside a table, the <code>table</code> menu adds rows and columns, rules the table or removes its
+rules with its <strong>Table lines</strong> checkbox item (checked while the table is ruled), and
+deletes rows, columns or the table. Beside it, <code>tableBorderColor</code> and <code>tableBorderWidth</code>
+set the ruled table's line colour (from <code>tableBorderColors</code>, with the custom colour when
+<code>colorPicker</code> is on, and <strong>Remove</strong> to take the lines off) and width (from
+<code>tableBorderWidths</code>). Each keeps the other half of the border and writes
+<code>&lt;width&gt; solid &lt;colour&gt;</code>; a border in another form, such as a hand-written
+<code>2px dotted red</code>, reads as <code>1px</code> and <code>#d0d5dd</code>. Both are disabled unless the caret is in
+a ruled table, and both need the <code>table</code> feature. A ruled table is stored as
+<code>&lt;table border="1"&gt;</code> with <code>border-collapse: collapse</code> beside its width, and a literal
+<code>border</code> on every <code>th</code> and <code>td</code> (HTML storage writes the colour as the browser does,
+<code>1px solid rgb(208, 213, 221)</code>; JSON storage keeps the value as set), so it shows its
+lines wherever the HTML is rendered, an email client included, with no stylesheet. Rows and columns added to it are ruled too. A table starts unruled. In code,
+<code>editor.commands.setTableBorder("2px solid #000")</code> rules the table at the selection with
+any border shorthand and <code>editor.commands.unsetTableBorder()</code> clears it and its cells.
+Markup that arrives ruled, such as a hand-written <code>&lt;table border="1"&gt;</code>, loads ruled, with
+its first cell's <code>border</code> (or the default lines when that cell has none) on every cell.</p>
 <h3 id="restricting-features">Restricting features<a class="headerlink" href="#restricting-features" title="Permanent link">&para;</a></h3>
 <p><code>toolbar</code> decides which buttons a field shows; <code>features</code> decides what its editor can do.
 Leaving the heading buttons out of the toolbar does not stop an author typing <code>##</code>,

@@ -1318,8 +1318,12 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 <td>Editing area and source view (light default: unset, so the area shows the shell's <code>--tiptap-bg</code> / <code>--tiptap-fg</code>)</td>
 </tr>
 <tr>
+<td><code>--tiptap-content-weight</code></td>
+<td>Font weight of the editing area and source view (default <code>400</code>); <code>strong</code> and <code>b</code> are relative (<code>bolder</code>), so raising it to <code>600</code> makes bold text <code>900</code></td>
+</tr>
+<tr>
 <td><code>--tiptap-content-border</code></td>
-<td>Table cell borders in the editing area (light default: <code>#d0d5dd</code>, dark <code>#858d9b</code>)</td>
+<td>The dashed guide lines of an unruled table's cells in the editing area (light default: <code>#d0d5dd</code>, dark <code>#858d9b</code>)</td>
 </tr>
 <tr>
 <td><code>--tiptap-highlight-ink</code></td>
@@ -1518,7 +1522,10 @@ the shell, 3.22 on the toolbar), dark <code>#7a8190</code> (4.23 on the shell, 3
 3.20 on the editing area). Against the page around it the ratio depends on the page. The
 separators, menus, panels, footer, source note, modal header and image picker share the
 token. Table cells do not: they read <code>--tiptap-content-border</code>, so a project that sets
-<code>--tiptap-border</code> and wants tables to match sets <code>--tiptap-content-border</code> too. A project
+<code>--tiptap-border</code> and wants tables to match sets <code>--tiptap-content-border</code> too. Those cell
+lines are dashed, because they are only an editing guide and are not part of the stored
+HTML. A ruled table's cells carry their own solid <code>border</code> inline, which wins over the
+guide, so what the editor shows solid is what a reader sees. A project
 that sets <code>--tiptap-border</code> keeps its value in both schemes, and the 3:1 is then its to
 keep.</p>
 <h2 id="targeting-parts">Targeting parts<a class="headerlink" href="#targeting-parts" title="Permanent link">&para;</a></h2>
@@ -1533,15 +1540,20 @@ spec with <code>isActive</code>) carry <code>aria-pressed</code> alongside <code
 <h3 id="accessible-name-state-and-locking">Accessible name, state and locking<a class="headerlink" href="#accessible-name-state-and-locking" title="Permanent link">&para;</a></h3>
 <p>The editable takes its accessible name, description and invalid/required state from the
 textarea (its labels, <code>aria-label</code>, <code>aria-describedby</code>, <code>aria-invalid</code>, <code>required</code>). A
-<code>disabled</code> or <code>readonly</code> textarea locks the editor: every built-in toolbar control, and the
-control a <code>ui.registerButton</code> <code>render</code> button returns, gets <code>disabled</code>. A custom toolbar
-region or shell is yours to lock: read <code>editor.isEditable</code> (it follows the textarea both ways).</p>
+<code>disabled</code> or <code>readonly</code> textarea, or one inside a <code>&lt;fieldset disabled&gt;</code> (outside its first
+<code>&lt;legend&gt;</code>), locks the editor: every built-in toolbar control, and the control a
+<code>ui.registerButton</code> <code>render</code> button returns, gets <code>disabled</code>. A custom toolbar region or
+shell is yours to lock: read <code>editor.isEditable</code> (it follows the textarea and its fieldsets
+both ways).</p>
 <h3 id="dropdowns-and-the-keyboard">Dropdowns and the keyboard<a class="headerlink" href="#dropdowns-and-the-keyboard" title="Permanent link">&para;</a></h3>
 <p>The built-in dropdowns follow the WAI-ARIA Authoring Practices. Font size and font family
 are menus of radio items (<code>role="menu"</code>, items <code>role="menuitemradio"</code> with <code>aria-checked</code> on
 the current value, <code>Default</code> when none is set). Image, merge tags and table are menus of
-actions (<code>role="menuitem"</code>, the table's groups divided by <code>role="separator"</code>). Text color
-and highlight are non-modal dialogs (<code>role="dialog"</code>) because they hold the native colour
+actions (<code>role="menuitem"</code>, the table's groups divided by <code>role="separator"</code>); the
+table's <strong>Table lines</strong> is a <code>role="menuitemcheckbox"</code> with <code>aria-checked</code> on while the
+table is ruled, and a keyboard open still starts on the first item. Table line width is a
+menu of radio items like font size, with no <code>Default</code>. Text color, highlight and table
+line colour are non-modal dialogs (<code>role="dialog"</code>) because they hold the native colour
 input: the swatches are buttons with <code>aria-pressed</code> on the current colour. Each trigger's
 <code>aria-haspopup</code> names its popup, <code>"menu"</code> or <code>"dialog"</code>.</p>
 <table>
@@ -1615,7 +1627,8 @@ fill (<code>.is-active</code>) or outline that marks the current value.</p>
 invisible stack of every label in the same grid cell, which keeps the trigger as wide as
 its widest label (in the active locale and <code>fontSizes</code>) so it does not shift as the caret
 moves. Its accessible name is the <code>fontSizeValue</code> string (<code>"{name}: {value}"</code>, e.g.
-<code>Font size: 16</code>); a locale registered with <code>registerLocale</code> can reword it.</p>
+<code>Font size: 16</code>); a locale registered with <code>registerLocale</code> can reword it. The table line
+width trigger shows the table's width the same way, named by <code>tableBorderWidthValue</code>.</p>
 <p>A button given a <a href="../configuration/"><code>toolbarLabels</code></a> entry carries
 <code>.django-tiptap__btn--labelled</code> and its text in <code>.django-tiptap__btn-label</code>, after the
 glyph and before a dropdown's caret. The span does not wrap and ends in an ellipsis past
