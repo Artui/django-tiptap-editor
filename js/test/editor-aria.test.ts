@@ -90,10 +90,10 @@ describe("a field with no label", () => {
   });
 
   it("carries the textarea's aria-labelledby", () => {
-    const { editable } = mount(
+    const { textarea, editable } = mount(
       '<h3 id="ID-heading">Message</h3><textarea id="ID" aria-labelledby="ID-heading"></textarea>',
     );
-    expect(editable.getAttribute("aria-labelledby")).toMatch(/-heading$/);
+    expect(editable.getAttribute("aria-labelledby")).toBe(`${textarea.id}-heading`);
   });
 
   it("falls back to the textarea's title", () => {
@@ -169,6 +169,14 @@ describe("a label wrapping the field", () => {
     textarea.setAttribute("aria-describedby", "help");
     await settle();
     expect(editable.getAttribute("aria-label")).toBe("Body text");
+  });
+
+  it("reads every label as text when one of them wraps the field", () => {
+    const { editable } = mount(
+      '<label for="ID">Lead</label><label>Body <textarea id="ID"></textarea></label>',
+    );
+    expect(editable.getAttribute("aria-label")).toBe("Lead Body");
+    expect(editable.hasAttribute("aria-labelledby")).toBe(false);
   });
 
   it("does not refocus the editable for a click inside the shell", () => {
