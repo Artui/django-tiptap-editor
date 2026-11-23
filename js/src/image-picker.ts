@@ -1,4 +1,4 @@
-// Library picker: a modal that GETs config.imageListUrl (-> [{title, value}])
+// Library picker: a modal <dialog> that GETs config.imageListUrl (-> [{title, value}])
 // and inserts the chosen image (protocol-validated via insertImage).
 import { configFor } from "./editor-config";
 import { translatorFor } from "./i18n";
@@ -10,6 +10,8 @@ interface ImageItem {
   value: string;
 }
 
+let seq = 0;
+
 export async function openImagePicker(editor: Editor): Promise<void> {
   const url = configFor(editor).imageListUrl;
   if (!url) {
@@ -17,16 +19,20 @@ export async function openImagePicker(editor: Editor): Promise<void> {
   }
   const t = translatorFor(editor);
 
-  const overlay = document.createElement("div");
-  overlay.className = "django-tiptap__modal-overlay";
+  // The dialog fills the viewport and is the dimmed overlay; .django-tiptap__modal is the box.
+  const dialog = document.createElement("dialog");
+  dialog.className = "django-tiptap__modal-overlay";
+  dialog.setAttribute("aria-modal", "true");
   const modal = document.createElement("div");
   modal.className = "django-tiptap__modal";
-  overlay.appendChild(modal);
+  dialog.appendChild(modal);
 
   const header = document.createElement("div");
   header.className = "django-tiptap__modal-header";
   const heading = document.createElement("span");
+  heading.id = `django-tiptap-picker-${++seq}`;
   heading.textContent = t("pickerTitle");
+  dialog.setAttribute("aria-labelledby", heading.id);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "django-tiptap__modal-close";
@@ -42,29 +48,50 @@ export async function openImagePicker(editor: Editor): Promise<void> {
   modal.appendChild(header);
   modal.appendChild(bodyEl);
 
-  function close(): void {
-    overlay.remove();
-    document.removeEventListener("keydown", onKey, true);
-    editor.off("destroy", close);
-  }
-  function onKey(event: KeyboardEvent): void {
-    if (event.key === "Escape") {
-      close();
+  // Each path runs this once: it removes what fired it, and destroy is unsubscribed.
+  function finish(returnFocus: boolean): void {
+    editor.off("destroy", onDestroy);
+    dialog.close();
+    dialog.remove();
+    if (returnFocus) {
+      editor.view.focus();
     }
   }
-  overlay.addEventListener("mousedown", (event) => {
-    if (event.target === overlay) {
+  function onDestroy(): void {
+    finish(false);
+  }
+  const close = (): void => finish(true);
+
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    close();
+  });
+  // Tab wraps inside the dialog rather than leaving it for the browser's own UI.
+  dialog.addEventListener("keydown", (event) => {
+    if (event.key !== "Tab") {
+      return;
+    }
+    const stops = Array.from(dialog.querySelectorAll<HTMLElement>("button"));
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey ? active === first : active === last) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+  });
+  // The press's default action would otherwise move focus off the editor again.
+  dialog.addEventListener("mousedown", (event) => {
+    if (event.target === dialog) {
+      event.preventDefault();
       close();
     }
   });
   closeBtn.addEventListener("click", close);
-  document.addEventListener("keydown", onKey, true);
-  // The overlay is portaled to <body> and the keydown listener lives on
-  // `document` — neither sits inside the editor shell, so removing the shell does
-  // not clean them up. Dispose them if the editor is torn down while the picker
-  // is open (e.g. a destructive DOM swap removes the editor mid-pick).
-  editor.on("destroy", close);
-  document.body.appendChild(overlay);
+  editor.on("destroy", onDestroy);
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  closeBtn.focus();
 
   try {
     const items: ImageItem[] = await (await fetch(url)).json();
@@ -94,6 +121,8 @@ export async function openImagePicker(editor: Editor): Promise<void> {
       grid.appendChild(tile);
     }
     bodyEl.appendChild(grid);
+    // A no-op if the picker was closed meanwhile: a removed element takes no focus.
+    (grid.firstElementChild as HTMLElement).focus();
   } catch {
     bodyEl.textContent = t("pickerError");
   }

@@ -587,20 +587,33 @@
   outline: 2px solid var(--tiptap-accent);
 }
 
-/* Image picker modal. Mounts on <body> (outside the editor's token scope), so
-   tokens carry explicit fallbacks. */
+/* Image picker modal: a <dialog> on <body> (outside the editor's token scope), so
+   tokens carry explicit fallbacks. Opened with showModal(), it sits in the top layer
+   above any host modal, so no z-index. The dialog itself fills the viewport and is the
+   dimmed overlay (an element, so it inherits tokens set on :root, which ::backdrop
+   does not in every browser); a press on it outside the box closes the picker. */
 .django-tiptap__modal-overlay {
   position: fixed;
   inset: 0;
-  /* Portaled to <body>, so it must clear host modal stacks (Bootstrap 3/4/5 use
-     1050–1060; apps often push higher). 2000 clears the common cases; override
-     via --tiptap-modal-z on :root/html/body — NOT on .django-tiptap, which the
-     body-portaled overlay does not inherit from. */
-  z-index: var(--tiptap-modal-z, 2000);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--tiptap-overlay-bg, var(--_tiptap-overlay-bg, rgba(16, 24, 40, 0.5)));
+}
+
+.django-tiptap__modal-overlay[open] {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--tiptap-overlay-bg, var(--_tiptap-overlay-bg, rgba(16, 24, 40, 0.5)));
+}
+
+.django-tiptap__modal-overlay::backdrop {
+  background: transparent;
 }
 
 .django-tiptap__modal {

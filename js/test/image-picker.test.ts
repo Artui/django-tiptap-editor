@@ -1,8 +1,6 @@
-// The library picker portals its overlay to <body> and registers a capture-phase
-// keydown listener on `document` — neither lives inside the editor shell. They
-// must be disposed when the editor is destroyed (e.g. a destructive DOM swap
-// removes the editor while the picker is open), or they leak: a stray modal over
-// the page and a document listener whose closure pins the dead editor in memory.
+// The library picker portals its dialog to <body>, outside the editor shell. It must be
+// disposed when the editor is destroyed (e.g. a destructive DOM swap removes the editor
+// while the picker is open), and it keeps no `document` listener that would pin the editor.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildExtensions } from "../src/build-extensions";
@@ -10,6 +8,7 @@ import type { TipTapConfig } from "../src/default-config";
 import { setEditorConfig } from "../src/editor-config";
 import { openImagePicker } from "../src/image-picker";
 import { Editor } from "../src/tiptap-runtime";
+import { installDialog, removeDialog } from "./dialog-stub";
 
 const ctx = { tiptap: {}, locale: "en", t: (k: string) => k };
 
@@ -26,6 +25,7 @@ function overlay(): HTMLElement | null {
 }
 
 beforeEach(() => {
+  installDialog();
   // Hold the picker in its loading state so the overlay stays up for the test.
   vi.stubGlobal(
     "fetch",
@@ -35,6 +35,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  removeDialog();
   document.body.innerHTML = "";
 });
 
@@ -49,20 +51,15 @@ describe("image picker lifecycle", () => {
     expect(overlay()).toBeNull();
   });
 
-  it("removes the document keydown listener on teardown (no leak)", () => {
+  it("adds no document keydown listener to leak past teardown", () => {
     const addSpy = vi.spyOn(document, "addEventListener");
-    const removeSpy = vi.spyOn(document, "removeEventListener");
     const editor = makeEditor({ imageListUrl: "/images/" });
     void openImagePicker(editor);
 
-    // The picker registered exactly one capture-phase keydown on `document`.
-    const added = addSpy.mock.calls.filter((c) => c[0] === "keydown" && c[2] === true);
-    expect(added).toHaveLength(1);
-    const handler = added[0][1];
+    expect(addSpy.mock.calls.filter((c) => c[0] === "keydown")).toHaveLength(0);
 
     editor.destroy();
-
-    expect(removeSpy).toHaveBeenCalledWith("keydown", handler, true);
+    expect(overlay()).toBeNull();
   });
 
   it("still closes normally via the close button (no double-teardown error)", () => {

@@ -33,9 +33,9 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 | `--tiptap-highlight-glyph-bg` / `--tiptap-highlight-glyph-fg` | The highlight button's glyph (light: `#fff3a3`, text inherits the button's) |
 | `--tiptap-swatch-border` / `--tiptap-swatch-border-hover` | Colour swatch and custom-colour chip outline, and its hover |
 | `--tiptap-shadow-color` | Shadow of the dropdown panels and the floating menus |
-| `--tiptap-modal-shadow-color` / `--tiptap-overlay-bg` | Image-picker modal shadow and the overlay behind it |
+| `--tiptap-modal-shadow-color` / `--tiptap-overlay-bg` | Image-picker modal shadow and the dimmed overlay around it |
 | `--tiptap-color-scheme` | `color-scheme` of the shell and the picker modal, so the source textarea, the colour input and the focus ring follow the scheme (light default: unset, so they inherit the page's) |
-| `--tiptap-modal-z` | `z-index` of the image-picker overlay, and of the open dropdown panels in a browser without the popover API (default `2000`) |
+| `--tiptap-modal-z` | `z-index` of the open dropdown panels in a browser without the popover API (default `2000`); the image picker sits in the top layer and takes none |
 
 The defaults are declared on the document root with zero specificity
 (`:where(:root, :host)`), and every editor inherits them. So a token set anywhere above an
@@ -70,9 +70,12 @@ the host element, so a token set on the document's `:root` (including with
 
 ### Stacking the picker over host modals
 
-The image-picker overlay is portaled to `<body>`, so it sits outside the editor's
-stacking context, at `z-index: 2000`, which clears common modal stacks (Bootstrap 3/4/5
-use 1050–1060).
+The image picker is a native `<dialog>` appended to `<body>` and opened with
+`showModal()`, so it sits in the browser's top layer, above any host modal whatever its
+`z-index`, and the page behind it is inert. The `<dialog>`
+(`.django-tiptap__modal-overlay`) fills the viewport and carries the dimmed overlay
+colour; `.django-tiptap__modal` is the box inside it. A press on the overlay outside the
+box closes the picker.
 
 An open toolbar dropdown (font size, colour, table and the rest) stays inside the editor,
 right after its trigger, and is shown as a popover in the browser's top layer, so the
@@ -83,13 +86,13 @@ modal. It is placed beside its trigger, flips above it or aligns to its end wher
 viewport runs out, and follows it on scroll and resize. In a browser without the popover
 API (before Chrome 114, Safari 17, Firefox 125) the panel is portaled instead: into the
 nearest `dialog[open]`, `[role=dialog]`, `[aria-modal=true]` or `.modal` around the editor,
-else to `<body>` or the shadow root that holds the editor, and there it takes the same
-`z-index` as the picker. A native `<dialog>` scrolls its own overflow, so a portaled
+else to `<body>` or the shadow root that holds the editor, and there it takes
+`z-index: var(--tiptap-modal-z, 2000)`. A native `<dialog>` scrolls its own overflow, so a portaled
 panel near the dialog's edge can be clipped there. Escape on an open panel closes the
 panel only, not the modal around it.
 
-If your app embeds the editor inside a modal that stacks even higher, raise the knob —
-no `!important` needed:
+If your app embeds the editor inside a modal that stacks above `2000`, raise the knob for
+the portaled panels — no `!important` needed:
 
 ```css
 :root {
@@ -97,11 +100,11 @@ no `!important` needed:
 }
 ```
 
-Set `--tiptap-modal-z` on `:root` (or `html`/`body`), **not** on `.django-tiptap`:
-because the overlay is appended to `<body>`, it does not inherit custom properties
-declared on the editor element. The same holds for the overlay's colours, border and
-radius: a token set on `:root` themes the picker as well as the editors, one set on
-`.django-tiptap` only the editors.
+Set `--tiptap-modal-z` on `:root` (or `html`/`body`), **not** on `.django-tiptap`: a
+panel portaled to `<body>` does not inherit custom properties declared on the editor
+element. The same holds for the picker's colours, border and radius, since it is
+appended to `<body>` too: a token set on `:root` themes the picker as well as the
+editors, one set on `.django-tiptap` only the editors.
 
 The dropdown panels are themed like the editor they belong to: a panel inherits the
 editor's tokens, font, direction and language from the element it sits in, so a token
@@ -261,6 +264,13 @@ input: the swatches are buttons with `aria-pressed` on the current colour. Each 
 | Tab | panel | closes a menu and moves to the control after the trigger; walks a dialog's swatches, custom colour and Remove, and leaves it from the last |
 | Shift+Tab | panel | back to the trigger: a menu closes, a dialog stays open |
 | Escape | anywhere | closes the panel; focus goes back to the trigger if it was in the panel |
+
+"From library…" in the image menu opens the picker as a modal dialog (`role="dialog"`
+from the native `<dialog>`, `aria-modal="true"`, named by its heading). Focus goes to its
+close button, then to the first image once the list has loaded. Tab and Shift+Tab cycle
+through the close button and the images without leaving the picker; Enter or Space on an
+image inserts it. Escape, the close button, a press on the overlay or a pick closes the
+picker and puts focus back in the editor.
 
 A menu keeps one item tabbable at a time (roving `tabindex`). Opening a panel with the
 mouse leaves focus, and the editor's visible selection, where it was. A focused item

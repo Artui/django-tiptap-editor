@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The image library picker is a native `<dialog>` opened with `showModal()`.** It sits
+  in the browser's top layer, above any host modal, and the page behind it is inert, so
+  `--tiptap-modal-z` no longer applies to it (it still stacks the dropdown panels portaled
+  in a browser without the popover API). `.django-tiptap__modal-overlay` is now the
+  `<dialog>` element itself, filling the viewport with the `--tiptap-overlay-bg` colour,
+  and `.django-tiptap__modal` the box inside it; a press on the overlay outside the box
+  still closes the picker. A host stylesheet that set `z-index` or `display` on
+  `.django-tiptap__modal-overlay` should drop it.
+
+### Fixed
+
+- **The image library picker takes keyboard focus and gives it back.** Since 0.17.0 a
+  pick in the image menu focused the editor, which for "From library…" left focus behind
+  the modal. The picker is now a labelled modal dialog (`aria-modal="true"`, named by its
+  heading): focus goes to its close button, then to the first image once the list loads;
+  Tab and Shift+Tab cycle inside it; Escape, the close button, a press on the overlay or
+  a pick closes it and returns focus to the editor, unless the editor was destroyed.
+  [Theming](https://artui.github.io/django-tiptap-editor/theming/#dropdowns-and-the-keyboard)
+  lists the keys.
+
 ## [0.17.0] — 2026-11-21
 
 ### Added
@@ -23,7 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   closes the menu and moves on and Shift+Tab closes it and returns to the trigger; a
   colour dialog stays open on Shift+Tab and closes when focus leaves it for another part
   of the page. After a pick focus is in the editor, also when the image URL prompt is
-  cancelled or the file dialog or library opens; Escape returns it to the trigger. A mouse
+  cancelled or the file dialog opens (the library picker takes focus itself, as of
+  0.17.1); Escape returns it to the trigger. A mouse
   open still leaves focus, and the editor's selection, where it was. Menu items, swatches
   and the custom colour row show a `:focus-visible` ring distinct from the current-value
   marking. [Theming](https://artui.github.io/django-tiptap-editor/theming/#dropdowns-and-the-keyboard)
