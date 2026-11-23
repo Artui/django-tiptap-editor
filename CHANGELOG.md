@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **The editing area and the source view no longer inherit the host page's font weight.**
-  On a page whose body weight was `500` or `600`, body text took that weight, bold text
-  rose to `900`, and headings at `700` barely stood out from `600` text. Both now sit at
+  On a page whose body weight was `500` or `600`, body text took that weight (bold rose to
+  `900` at `600`), and headings at `700` barely stood out from `600` text. Both now sit at
   `--tiptap-content-weight`; the toolbar, menus and image picker still inherit the host's.
   A host whose body weight is below `400`, such as a light brand font at `300`, sees the
   content get heavier and restores it with `--tiptap-content-weight: 300`.
@@ -31,7 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field's own `disabled` does (toolbar disabled, `aria-disabled="true"`, out of the tab
   order, a label click does not focus it), while a field in the fieldset's first `<legend>`
   stays editable, as the browser leaves it enabled. Setting or clearing `disabled` on an
-  ancestor fieldset later is followed both ways.
+  ancestor fieldset later is followed both ways, and so is moving the field into or out of
+  a disabled fieldset or inserting a `<legend>` ahead of the one that holds it.
 
 ## [0.18.0] — 2026-11-23
 

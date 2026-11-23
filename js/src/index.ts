@@ -49,6 +49,8 @@ interface Instance {
   // Narrow per-editor observer that re-asserts the textarea's hidden state when a
   // morphing swap strips it (see watchTextareaAttributes). Disconnected on destroy.
   attrObserver: MutationObserver;
+  // Re-walks the ancestor fieldsets after a move and re-reads the lock (see observeDom).
+  rewatch: () => void;
   // Removes the form-submit listeners that flush an open source view (see
   // watchFormSubmit). Called on destroy.
   detachForm: () => void;
@@ -139,8 +141,8 @@ function readInitialContent(raw: string, extensions: AnyExtension[]): object | s
 function watchTextareaAttributes(
   element: HTMLTextAreaElement,
   onChange: () => void,
-): MutationObserver {
-  const observer = new MutationObserver(() => {
+): { observer: MutationObserver; rewatch: () => void } {
+  const handle = (): void => {
     if (element.style.display !== "none") {
       element.style.display = "none";
     }
@@ -148,17 +150,29 @@ function watchTextareaAttributes(
       element.setAttribute(BOUND_ATTR, "true");
     }
     onChange();
-  });
-  observer.observe(element, {
-    attributes: true,
-    attributeFilter: ["style", BOUND_ATTR, ...ARIA_SOURCE_ATTRIBUTES],
-  });
-  // An ancestor fieldset's disabled disables the field without touching its own attributes.
-  for (let fieldset = element.parentElement?.closest("fieldset"); fieldset; ) {
-    observer.observe(fieldset, { attributes: true, attributeFilter: ["disabled"] });
-    fieldset = fieldset.parentElement?.closest("fieldset");
-  }
-  return observer;
+  };
+  const observer = new MutationObserver(handle);
+  const watch = (): void => {
+    observer.disconnect();
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ["style", BOUND_ATTR, ...ARIA_SOURCE_ATTRIBUTES],
+    });
+    // A fieldset's disabled, or a legend inserted ahead of the field's, disables it silently.
+    for (let fieldset = element.parentElement?.closest("fieldset"); fieldset; ) {
+      observer.observe(fieldset, { attributes: true, attributeFilter: ["disabled"], childList: true });
+      fieldset = fieldset.parentElement?.closest("fieldset");
+    }
+  };
+  watch();
+  return {
+    observer,
+    // Re-observing drops pending records; handle() reads current state, so it covers them.
+    rewatch: () => {
+      watch();
+      handle();
+    },
+  };
 }
 
 // :disabled, not .disabled: a disabled ancestor fieldset (outside its first legend) disables the field.
@@ -433,7 +447,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   editor.on("transaction", () => shell.refresh());
 
   element.setAttribute(BOUND_ATTR, "true");
-  const attrObserver = watchTextareaAttributes(element, () => {
+  const { observer: attrObserver, rewatch } = watchTextareaAttributes(element, () => {
     aria = editableAria(element);
     if (isLockedField() !== locked) {
       locked = !locked;
@@ -450,7 +464,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   });
   const detachForm = watchFormSubmit(element, editor);
   const detachLabels = watchLabelClicks(element, editor, shell.el);
-  instances.set(id, { editor, shell: shell.el, element, attrObserver, detachForm, detachLabels });
+  instances.set(id, { editor, shell: shell.el, element, attrObserver, rewatch, detachForm, detachLabels });
   return editor;
 }
 
@@ -469,6 +483,15 @@ function destroy(id: string): void {
   instance.editor.destroy();
   instance.shell.remove();
   instances.delete(id);
+}
+
+// A moved field may have changed fieldsets, so its lock is re-read where it landed.
+function rewatchWithin(root: Element): void {
+  for (const instance of instances.values()) {
+    if (root.contains(instance.element)) {
+      instance.rewatch();
+    }
+  }
 }
 
 // Tear down every editor whose textarea lives inside `root`. Called when content
@@ -560,6 +583,7 @@ function observeDom(): void {
     added.forEach((node) => {
       if (node.isConnected) {
         autoScan(node);
+        rewatchWithin(node);
       }
     });
   });

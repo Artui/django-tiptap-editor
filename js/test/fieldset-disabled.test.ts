@@ -117,3 +117,43 @@ describe("toggling the fieldset after mount", () => {
     expect(setEditable).not.toHaveBeenCalled();
   });
 });
+
+describe("a change to which fieldset holds the field", () => {
+  it("locks a field moved into a disabled fieldset, and unlocks it moved back out", async () => {
+    const field = mountIn((t) => `<div class="row">${t}</div>`);
+    const row = field.shell.parentElement as HTMLElement;
+    const fieldset = document.createElement("fieldset");
+    fieldset.disabled = true;
+    document.body.appendChild(fieldset);
+    fieldset.appendChild(row);
+    await settle();
+    expectDisabled(field);
+    document.body.appendChild(row);
+    await settle();
+    expectEditable(field);
+  });
+
+  it("follows a fieldset the field was moved into", async () => {
+    const field = mountIn((t) => `<div class="row">${t}</div>`);
+    const fieldset = document.createElement("fieldset");
+    document.body.appendChild(fieldset);
+    fieldset.appendChild(field.shell.parentElement as HTMLElement);
+    await settle();
+    expectEditable(field);
+    fieldset.disabled = true;
+    await settle();
+    expectDisabled(field);
+  });
+
+  it("locks a legend's field when a legend is inserted ahead of it, and unlocks on removal", async () => {
+    const field = mountIn((t) => `<fieldset disabled><legend>${t}</legend></fieldset>`);
+    expectEditable(field);
+    const ahead = document.createElement("legend");
+    field.fieldset.prepend(ahead);
+    await settle();
+    expectDisabled(field);
+    ahead.remove();
+    await settle();
+    expectEditable(field);
+  });
+});
