@@ -7,6 +7,7 @@ export const TOKEN_NAMES = [
   "--tiptap-height",
   "--tiptap-max-height",
   "--tiptap-font",
+  "--tiptap-content-weight",
   "--tiptap-fg",
   "--tiptap-bg",
   "--tiptap-border",
