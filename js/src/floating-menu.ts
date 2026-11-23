@@ -83,5 +83,9 @@ export function mountFloatingMenu(
   editor.on("transaction", place);
   editor.on("focus", place);
   editor.on("blur", hide);
+  // setEditable emits nothing, so ProseMirror's contenteditable flip is the lock's only signal.
+  const editability = new MutationObserver(place);
+  editability.observe(editor.view.dom, { attributes: true, attributeFilter: ["contenteditable"] });
+  editor.on("destroy", () => editability.disconnect());
   place();
 }

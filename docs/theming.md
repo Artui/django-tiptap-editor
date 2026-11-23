@@ -243,6 +243,14 @@ Toggle buttons (those with an active state, including `link` and any `ui.registe
 spec with `isActive`) carry `aria-pressed` alongside `.is-active`; dropdown triggers carry
 `aria-expanded` alongside `.is-open`. Either attribute is a styling hook as good as the class.
 
+### Accessible name, state and locking
+
+The editable takes its accessible name, description and invalid/required state from the
+textarea (its labels, `aria-label`, `aria-describedby`, `aria-invalid`, `required`). A
+`disabled` or `readonly` textarea locks the editor: every built-in toolbar control, and the
+control a `ui.registerButton` `render` button returns, gets `disabled`. A custom toolbar
+region or shell is yours to lock: read `editor.isEditable` (it follows the textarea both ways).
+
 ### Dropdowns and the keyboard
 
 The built-in dropdowns follow the WAI-ARIA Authoring Practices. Font size and font family
@@ -357,6 +365,9 @@ DjangoTipTap.ui.setRenderer("bubbleMenu", (ctx) => {
 !!! warning "Keep the selection on click"
     A click that moves focus out of the editor dismisses the menu. Call `preventDefault` on
     `mousedown` in your controls (as above) — the same rule the built-in toolbar follows.
+
+A bubble or floating menu is hidden while the editor is not editable, including when the
+field is locked with the menu open.
 
 The built-in positioner is intentionally simple (it favours a tiny bundle over pixel-perfect
 edge handling). For full control, render your own menu via [explicit init](api.md) and TipTap's

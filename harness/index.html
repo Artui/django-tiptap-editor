@@ -149,6 +149,49 @@
       </section>
 
       <section class="panel">
+        <h2>Labelled field</h2>
+        <p class="lede">
+          The markup Django renders for a required field with help text and an error, then a
+          field whose label wraps it. Each editor takes its name, description, required and
+          invalid state from the textarea and its label; a click on a label puts the caret in
+          its editor and keeps the selection. The readout lists the ARIA each editable carries.
+        </p>
+        <label for="harness-labelled">Article body</label>
+        <textarea id="harness-labelled" name="labelled" required aria-invalid="true"
+          aria-describedby="harness-labelled-help" data-tiptap-config="{}"
+        >&lt;p&gt;Select a word, click the label above, and type.&lt;/p&gt;</textarea>
+        <div id="harness-labelled-help">Plain prose; headings are fine.</div>
+        <label>
+          <span>Summary</span>
+          <textarea id="harness-wrapped" name="wrapped" data-tiptap-config="{}"
+          >&lt;p&gt;This label wraps the editor; its name is only the label's text.&lt;/p&gt;</textarea>
+        </label>
+        <pre id="aria-value"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Disabled and read-only fields</h2>
+        <p class="lede">
+          A <code>disabled</code> field and a <code>readonly</code> one. Neither takes typing, a
+          shortcut or a toolbar command, and every toolbar button is disabled; the read-only
+          editor stays in the tab order, as a read-only textarea does. The switches set and clear
+          the attribute on each textarea, and the editor follows. The readout lists each
+          editable's state and the value the form would post (a disabled field posts nothing).
+        </p>
+        <label for="harness-disabled">Archived note</label>
+        <textarea id="harness-disabled" name="disabled-note" disabled data-tiptap-config="{}"
+        >&lt;p&gt;This field is &lt;strong&gt;disabled&lt;/strong&gt;.&lt;/p&gt;</textarea>
+        <label for="harness-readonly">Published body</label>
+        <textarea id="harness-readonly" name="readonly-body" readonly data-tiptap-config="{}"
+        >&lt;p&gt;This field is &lt;b&gt;read-only&lt;/b&gt;; its value posts unchanged.&lt;/p&gt;</textarea>
+        <div>
+          <label><input type="checkbox" id="toggle-disabled" checked> disabled</label>
+          <label><input type="checkbox" id="toggle-readonly" checked> readonly</label>
+        </div>
+        <pre id="locked-value"></pre>
+      </section>
+
+      <section class="panel">
         <h2>Scenarios</h2>
         <p id="summary">Not run yet.</p>
         <button id="run" type="button">Run all scenarios</button>
@@ -163,6 +206,46 @@
     <script src="../django_tiptap_editor/static/django_tiptap_editor/tiptap.bundle.js"></script>
     <script>
       const MODES = ["paragraph", "hardBreak", "swap"];
+
+      // --- labelled field ------------------------------------------------
+      const ARIA_NAMES = ["role", "aria-labelledby", "aria-label", "aria-describedby",
+        "aria-invalid", "aria-required", "aria-multiline"];
+      const ariaValue = document.getElementById("aria-value");
+      const showAria = () => {
+        ariaValue.textContent = ["harness-labelled", "harness-wrapped"].map((id) => {
+          const dom = DjangoTipTap.get(id)?.view.dom;
+          const attrs = ARIA_NAMES.filter((name) => dom?.hasAttribute(name))
+            .map((name) => `  ${name}="${dom.getAttribute(name)}"`);
+          return [id, ...attrs].join("\n");
+        }).join("\n\n");
+      };
+      // The bundle mounts on DOMContentLoaded while the page is parsing; read after it.
+      document.addEventListener("DOMContentLoaded", showAria);
+
+      // --- disabled and read-only fields ---------------------------------
+      const LOCKED = { "harness-disabled": "disabled", "harness-readonly": "readonly" };
+      const lockedValue = document.getElementById("locked-value");
+      const showLocked = () => {
+        lockedValue.textContent = Object.keys(LOCKED).map((id) => {
+          const editor = DjangoTipTap.get(id);
+          const dom = editor?.view.dom;
+          const attrs = ["contenteditable", "tabindex", "aria-disabled", "aria-readonly"]
+            .filter((name) => dom?.hasAttribute(name))
+            .map((name) => `  ${name}="${dom.getAttribute(name)}"`);
+          const field = document.getElementById(id);
+          const posted = field.disabled ? "(not posted)" : field.value;
+          return [`${id} isEditable=${editor?.isEditable}`, ...attrs, `  posts: ${posted}`]
+            .join("\n");
+        }).join("\n\n");
+      };
+      for (const [id, attr] of Object.entries(LOCKED)) {
+        document.getElementById(`toggle-${attr}`).addEventListener("change", (event) => {
+          document.getElementById(id).toggleAttribute(attr, event.target.checked);
+          // The editor follows from a MutationObserver; read once it has run.
+          setTimeout(showLocked, 0);
+        });
+      }
+      document.addEventListener("DOMContentLoaded", showLocked);
 
       // --- colour scheme -------------------------------------------------
       const SCHEMES = ["light", "dark", "system"];

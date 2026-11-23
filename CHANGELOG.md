@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-11-23
+
+### Fixed
+
+- **The editor has the accessible name, description and state of its field (WCAG 2.2
+  4.1.2).** The editable area took focus with no name: the textarea that its `<label for>`
+  points at is hidden, and nothing carried the label, help text or error state across. The
+  editable now names its labels through `aria-labelledby` (a label without an `id` gets
+  `<textarea id>-label`, then `-label-2` and so on by position), or carries the textarea's
+  own `aria-labelledby`, `aria-label` or `title`, in the order the textarea itself was named
+  by. A label that wraps the field is read as text, without the editor's content and
+  toolbar. It also carries the textarea's `aria-describedby` and `aria-invalid`, sets
+  `aria-required="true"` for a `required` field and `aria-multiline="true"`, and follows
+  later changes to those attributes, as a morphing swap or a script makes them. A click on
+  a label now focuses its editor and keeps the selection; the tab order is unchanged.
+- **A `disabled` or `readonly` field mounts an editor that cannot be edited, and says so
+  (WCAG 2.2 4.1.2).** Both attributes were ignored: the editor took typing, shortcuts and
+  toolbar commands, and announced an ordinary editable textbox. Such a field now mounts with
+  `isEditable` false, every control in the built-in toolbar carries `disabled` (a custom
+  toolbar region or shell reads `editor.isEditable`), and the editable carries
+  `aria-disabled="true"` for a disabled field or `aria-readonly="true"` for a read-only one
+  (a field that is both is announced as disabled). A read-only editor stays in the tab order,
+  as a read-only textarea does; a disabled one leaves it. Setting or clearing either
+  attribute later, as a morphing swap or a script does, is followed both ways: an open
+  source view is applied and closed and an open toolbar panel closes before the field locks,
+  and unlocking leaves disabled what has nothing to act on, such as undo with no history or a
+  control a custom button disabled itself. A read-only field's value is not rewritten, so it
+  posts exactly what the server rendered.
+  Image paste and drop upload and the image resize handles follow the same lock: they are
+  off whenever the editor is not editable, including a consumer's own `editor.setEditable(false)`
+  and an open source view (on 0.17.1 a dropped image still uploaded there), and a resize drag
+  begun before the field locked commits nothing. A click on the label of a read-only field
+  focuses its editor, as it does a native read-only textarea. A bubble or floating menu hides
+  when the field locks while it is shown.
+
 ## [0.17.1] — 2026-11-23
 
 ### Changed
@@ -1338,7 +1373,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...v0.16.1

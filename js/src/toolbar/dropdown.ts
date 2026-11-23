@@ -40,6 +40,7 @@ const openPanels = new Set<() => void>();
 // outside the shell, and focus moving between the two must count as staying inside.
 const leaveHandlers = new WeakMap<HTMLElement, (event: FocusEvent) => void>();
 const shellPanels = new WeakMap<HTMLElement, HTMLElement>();
+const panelClosers = new WeakMap<HTMLElement, () => void>();
 
 export function registerShell(shell: HTMLElement, onLeave: (event: FocusEvent) => void): void {
   leaveHandlers.set(shell, onLeave);
@@ -47,6 +48,13 @@ export function registerShell(shell: HTMLElement, onLeave: (event: FocusEvent) =
 
 export function openPanelIn(shell: HTMLElement): HTMLElement | null {
   return shellPanels.get(shell) ?? null;
+}
+
+export function closePanelIn(shell: HTMLElement): void {
+  const panel = shellPanels.get(shell);
+  if (panel) {
+    panelClosers.get(panel)?.();
+  }
 }
 
 function shellOf(node: Element): HTMLElement | null {
@@ -120,6 +128,7 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
   const panel = document.createElement("div");
   panel.className = "django-tiptap__panel";
   panel.setAttribute(PANEL_ATTR, "");
+  panelClosers.set(panel, close);
 
   let isOpen = false;
   let popped = false;

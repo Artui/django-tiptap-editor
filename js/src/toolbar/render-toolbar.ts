@@ -7,8 +7,9 @@ import { featureEnabled, resolveFeatures } from "../features";
 import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
 import { getButton } from "./button-registry";
-import type { ButtonSpec } from "./button-registry";
+import type { ButtonSpec, RenderedControl } from "./button-registry";
 import { applyLabel, toolbarLabel } from "./label";
+import { isLocked } from "./lock";
 
 export interface RenderedToolbar {
   el: HTMLElement;
@@ -39,6 +40,29 @@ function renderButton(
     onClick();
   });
   return button;
+}
+
+const FORM_CONTROLS = "button, input, select, textarea";
+
+// Frees only what it disabled; "re-enables only what the lock disabled" fails without a conjunct.
+function lockingRefresh(editor: Editor, control: RenderedControl): () => void {
+  const held = new Set<Element>();
+  return () => {
+    if (!isLocked(editor)) {
+      held.forEach((node) => node.removeAttribute("disabled"));
+      held.clear();
+    }
+    control.refresh?.();
+    if (isLocked(editor)) {
+      const nodes = [control.el, ...Array.from(control.el.querySelectorAll(FORM_CONTROLS))];
+      for (const node of nodes) {
+        if (node.matches(FORM_CONTROLS) && !node.hasAttribute("disabled")) {
+          node.setAttribute("disabled", "");
+          held.add(node);
+        }
+      }
+    }
+  };
 }
 
 export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToolbar {
@@ -80,9 +104,7 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
         const control = spec.render(editor);
         control.el.setAttribute("data-key", key);
         groupEl.appendChild(control.el);
-        if (control.refresh) {
-          refreshers.push(control.refresh);
-        }
+        refreshers.push(lockingRefresh(editor, control));
         continue;
       }
       if (!spec.icon || !spec.onClick) {
@@ -103,9 +125,8 @@ export function renderToolbar(editor: Editor, config: TipTapConfig): RenderedToo
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
         }
-        if (spec.isEnabled) {
-          button.toggleAttribute("disabled", !spec.isEnabled(editor));
-        }
+        const enabled = spec.isEnabled ? spec.isEnabled(editor) : true;
+        button.toggleAttribute("disabled", isLocked(editor) || !enabled);
       });
     }
     if (groupEl.childElementCount > 0) {

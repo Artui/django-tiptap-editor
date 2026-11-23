@@ -17,7 +17,8 @@ import { registerExtension } from "./registry";
 import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
-import { openPanelIn, PANEL_ATTR, registerShell } from "./toolbar/dropdown";
+import { closePanelIn, openPanelIn, PANEL_ATTR, registerShell } from "./toolbar/dropdown";
+import { setLocked } from "./toolbar/lock";
 import { flushSourceView, setSourceWriter } from "./toolbar/source-view";
 import {
   createDocument,
@@ -51,6 +52,7 @@ interface Instance {
   // Removes the form-submit listeners that flush an open source view (see
   // watchFormSubmit). Called on destroy.
   detachForm: () => void;
+  detachLabels: () => void;
 }
 
 const instances = new Map<string, Instance>();
@@ -134,7 +136,10 @@ function readInitialContent(raw: string, extensions: AnyExtension[]): object | s
 // the value is actually wrong) so a re-assertion can't feed back into an infinite
 // mutation loop, and attributeFilter keeps this off the global hot path — no
 // page-wide attribute observation.
-function watchTextareaAttributes(element: HTMLTextAreaElement): MutationObserver {
+function watchTextareaAttributes(
+  element: HTMLTextAreaElement,
+  onChange: () => void,
+): MutationObserver {
   const observer = new MutationObserver(() => {
     if (element.style.display !== "none") {
       element.style.display = "none";
@@ -142,12 +147,103 @@ function watchTextareaAttributes(element: HTMLTextAreaElement): MutationObserver
     if (element.getAttribute(BOUND_ATTR) !== "true") {
       element.setAttribute(BOUND_ATTR, "true");
     }
+    onChange();
   });
   observer.observe(element, {
     attributes: true,
-    attributeFilter: ["style", BOUND_ATTR],
+    attributeFilter: ["style", BOUND_ATTR, ...ARIA_SOURCE_ATTRIBUTES],
   });
   return observer;
+}
+
+// The textarea attributes the editable's ARIA is computed from (see editableAria).
+const ARIA_SOURCE_ATTRIBUTES = [
+  "aria-label",
+  "aria-labelledby",
+  "aria-describedby",
+  "aria-invalid",
+  "required",
+  "title",
+  "disabled",
+  "readonly",
+];
+
+// A label's own text: the hidden textarea's initial markup and the editor inside it are not its name.
+function labelText(label: HTMLLabelElement, element: HTMLTextAreaElement): string {
+  const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+  const parts: string[] = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!element.contains(node) && !node.parentElement?.closest(`[${SHELL_ATTR}]`)) {
+      parts.push(node.nodeValue ?? "");
+    }
+  }
+  return parts.join("").replace(/\s+/g, " ").trim();
+}
+
+// A morph that strips a generated id and touches only the label is not seen until the next sync.
+function labelIds(labels: HTMLLabelElement[], element: HTMLTextAreaElement): string {
+  return labels
+    .map((label, index) => {
+      if (!label.id) {
+        label.id = `${element.id}-label${index ? `-${index + 1}` : ""}`;
+      }
+      return label.id;
+    })
+    .join(" ");
+}
+
+// The editable's ARIA in accname order; a label wrapping the shell is read as text, not referenced.
+function editableAria(element: HTMLTextAreaElement): Record<string, string> {
+  const aria: Record<string, string> = { "aria-multiline": "true" };
+  const labels = Array.from(element.labels ?? []);
+  const own = (name: string): string => element.getAttribute(name)?.trim() ?? "";
+  const wrapped = labels.some((label) => label.contains(element));
+  const name = wrapped
+    ? labels.map((label) => labelText(label, element)).join(" ").trim()
+    : labelIds(labels, element);
+  if (own("aria-labelledby")) {
+    aria["aria-labelledby"] = own("aria-labelledby");
+  } else if (own("aria-label")) {
+    aria["aria-label"] = own("aria-label");
+  } else if (name) {
+    aria[wrapped ? "aria-label" : "aria-labelledby"] = name;
+  } else if (own("title")) {
+    aria["aria-label"] = own("title");
+  }
+  if (own("aria-describedby")) {
+    aria["aria-describedby"] = own("aria-describedby");
+  }
+  if (own("aria-invalid")) {
+    aria["aria-invalid"] = own("aria-invalid");
+  }
+  if (element.required) {
+    aria["aria-required"] = "true";
+  }
+  if (element.disabled) {
+    aria["aria-disabled"] = "true";
+  } else if (element.readOnly) {
+    aria["aria-readonly"] = "true";
+    aria.tabindex = "0";
+  }
+  return aria;
+}
+
+// Cut a branch and a test fails: shell clicks do not refocus, read-only focuses, disabled does not.
+function watchLabelClicks(element: HTMLTextAreaElement, editor: Editor, shell: HTMLElement): () => void {
+  const labels = Array.from(element.labels ?? []);
+  const onClick = (event: Event): void => {
+    const target = event.target as Node;
+    if (target === element || shell.contains(target)) {
+      return;
+    }
+    if (editor.isEditable) {
+      editor.view.focus();
+    } else if (!element.disabled) {
+      (editor.view.dom as HTMLElement).focus({ preventScroll: true });
+    }
+  };
+  labels.forEach((label) => label.addEventListener("click", onClick));
+  return () => labels.forEach((label) => label.removeEventListener("click", onClick));
 }
 
 // Submitting with source view open must not ship a stale value: in HTML mode the
@@ -289,9 +385,15 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
 
   const extensions = buildExtensions(config, ctx);
   let store: (doc: Doc) => void = () => {};
+  let aria = editableAria(element);
+  const isLockedField = (): boolean => element.disabled || element.readOnly;
+  let locked = isLockedField();
   const editor = new Editor({
     element: content,
     extensions,
+    editable: !locked,
+    // A function, so ProseMirror owns these attributes and re-reads them on every view update.
+    editorProps: { attributes: () => aria },
     content: json ? readInitialContent(element.value, extensions) : element.value || "",
     onUpdate({ editor }) {
       store(editor.state.doc);
@@ -301,6 +403,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const value = bindValueEvents(element, editor, json);
   store = value.store;
   setSourceWriter(editor, (html) => store(createDocument(html, editor.schema)));
+  setLocked(editor, locked);
   // Make the translator + config resolvable from any onClick(editor) / control.
   setTranslator(editor, t);
   setEditorConfig(editor, config);
@@ -320,9 +423,24 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   editor.on("transaction", () => shell.refresh());
 
   element.setAttribute(BOUND_ATTR, "true");
-  const attrObserver = watchTextareaAttributes(element);
+  const attrObserver = watchTextareaAttributes(element, () => {
+    aria = editableAria(element);
+    if (isLockedField() !== locked) {
+      locked = !locked;
+      // Source view's close makes the editor editable, so it closes before the lock.
+      if (locked) {
+        flushSourceView(editor);
+        closePanelIn(shell.el);
+      }
+      setLocked(editor, locked);
+      editor.setEditable(!locked, false);
+      shell.refresh();
+    }
+    editor.view.setProps({});
+  });
   const detachForm = watchFormSubmit(element, editor);
-  instances.set(id, { editor, shell: shell.el, element, attrObserver, detachForm });
+  const detachLabels = watchLabelClicks(element, editor, shell.el);
+  instances.set(id, { editor, shell: shell.el, element, attrObserver, detachForm, detachLabels });
   return editor;
 }
 
@@ -337,6 +455,7 @@ function destroy(id: string): void {
   }
   instance.attrObserver.disconnect();
   instance.detachForm();
+  instance.detachLabels();
   instance.editor.destroy();
   instance.shell.remove();
   instances.delete(id);
