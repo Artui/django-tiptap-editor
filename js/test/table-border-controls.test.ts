@@ -349,3 +349,26 @@ describe("a border that is not <width> solid <colour>", () => {
     expect(border(editor)).toBe("3px solid #d0d5dd");
   });
 });
+
+describe("a colour saved in the rgb() form the browser writes", () => {
+  const SAVED =
+    '<p>out</p><table border="1"><tbody><tr><td style="border: 1px solid rgb(31, 35, 41);"><p>a</p></td>' +
+    "<td><p>b</p></td></tr></tbody></table>";
+
+  it("presses its hex swatch and seeds the custom input in the table line colour", () => {
+    const { shell } = mount(SAVED, { ...CONFIG, colorPicker: true });
+    open(shell, "tableBorderColor");
+    expect(swatch("#1f2329").getAttribute("aria-pressed")).toBe("true");
+    const input = document.querySelector<HTMLInputElement>(".django-tiptap__panel input[type=color]");
+    expect(input?.value).toBe("#1f2329");
+  });
+
+  it("presses its hex swatch in the text colour", () => {
+    const { editor, shell } = mount('<p><span style="color: rgb(224, 62, 45)">red</span></p>', {
+      toolbar: [["color"]],
+    });
+    editor.commands.setTextSelection(2);
+    open(shell, "color");
+    expect(swatch("#e03e2d").getAttribute("aria-pressed")).toBe("true");
+  });
+});

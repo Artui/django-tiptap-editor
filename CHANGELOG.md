@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stays editable, as the browser leaves it enabled. Setting or clearing `disabled` on an
   ancestor fieldset later is followed both ways, and so is moving the field into or out of
   a disabled fieldset or inserting a `<legend>` ahead of the one that holds it.
+- **A saved colour shows as the current one in the colour dropdowns.** The browser stores a
+  colour as `rgb(...)`, so after a save and reload the text colour, highlight and table line
+  colour dropdowns pressed no swatch and the custom colour input opened on black. Swatches
+  now compare as hex, and an `rgb()` colour seeds the custom input.
 - **Each image in the library picker is announced once (WCAG 2.2 4.1.2, 1.1.1).** A picker
   item read its title twice, as "Team photo Team photo": the thumbnail's `alt` repeated the
   caption beside it. The thumbnail is now decorative (`alt=""`) and the caption names the

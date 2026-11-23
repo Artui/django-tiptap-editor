@@ -240,6 +240,16 @@ export type SwatchOptions = string[] | ((editor: Editor) => string[]);
 // stored value in any other notation (rgb(), a named color) can't seed it, so
 // the picker opens on black rather than silently showing a wrong color.
 const HEX6_RE = /^#[0-9a-f]{6}$/i;
+const RGB_RE = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*1\s*)?\)$/i;
+
+// A saved colour comes back as the rgb() the browser wrote, so swatches compare in lower-case hex.
+function asHex(color: string): string {
+  const rgb = RGB_RE.exec(color.trim());
+  if (!rgb) {
+    return color.trim().toLowerCase();
+  }
+  return `#${rgb.slice(1, 4).map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+}
 
 // The optional native picker row under the swatch grid, shown when the editor's
 // config opts in via `colorPicker`. Committing on "change" (not "input") keeps
@@ -313,7 +323,7 @@ export function colorControl(
           panel.setAttribute("aria-label", t(opts.title));
           const grid = document.createElement("div");
           grid.className = "django-tiptap__swatches";
-          const current = (hooks.read(editor) ?? "").toLowerCase();
+          const current = asHex(hooks.read(editor) ?? "");
           for (const color of swatches) {
             const sw = document.createElement("button");
             sw.type = "button";
@@ -321,7 +331,7 @@ export function colorControl(
             sw.style.backgroundColor = color;
             sw.title = color;
             sw.setAttribute("aria-label", color);
-            const pressed = current === color.toLowerCase();
+            const pressed = current === asHex(color);
             sw.classList.toggle("is-active", pressed);
             sw.setAttribute("aria-pressed", String(pressed));
             sw.addEventListener("mousedown", (e) => e.preventDefault());
