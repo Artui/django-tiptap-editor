@@ -212,6 +212,24 @@ describe("a label click", () => {
     expect(editor.state.selection.to).toBe(6);
   });
 
+  it("focuses a read-only editable, as a native readonly textarea's label does", () => {
+    const { textarea, editable } = mount(
+      '<label for="ID">Body</label><textarea id="ID" readonly></textarea>',
+    );
+    expect(editable.getAttribute("tabindex")).toBe("0");
+    textarea.labels?.[0].click();
+    expect(document.activeElement).toBe(editable);
+  });
+
+  it("leaves a disabled editable unfocusable", () => {
+    const { textarea, editable } = mount(
+      '<label for="ID">Body</label><textarea id="ID" disabled></textarea>',
+    );
+    expect(editable.hasAttribute("tabindex")).toBe(false);
+    textarea.labels?.[0].click();
+    expect(document.activeElement).not.toBe(editable);
+  });
+
   it("focuses its own editor when two share a page", () => {
     const one = mount('<label for="ID">First</label><textarea id="ID"></textarea>');
     const two = mount('<label for="ID">Second</label><textarea id="ID"></textarea>');

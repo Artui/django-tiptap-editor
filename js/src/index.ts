@@ -228,13 +228,18 @@ function editableAria(element: HTMLTextAreaElement): Record<string, string> {
   return aria;
 }
 
-// Each conjunct fails "does not refocus the editable for a click inside the shell" when cut.
+// Cut a branch and a test fails: shell clicks do not refocus, read-only focuses, disabled does not.
 function watchLabelClicks(element: HTMLTextAreaElement, editor: Editor, shell: HTMLElement): () => void {
   const labels = Array.from(element.labels ?? []);
   const onClick = (event: Event): void => {
     const target = event.target as Node;
-    if (target !== element && !shell.contains(target)) {
+    if (target === element || shell.contains(target)) {
+      return;
+    }
+    if (editor.isEditable) {
       editor.view.focus();
+    } else if (!element.disabled) {
+      (editor.view.dom as HTMLElement).focus({ preventScroll: true });
     }
   };
   labels.forEach((label) => label.addEventListener("click", onClick));

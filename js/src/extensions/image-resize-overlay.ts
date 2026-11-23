@@ -169,7 +169,10 @@ export function createImageResizeOverlay(editor: Editor): ImageResizeOverlay {
       stopDrag?.();
       target.dom.style.width = "";
       target.dom.style.height = "";
-      commit(target, latest);
+      // A drag begun before the field locked must not write to a locked editor.
+      if (editor.isEditable) {
+        commit(target, latest);
+      }
       sync();
     };
     stopDrag = () => {

@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and unlocking leaves disabled what has nothing to act on, such as undo with no history or a
   control a custom button disabled itself. A read-only field's value is not rewritten, so it
   posts exactly what the server rendered.
+  Image paste and drop upload and the image resize handles follow the same lock: they are
+  off whenever the editor is not editable, including a consumer's own `editor.setEditable(false)`
+  and an open source view (on 0.17.1 a dropped image still uploaded there), and a resize drag
+  begun before the field locked commits nothing. A click on the label of a read-only field
+  focuses its editor, as it does a native read-only textarea. A bubble or floating menu hides
+  when the field locks while it is shown.
 
 ## [0.17.1] — 2026-11-23
 

@@ -161,6 +161,38 @@ describe("the image resize handles", () => {
     expect(editor.getHTML()).toContain('width="200"');
   });
 
+  it("drop a drag begun before the field locked, committing nothing on mouseup", async () => {
+    const { editor, textarea } = await mount("", IMG);
+    stubLayout(editor);
+    selectImage(editor);
+    const before = editor.getHTML();
+    const handle = document.querySelector(".django-tiptap__img-handle--se") as Element;
+    handle.dispatchEvent(new MouseEvent("mousedown", { clientX: 0, bubbles: true }));
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 100, bubbles: true }));
+    textarea.readOnly = true;
+    await nextTick();
+    document.dispatchEvent(new MouseEvent("mouseup", { clientX: 100, bubbles: true }));
+    expect(editor.getHTML()).toBe(before);
+    expect(overlay().hidden).toBe(true);
+    expect((editor.view.nodeDOM(1) as HTMLElement).style.width).toBe("");
+  });
+
+  it("stop observing the lock once the editor is destroyed", async () => {
+    const { editor, textarea } = await mount("", IMG);
+    const dom = editor.view.dom as HTMLElement;
+    DjangoTipTap.destroy(textarea.id);
+    let reads = 0;
+    Object.defineProperty(editor, "isEditable", {
+      get: () => {
+        reads += 1;
+        return true;
+      },
+    });
+    dom.setAttribute("contenteditable", "false");
+    await nextTick();
+    expect(reads).toBe(0);
+  });
+
   it("hide when the field locks and show again when it unlocks, with the image still selected", async () => {
     const { editor, textarea } = await mount("", IMG);
     stubLayout(editor);
