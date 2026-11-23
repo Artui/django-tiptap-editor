@@ -75,7 +75,8 @@ export async function openImagePicker(editor: Editor): Promise<void> {
     const first = stops[0];
     const last = stops[stops.length - 1];
     const active = document.activeElement;
-    if (event.shiftKey ? active === first : active === last) {
+    // A press on the box's padding or heading focuses the dialog itself: Shift+Tab wraps too.
+    if (event.shiftKey ? active === first || active === dialog : active === last) {
       event.preventDefault();
       (event.shiftKey ? last : first).focus();
     }

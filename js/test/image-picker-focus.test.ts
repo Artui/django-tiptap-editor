@@ -177,6 +177,27 @@ describe("Tab stays inside the picker", () => {
     expect(key(tiles()[0], "Enter").defaultPrevented).toBe(false);
   });
 
+  it("lets Enter through on the last stop", async () => {
+    const { shell } = mount();
+    await openFromKeyboard(shell);
+    resolveFetch(ITEMS);
+    await settle();
+    tiles()[1].focus();
+    expect(key(tiles()[1], "Enter").defaultPrevented).toBe(false);
+  });
+
+  it("wraps Shift+Tab to the last stop from the dialog itself (a press on its heading)", async () => {
+    const { shell } = mount();
+    await openFromKeyboard(shell);
+    resolveFetch(ITEMS);
+    await settle();
+    const dialog = overlay() as HTMLElement;
+    dialog.tabIndex = -1;
+    dialog.focus();
+    expect(key(dialog, "Tab", true).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(tiles()[1]);
+  });
+
   it("holds focus on the close button when it is the only stop", async () => {
     const { shell } = mount();
     await openFromKeyboard(shell);
