@@ -37,8 +37,11 @@ function inCell(e: Editor): Editor {
 }
 
 type Cmds = Record<string, (...args: unknown[]) => boolean>;
-const run = (e: Editor, name: string, ...args: unknown[]): boolean =>
-  (e.commands as unknown as Cmds)[name](...args);
+function run(e: Editor, name: string, ...args: unknown[]): boolean {
+  const command = (e.commands as unknown as Cmds)[name];
+  expect(typeof command, name).toBe("function");
+  return command(...args);
+}
 
 function cells(html: string): HTMLElement[] {
   const root = document.createElement("template");
@@ -108,6 +111,24 @@ describe("a ruled table", () => {
     const found = cells(e.getHTML());
     expect(found.length).toBeGreaterThan(3);
     expect(found.every((cell) => cell.style.border === LINES_RGB)).toBe(true);
+  });
+
+  it("rules every cell with any border shorthand it is given", () => {
+    const e = inCell(make(TWO_BY_TWO));
+    run(e, "setTableBorder", "2px dashed #000");
+    run(e, "addRowAfter");
+    expect(e.getJSON().content?.[0].attrs?.border).toBe("2px dashed #000");
+    expect(cells(e.getHTML()).map((cell) => cell.style.border)).toEqual(Array(6).fill("2px dashed rgb(0, 0, 0)"));
+  });
+
+  it("rules the cells that fill out a ragged ruled table", () => {
+    const e = inCell(
+      make('<table border="1"><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr><tr><td><p>c</p></td></tr></tbody></table>'),
+    );
+    e.commands.insertContent("z");
+    const found = cells(e.getHTML());
+    expect(found).toHaveLength(4);
+    expect(found.map((cell) => cell.style.border)).toEqual(Array(4).fill(LINES_RGB));
   });
 
   it("unsetTableBorder clears the table and every cell", () => {

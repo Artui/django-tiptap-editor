@@ -4,10 +4,13 @@
 // `border`, which renders as an inline style, because email clients read
 // neither stylesheets nor CSS variables. Unruled tables render exactly as the
 // stock nodes do, and their cells keep any hand-written border of their own.
-import type { Node as PMNode } from "@tiptap/pm/model";
-import type { EditorState, Transaction } from "@tiptap/pm/state";
-
 import { Table, TableCell, TableHeader } from "../tiptap-runtime";
+import type { Editor } from "../tiptap-runtime";
+
+type EditorState = Editor["state"];
+type Transaction = EditorState["tr"];
+type PMNode = EditorState["doc"];
+type PMPlugin = EditorState["plugins"][number];
 
 export const DEFAULT_TABLE_BORDER = "1px solid #d0d5dd";
 
@@ -147,17 +150,27 @@ export const RuledTable = Table.extend({
     };
   },
 
-  // Rows and columns prosemirror-tables adds are fresh cells with no border. A
-  // dispatch hook rather than a plugin keeps @tiptap/pm out of the glue's imports.
-  dispatchTransaction({ transaction, next }) {
-    if (transaction.docChanged) {
-      transaction.doc.descendants((node, pos) => {
-        if (node.type.name === "table" && node.attrs.border) {
-          setCells(transaction, node, pos, node.attrs.border);
+  // Rows and columns prosemirror-tables adds, and the cells its fixTables fills
+  // a ragged table out with, are fresh cells with no border. The Plugin class
+  // is the table's own, so the glue imports nothing from @tiptap/pm.
+  addProseMirrorPlugins() {
+    const plugins = this.parent?.() ?? [];
+    const PluginClass = plugins[0].constructor as new (spec: PMPlugin["spec"]) => PMPlugin;
+    const sync = new PluginClass({
+      appendTransaction(transactions, _old, state) {
+        if (!transactions.some((tr) => tr.docChanged)) {
+          return null;
         }
-        return true;
-      });
-    }
-    next(transaction);
+        const tr = state.tr;
+        state.doc.descendants((node, pos) => {
+          if (node.type.name === "table" && node.attrs.border) {
+            setCells(tr, node, pos, node.attrs.border);
+          }
+          return true;
+        });
+        return tr.docChanged ? tr : null;
+      },
+    });
+    return [...plugins, sync];
   },
 });

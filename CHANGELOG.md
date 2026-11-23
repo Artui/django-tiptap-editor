@@ -23,8 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   document stored as JSON gains `"border": null` on every table, cell and header it saves.
 - **The sanitiser keeps a table's rules.** The vocabulary gains `table[border]`, kept only
   as a whole number in ASCII digits (`border="2"` survives, `border="1px"` is dropped),
-  `border-collapse` on `table`, and `border` on `th` and `td`. A `col` keeps only
-  `min-width` and `width`. `render_doc` writes a ruled table as the editor does:
+  `border-collapse` on `table`, and `border` on `th` and `td`. A `border` declaration on
+  the `table` itself is still dropped: the rules live on the cells. `render_doc` writes a ruled table as the editor does:
   `border="1"` and `border-collapse: collapse` on the table and each cell's `border` after
   its `text-align`.
 - **`--tiptap-content-weight` sets the font weight of the editing area and the source
