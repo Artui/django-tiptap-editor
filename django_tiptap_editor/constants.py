@@ -64,6 +64,8 @@ KNOWN_CONFIG_KEYS = frozenset(
         "fontSizes",
         "textColors",
         "highlightColors",
+        "tableBorderColors",
+        "tableBorderWidths",
         "colorPicker",
         "imageResize",
         "extraAttributes",

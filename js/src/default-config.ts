@@ -47,7 +47,11 @@ export interface TipTapConfig {
   // palettes.
   textColors?: string[];
   highlightColors?: string[];
-  // Adds a native <input type="color"> under both swatch grids, for colors the
+  // Swatches for the table line colour dropdown (any CSS color) and presets for
+  // the table line width dropdown (CSS lengths like "2px"). Omit for the built-ins.
+  tableBorderColors?: string[];
+  tableBorderWidths?: string[];
+  // Adds a native <input type="color"> under every swatch grid, for colors the
   // palettes don't carry. Off by default: the swatch grid alone is what keeps a
   // document's colors to a house palette.
   colorPicker?: boolean;
@@ -74,7 +78,7 @@ export const DEFAULT_TOOLBAR: string[][] = [
   ["h1", "h2", "h3", "paragraph"],
   ["bulletList", "orderedList", "blockquote"],
   ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
-  ["image", "table"],
+  ["image", "table", "tableBorderColor", "tableBorderWidth"],
   ["link", "unlink", "clearFormatting"],
   ["sourceView"],
 ];

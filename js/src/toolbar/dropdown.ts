@@ -12,7 +12,7 @@
 import type { Editor } from "../tiptap-runtime";
 import { forwardTheme } from "./forward-theme";
 import { applyLabel } from "./label";
-import { focusItem, itemsOf } from "./menu-keys";
+import { focusItem, isCheckedRadio, itemsOf } from "./menu-keys";
 import { placePanel } from "./place-panel";
 
 export interface Dropdown {
@@ -191,12 +191,12 @@ export function createDropdown(opts: DropdownOptions): Dropdown {
     close();
   }
 
-  // Keyboard open: the checked or pressed entry, else the first (ArrowUp: the last).
+  // Keyboard open: the checked radio or pressed entry, else the first (ArrowUp: the last).
   function focusInside(last: boolean): void {
     const menu = panel.querySelector<HTMLElement>("[role=menu]");
     if (menu) {
       const items = itemsOf(menu);
-      const checked = items.find((item) => item.getAttribute("aria-checked") === "true");
+      const checked = items.find(isCheckedRadio);
       const to = checked ?? (last ? items[items.length - 1] : items[0]);
       if (to) {
         focusItem(menu, to);

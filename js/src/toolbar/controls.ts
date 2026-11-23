@@ -1,6 +1,7 @@
 // Dropdown controls for the textStyle attributes (font size / family, text
 // color, highlight). All four are textStyle marks, so they apply uniformly via
-// setMark — which merges, so setting one doesn't clear the others.
+// setMark — which merges, so setting one doesn't clear the others. The table
+// line controls reuse them through a read/apply ValueSource.
 import { configFor } from "../editor-config";
 import { translatorFor } from "../i18n";
 import type { Editor } from "../tiptap-runtime";
@@ -11,6 +12,38 @@ import { menuKeys } from "./menu-keys";
 
 function applyTextStyle(editor: Editor, attr: string, value: string | null): void {
   editor.chain().focus().setMark("textStyle", { [attr]: value }).run();
+}
+
+// Where a control's value lives: a textStyle attribute, or a read/apply pair
+// (the table line controls), which also says when the control is enabled.
+export type ValueSource =
+  | { attr: string }
+  | {
+      read: (editor: Editor) => string | null;
+      apply: (editor: Editor, value: string | null) => void;
+      enabled: (editor: Editor) => boolean;
+    };
+
+interface ValueHooks {
+  read: (editor: Editor) => string | null;
+  apply: (editor: Editor, value: string | null) => void;
+  enabled?: (editor: Editor) => boolean;
+}
+
+function hooksOf(source: ValueSource): ValueHooks {
+  if ("attr" in source) {
+    return {
+      read: (editor) => (editor.getAttributes("textStyle")[source.attr] as string) ?? null,
+      apply: (editor, value) => applyTextStyle(editor, source.attr, value),
+    };
+  }
+  return source;
+}
+
+// Disables the trigger while the source says so; undefined when it never does.
+function enabler(hooks: ValueHooks, editor: Editor, trigger: HTMLButtonElement): (() => void) | undefined {
+  const enabled = hooks.enabled;
+  return enabled && (() => trigger.toggleAttribute("disabled", !enabled(editor)));
 }
 
 function menuItem(label: string, active: boolean, onPick: () => void): HTMLButtonElement {
@@ -36,15 +69,20 @@ export type SelectOptions =
   | Array<{ label: string; value: string }>
   | ((editor: Editor) => Array<{ label: string; value: string }>);
 
-// Font size / family: a menu of radio items, the presets plus "Default".
-export function selectControl(opts: {
-  title: string;
-  attr: string;
-  triggerHTML: string;
-  options: SelectOptions;
-  styleOption?: boolean;
-  showValue?: boolean;
-}): ButtonSpec {
+// Font size / family: a menu of radio items, the presets plus "Default" unless
+// `defaultItem` is false (the table line width, which always has a value).
+export function selectControl(
+  opts: {
+    title: string;
+    triggerHTML: string;
+    options: SelectOptions;
+    styleOption?: boolean;
+    showValue?: boolean;
+    defaultItem?: boolean;
+  } & ValueSource,
+): ButtonSpec {
+  const hooks = hooksOf(opts);
+  const withDefault = opts.defaultItem !== false;
   return {
     title: opts.title,
     render(editor: Editor): RenderedControl {
@@ -62,24 +100,26 @@ export function selectControl(opts: {
           list.className = "django-tiptap__menu";
           list.setAttribute("role", "menu");
           list.setAttribute("aria-label", t(opts.title));
-          const current = (editor.getAttributes("textStyle")[opts.attr] as string) ?? null;
+          const current = hooks.read(editor);
           const radio = (item: HTMLButtonElement, checked: boolean): HTMLButtonElement => {
             item.setAttribute("role", "menuitemradio");
             item.setAttribute("aria-checked", String(checked));
             return item;
           };
-          list.appendChild(
-            radio(
-              menuItem(t("default"), !current, () => {
-                applyTextStyle(editor, opts.attr, null);
-                close();
-              }),
-              !current,
-            ),
-          );
+          if (withDefault) {
+            list.appendChild(
+              radio(
+                menuItem(t("default"), !current, () => {
+                  hooks.apply(editor, null);
+                  close();
+                }),
+                !current,
+              ),
+            );
+          }
           for (const opt of options) {
             const item = menuItem(opt.label, current === opt.value, () => {
-              applyTextStyle(editor, opts.attr, opt.value);
+              hooks.apply(editor, opt.value);
               close();
             });
             if (opts.styleOption) {
@@ -91,14 +131,17 @@ export function selectControl(opts: {
           return list;
         },
       });
+      const enable = enabler(hooks, editor, dd.trigger);
       // A label replaces the readout, so the trigger keeps one name.
       if (!opts.showValue || label) {
-        return { el: dd.el };
+        return enable ? { el: dd.el, refresh: enable } : { el: dd.el };
       }
-      const readout = valueReadout([t("default"), ...options.map((o) => o.label)]);
+      const labels = options.map((o) => o.label);
+      const readout = valueReadout(withDefault ? [t("default"), ...labels] : labels);
       dd.trigger.prepend(readout.el);
       const refresh = (): void => {
-        const current = editor.getAttributes("textStyle")[opts.attr] as string | undefined;
+        enable?.();
+        const current = hooks.read(editor);
         const text = current
           ? (options.find((o) => o.value === current)?.label ?? current.replace(/px$/, ""))
           : t("default");
@@ -130,7 +173,8 @@ function valueReadout(labels: string[]): { el: HTMLElement; text: HTMLElement } 
   return { el, text };
 }
 
-export type MenuItem = { label: string; run: () => void } | "separator";
+// `checked` makes the item a menuitemcheckbox showing that state (the table's lines).
+export type MenuItem = { label: string; run: () => void; checked?: boolean } | "separator";
 
 // A dropdown of command actions, rebuilt on open so items can reflect editor
 // state (e.g. table-edit actions only appear inside a table).
@@ -166,11 +210,16 @@ export function commandMenuControl(opts: {
               menu.appendChild(sep);
               continue;
             }
-            const item = menuItem(t(entry.label), false, () => {
+            const item = menuItem(t(entry.label), entry.checked === true, () => {
               entry.run();
               close();
             });
-            item.setAttribute("role", "menuitem");
+            if (entry.checked === undefined) {
+              item.setAttribute("role", "menuitem");
+            } else {
+              item.setAttribute("role", "menuitemcheckbox");
+              item.setAttribute("aria-checked", String(entry.checked));
+            }
             menu.appendChild(item);
           }
           menuKeys(menu);
@@ -206,8 +255,7 @@ const HEX6_RE = /^#[0-9a-f]{6}$/i;
 // named with aria-label instead, and covering the row keeps the whole row
 // clickable as the label made it.
 function pickerRow(
-  editor: Editor,
-  attr: string,
+  apply: (value: string) => void,
   label: string,
   current: string,
   close: () => void,
@@ -228,10 +276,10 @@ function pickerRow(
   row.append(chip, text, input);
   // No preventDefault on mousedown here, unlike every other control: that is
   // what would stop the native picker from opening. Losing DOM focus is safe —
-  // the ProseMirror selection lives in editor state, and applyTextStyle's
-  // chain().focus() restores it before the mark is applied.
+  // the ProseMirror selection lives in editor state, and the apply hook's
+  // chain().focus() restores it before the value is applied.
   input.addEventListener("change", () => {
-    applyTextStyle(editor, attr, input.value);
+    apply(input.value);
     close();
   });
   return row;
@@ -239,13 +287,15 @@ function pickerRow(
 
 // Text color / highlight: a non-modal dialog of a swatch grid, an optional native
 // picker and "Remove" (an <input> cannot live in a menu); Tab walks it in DOM order.
-export function colorControl(opts: {
-  title: string;
-  attr: string;
-  triggerHTML: string;
-  swatches: SwatchOptions;
-  picker?: (editor: Editor) => boolean;
-}): ButtonSpec {
+export function colorControl(
+  opts: {
+    title: string;
+    triggerHTML: string;
+    swatches: SwatchOptions;
+    picker?: (editor: Editor) => boolean;
+  } & ValueSource,
+): ButtonSpec {
+  const hooks = hooksOf(opts);
   return {
     title: opts.title,
     render(editor: Editor): RenderedControl {
@@ -263,7 +313,7 @@ export function colorControl(opts: {
           panel.setAttribute("aria-label", t(opts.title));
           const grid = document.createElement("div");
           grid.className = "django-tiptap__swatches";
-          const current = ((editor.getAttributes("textStyle")[opts.attr] as string) ?? "").toLowerCase();
+          const current = (hooks.read(editor) ?? "").toLowerCase();
           for (const color of swatches) {
             const sw = document.createElement("button");
             sw.type = "button";
@@ -277,25 +327,26 @@ export function colorControl(opts: {
             sw.addEventListener("mousedown", (e) => e.preventDefault());
             sw.addEventListener("click", (e) => {
               e.preventDefault();
-              applyTextStyle(editor, opts.attr, color);
+              hooks.apply(editor, color);
               close();
             });
             grid.appendChild(sw);
           }
           panel.appendChild(grid);
           if (opts.picker?.(editor)) {
-            panel.appendChild(pickerRow(editor, opts.attr, t("custom"), current, close));
+            panel.appendChild(pickerRow((value) => hooks.apply(editor, value), t("custom"), current, close));
           }
           panel.appendChild(
             menuItem(t("remove"), false, () => {
-              applyTextStyle(editor, opts.attr, null);
+              hooks.apply(editor, null);
               close();
             }),
           );
           return panel;
         },
       });
-      return { el: dd.el };
+      const enable = enabler(hooks, editor, dd.trigger);
+      return enable ? { el: dd.el, refresh: enable } : { el: dd.el };
     },
   };
 }

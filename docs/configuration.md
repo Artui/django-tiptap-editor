@@ -27,7 +27,9 @@ any omitted key.
 | `fontSizes` | list[str] | Presets for the `fontSize` dropdown; each a CSS length like `"16px"` (label = value without `px`); the trigger shows the label of the size under the caret. Omit for the built-in list. |
 | `textColors` | list[str] | Swatches for the `color` (text color) dropdown; each any CSS color. Omit for the built-in palette. |
 | `highlightColors` | list[str] | Swatches for the `highlight` (background) dropdown; each any CSS color. Omit for the built-in palette. |
-| `colorPicker` | bool | Adds a native color picker under both color swatch grids, for colors the palettes don't carry. Default `False`. |
+| `tableBorderColors` | list[str] | Swatches for the `tableBorderColor` (table line colour) dropdown; each any CSS color. Omit for the built-in palette, `#d0d5dd` `#858b97` `#5c6370` `#1f2329` `#000000`. |
+| `tableBorderWidths` | list[str] | Presets for the `tableBorderWidth` (table line width) dropdown; each a CSS length like `"2px"` (label = value without `px`); the trigger shows the label of the table's width. Omit for `1px` `2px` `3px`. |
+| `colorPicker` | bool | Adds a native color picker under every color swatch grid (text color, highlight, table line colour), for colors the palettes don't carry. Default `False`. |
 | `imageResize` | bool | Drag handles on a selected image, setting the width/height the document asks for. Default `True`; set `False` to pin images to their inserted size. |
 | `mergeTags` | list[{label, value}] | Items for the merge-tags menu; `value` is inserted verbatim. |
 | `extraAttributes` | dict[str, list[str]] | Attributes kept on built-in blocks, by node type: `{"paragraph": ["class"], "heading": ["class"]}`. Only `class`, on `paragraph` and `heading`. See [Extra attributes](#extra-attributes). |
@@ -46,6 +48,8 @@ TipTapWidget(
         "fontSizes": ["12px", "14px", "16px", "20px", "28px"],
         "textColors": ["#1f2329", "#e03e2d", "#3598db"],
         "highlightColors": ["#fff3a3", "#c8f7c5", "#bfe3ff"],
+        "tableBorderColors": ["#d0d5dd", "#1f2329"],
+        "tableBorderWidths": ["1px", "2px"],
         "colorPicker": True,
         "imageResize": True,
         "mergeTags": [{"label": "First name", "value": "{{ first_name }}"}],
@@ -101,15 +105,22 @@ so one bad field does not stop the rest of the page mounting.
 
 `undo` `redo` · `bold` `italic` `underline` `strike` `code` · `fontSize` `fontFamily`
 `color` `highlight` · `h1` `h2` `h3` `paragraph` · `bulletList` `orderedList`
-`blockquote` `horizontalRule` (opt-in) · `alignLeft` `alignCenter` `alignRight` `alignJustify` · `image` `table` ·
+`blockquote` `horizontalRule` (opt-in) · `alignLeft` `alignCenter` `alignRight` `alignJustify` · `image` `table`
+`tableBorderColor` `tableBorderWidth` ·
 `link` `unlink` `clearFormatting` · `sourceView` · `mergeTags` (opt-in).
 
 A group is an inner array; groups render with separators. Register your own buttons with
 [`ui.registerButton`](extending.md#toolbar-buttons).
 
 Inside a table, the `table` menu adds rows and columns, rules the table or removes its
-rules (**Add table lines** / **Remove table lines**), and deletes rows, columns or the
-table. A ruled table is stored as `<table border="1">` with `border-collapse: collapse`
+rules with its **Table lines** checkbox item (checked while the table is ruled), and
+deletes rows, columns or the table. Beside it, `tableBorderColor` and `tableBorderWidth`
+set the ruled table's line colour (from `tableBorderColors`, with the custom colour when
+`colorPicker` is on, and **Remove** to take the lines off) and width (from
+`tableBorderWidths`). Each keeps the other half of the border and writes
+`<width> solid <colour>`; a border in another form, such as a hand-written
+`2px dotted red`, reads as `1px` and `#d0d5dd`. Both are disabled unless the caret is in
+a ruled table, and both need the `table` feature. A ruled table is stored as `<table border="1">` with `border-collapse: collapse`
 beside its width, and a literal `border: 1px solid #d0d5dd` on every `th` and `td`, so it
 shows its lines wherever the HTML is rendered, an email client included, with no
 stylesheet. Rows and columns added to it are ruled too. A table starts unruled. In code,

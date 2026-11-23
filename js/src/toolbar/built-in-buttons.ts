@@ -7,7 +7,7 @@
 // (config.features) can show. Buttons without one run core commands (undo,
 // paragraph, clearing formatting) that exist on every field.
 import { configFor } from "../editor-config";
-import { DEFAULT_TABLE_BORDER } from "../extensions/table-borders";
+import { DEFAULT_TABLE_BORDER, tableBorderParts } from "../extensions/table-borders";
 import { translatorFor } from "../i18n";
 import { openImagePicker } from "../image-picker";
 import type { Editor } from "../tiptap-runtime";
@@ -15,7 +15,7 @@ import { insertImage, uploadViaFileDialog } from "../upload";
 import { registerButton } from "./button-registry";
 import type { ButtonSpec } from "./button-registry";
 import { colorControl, commandMenuControl, selectControl } from "./controls";
-import type { MenuItem } from "./controls";
+import type { MenuItem, ValueSource } from "./controls";
 import { ICONS } from "./icons";
 import { isSourceActive, toggleSourceView } from "./source-view";
 
@@ -33,6 +33,8 @@ const TEXT_COLORS = [
   "#2dc26b", "#3598db", "#3538cd", "#9b59b6", "#ffffff",
 ];
 const HIGHLIGHTS = ["#fff3a3", "#c8f7c5", "#bfe3ff", "#ffd6e7", "#ffe0b2"];
+const TABLE_BORDER_COLORS = ["#d0d5dd", "#858b97", "#5c6370", "#1f2329", "#000000"];
+const TABLE_BORDER_WIDTHS = ["1px", "2px", "3px"];
 
 const caret = '<span class="django-tiptap__caret">&#9662;</span>';
 
@@ -40,6 +42,23 @@ const caret = '<span class="django-tiptap__caret">&#9662;</span>';
 // the feature its command needs (see `requires` on ButtonSpec).
 function needs(feature: string, spec: ButtonSpec): ButtonSpec {
   return { ...spec, requires: feature };
+}
+
+// One part of the ruled table's border at the caret; writing it keeps the other
+// part and always writes `<width> solid <colour>`. Off outside a ruled table.
+function tableBorderPart(part: "width" | "color"): ValueSource {
+  return {
+    read: (e) => tableBorderParts(e.getAttributes("table").border)[part],
+    apply: (e, value) => {
+      if (value === null) {
+        e.chain().focus().unsetTableBorder().run();
+        return;
+      }
+      const next = { ...tableBorderParts(e.getAttributes("table").border), [part]: value };
+      e.chain().focus().setTableBorder(`${next.width} solid ${next.color}`).run();
+    },
+    enabled: (e) => Boolean(e.getAttributes("table").border),
+  };
 }
 
 function heading(level: 1 | 2 | 3): ButtonSpec {
@@ -234,6 +253,7 @@ const BUILTIN: Record<string, ButtonSpec> = {
         },
       ];
       if (e.isActive("table")) {
+        const ruled = Boolean(e.getAttributes("table").border);
         items.push(
           "separator",
           { label: "addRowBefore", run: () => e.chain().focus().addRowBefore().run() },
@@ -241,12 +261,14 @@ const BUILTIN: Record<string, ButtonSpec> = {
           { label: "addColumnBefore", run: () => e.chain().focus().addColumnBefore().run() },
           { label: "addColumnAfter", run: () => e.chain().focus().addColumnAfter().run() },
           "separator",
-          e.getAttributes("table").border
-            ? { label: "tableLinesOff", run: () => e.chain().focus().unsetTableBorder().run() }
-            : {
-                label: "tableLinesOn",
-                run: () => e.chain().focus().setTableBorder(DEFAULT_TABLE_BORDER).run(),
-              },
+          {
+            label: "tableLines",
+            checked: ruled,
+            run: () =>
+              ruled
+                ? e.chain().focus().unsetTableBorder().run()
+                : e.chain().focus().setTableBorder(DEFAULT_TABLE_BORDER).run(),
+          },
           "separator",
           { label: "deleteRow", run: () => e.chain().focus().deleteRow().run() },
           { label: "deleteColumn", run: () => e.chain().focus().deleteColumn().run() },
@@ -255,6 +277,22 @@ const BUILTIN: Record<string, ButtonSpec> = {
       }
       return items;
     },
+  })),
+  tableBorderColor: needs("table", colorControl({
+    title: "tableBorderColor",
+    triggerHTML: `${ICONS.tableBorderColor}${caret}`,
+    swatches: (e) => configFor(e).tableBorderColors ?? TABLE_BORDER_COLORS,
+    picker: (e) => configFor(e).colorPicker === true,
+    ...tableBorderPart("color"),
+  })),
+  tableBorderWidth: needs("table", selectControl({
+    title: "tableBorderWidth",
+    triggerHTML: caret,
+    showValue: true,
+    defaultItem: false,
+    options: (e) =>
+      (configFor(e).tableBorderWidths ?? TABLE_BORDER_WIDTHS).map((v) => ({ label: v.replace("px", ""), value: v })),
+    ...tableBorderPart("width"),
   })),
   link: {
     icon: ICONS.link,

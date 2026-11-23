@@ -14,6 +14,15 @@ type PMPlugin = EditorState["plugins"][number];
 
 export const DEFAULT_TABLE_BORDER = "1px solid #d0d5dd";
 
+const SOLID_BORDER_RE = /^(\S+)\s+solid\s+(.+)$/;
+
+// The width and colour of a `<width> solid <colour>` border, else the default
+// lines' own, so a hand-written `2px dotted red` reads as 1px and #d0d5dd.
+export function tableBorderParts(value: unknown): { width: string; color: string } {
+  const match = typeof value === "string" ? SOLID_BORDER_RE.exec(value) : null;
+  return match ? { width: match[1], color: match[2] } : { width: "1px", color: "#d0d5dd" };
+}
+
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     tableBorders: {

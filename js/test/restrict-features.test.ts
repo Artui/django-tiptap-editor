@@ -568,6 +568,8 @@ const UNRESTRICTED_TOOLBAR = [
   "alignJustify",
   "image",
   "table",
+  "tableBorderColor",
+  "tableBorderWidth",
   "link",
   "unlink",
   "clearFormatting",

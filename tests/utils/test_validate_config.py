@@ -53,7 +53,14 @@ def test_invalid_enter_key_raises() -> None:
 
 
 # Keys validated as "a list of strings": font stacks/sizes and color swatches.
-STRING_LIST_KEYS = ["fontFamilies", "fontSizes", "textColors", "highlightColors"]
+STRING_LIST_KEYS = [
+    "fontFamilies",
+    "fontSizes",
+    "textColors",
+    "highlightColors",
+    "tableBorderColors",
+    "tableBorderWidths",
+]
 
 
 @pytest.mark.parametrize("key", STRING_LIST_KEYS)

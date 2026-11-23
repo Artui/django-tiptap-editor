@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Ruled tables.** Inside a table, the table menu's **Add table lines** rules it with
-  `1px solid #d0d5dd`, and **Remove table lines** takes the rules off it and every cell
-  (Swedish: *Lägg till tabellinjer* / *Ta bort tabellinjer*). A ruled table is stored as
+- **Ruled tables.** Inside a table, the table menu's **Table lines** item (a
+  `menuitemcheckbox`, checked while the table is ruled; Swedish: *Tabellinjer*) rules it
+  with `1px solid #d0d5dd`, and unchecking it takes the rules off it and every cell. Two
+  toolbar controls follow `table` in the default toolbar: `tableBorderColor`, a swatch
+  dialog like text color (presets from the new `tableBorderColors` config key, the custom
+  colour under `colorPicker`, and **Remove** to take the lines off), and
+  `tableBorderWidth`, a radio menu like font size whose trigger shows the table's width
+  (presets from the new `tableBorderWidths` key). Each keeps the other half of the border
+  and writes `<width> solid <colour>`; a border in another form reads as `1px` and
+  `#d0d5dd`. They are disabled unless the caret is in a ruled table or while the editor is
+  locked, and need the `table` feature. A ruled table is stored as
   `<table border="1">` with `border-collapse: collapse` merged into its width or min-width,
   and a literal inline `border` on every `th` and `td`, so it renders ruled with no
   stylesheet, in email too. Rows and columns added to it come out ruled. The editor

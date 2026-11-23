@@ -3,7 +3,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { buildExtensions } from "../src/build-extensions";
-import { getTranslator } from "../src/i18n";
 import { Editor } from "../src/tiptap-runtime";
 
 const LINES = "1px solid #d0d5dd";
@@ -201,15 +200,5 @@ describe("parsing ruled markup", () => {
       '<table style="min-width: 50px;"><colgroup><col style="min-width: 25px;"><col style="min-width: 25px;"></colgroup>' +
         "<tbody><tr><th><p>a</p></th><th><p>b</p></th></tr><tr><td><p>c</p></td><td><p>d</p></td></tr></tbody></table>",
     );
-  });
-});
-
-describe("the table-menu item", () => {
-  it.each([
-    ["en", "Add table lines", "Remove table lines"],
-    ["sv", "Lägg till tabellinjer", "Ta bort tabellinjer"],
-  ])("is labelled in %s", (locale, on, off) => {
-    const t = getTranslator(locale);
-    expect([t("tableLinesOn"), t("tableLinesOff")]).toEqual([on, off]);
   });
 });

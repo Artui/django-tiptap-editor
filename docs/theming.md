@@ -262,8 +262,11 @@ both ways).
 The built-in dropdowns follow the WAI-ARIA Authoring Practices. Font size and font family
 are menus of radio items (`role="menu"`, items `role="menuitemradio"` with `aria-checked` on
 the current value, `Default` when none is set). Image, merge tags and table are menus of
-actions (`role="menuitem"`, the table's groups divided by `role="separator"`). Text color
-and highlight are non-modal dialogs (`role="dialog"`) because they hold the native colour
+actions (`role="menuitem"`, the table's groups divided by `role="separator"`); the
+table's **Table lines** is a `role="menuitemcheckbox"` with `aria-checked` on while the
+table is ruled, and a keyboard open still starts on the first item. Table line width is a
+menu of radio items like font size, with no `Default`. Text color, highlight and table
+line colour are non-modal dialogs (`role="dialog"`) because they hold the native colour
 input: the swatches are buttons with `aria-pressed` on the current colour. Each trigger's
 `aria-haspopup` names its popup, `"menu"` or `"dialog"`.
 
@@ -296,7 +299,8 @@ The font-size trigger shows the current size as text (`Default`, `16`) rather th
 invisible stack of every label in the same grid cell, which keeps the trigger as wide as
 its widest label (in the active locale and `fontSizes`) so it does not shift as the caret
 moves. Its accessible name is the `fontSizeValue` string (`"{name}: {value}"`, e.g.
-`Font size: 16`); a locale registered with `registerLocale` can reword it.
+`Font size: 16`); a locale registered with `registerLocale` can reword it. The table line
+width trigger shows the table's width the same way, named by `tableBorderWidthValue`.
 
 A button given a [`toolbarLabels`](configuration.md) entry carries
 `.django-tiptap__btn--labelled` and its text in `.django-tiptap__btn-label`, after the
