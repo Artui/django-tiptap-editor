@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `aria-required="true"` for a `required` field and `aria-multiline="true"`, and follows
   later changes to those attributes, as a morphing swap or a script makes them. A click on
   a label now focuses its editor and keeps the selection; the tab order is unchanged.
+- **A `disabled` or `readonly` field mounts an editor that cannot be edited, and says so
+  (WCAG 2.2 4.1.2).** Both attributes were ignored: the editor took typing, shortcuts and
+  toolbar commands, and announced an ordinary editable textbox. Such a field now mounts with
+  `isEditable` false, every toolbar control carries `disabled`, and the editable carries
+  `aria-disabled="true"` for a disabled field or `aria-readonly="true"` for a read-only one
+  (a field that is both is announced as disabled). A read-only editor stays in the tab order,
+  as a read-only textarea does; a disabled one leaves it. Setting or clearing either
+  attribute later, as a morphing swap or a script does, is followed both ways: an open
+  source view is applied and closed and an open toolbar panel closes before the field locks,
+  and unlocking leaves disabled what has nothing to act on, such as undo with no history or a
+  control a custom button disabled itself. A read-only field's value is not rewritten, so it
+  posts exactly what the server rendered.
 
 ## [0.17.1] — 2026-11-23
 

@@ -12,7 +12,7 @@ make harness   # serves the repo root at http://localhost:8765/harness/
 directly in a browser works too; the server target exists so the page runs over `http://`
 like a real deployment.
 
-Four sections:
+Six sections:
 
 - **Colour scheme** — a `light` / `dark` / `system` switch that writes `data-tiptap-theme`
   on `<html>` (the page follows it too), above an editor holding every surface the dark
@@ -26,6 +26,15 @@ Four sections:
   them, the restricted one keeps only the text, because the excluded nodes and marks are
   not mounted at all. A button per editor pastes through ProseMirror's real clipboard path.
   `js/test/restrict-features.test.ts` is the headless gate for the same routes.
+- **Labelled field** — the markup Django renders for a required field with help text and
+  an error, then a field whose label wraps it. Each editor takes its name, description,
+  required and invalid state from the textarea and its label, and a click on a label puts
+  the caret in its editor. The readout lists the ARIA each editable carries.
+- **Disabled and read-only fields** — a `disabled` and a `readonly` textarea. Neither editor
+  takes typing, a shortcut or a toolbar command, every toolbar button is disabled, and the
+  read-only one stays in the tab order. Switches set and clear each attribute so the editor
+  is seen following; the readout lists each editable's state and the value the form posts.
+  `js/test/editor-editable.test.ts` is the headless gate.
 - **Scenarios** — scripted key presses (toolbar click → type → Enter → type) replayed
   across all three `enterKey` modes, each asserting the resulting HTML. Click a `FAIL`
   cell to see expected vs actual. The run also leaves `window.HARNESS_RESULTS` for the

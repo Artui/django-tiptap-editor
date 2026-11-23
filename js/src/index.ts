@@ -17,7 +17,8 @@ import { registerExtension } from "./registry";
 import { wireImageDropPaste } from "./upload";
 import type { ExtensionContext, ExtensionFactory } from "./registry";
 import { registerBuiltInButtons } from "./toolbar/built-in-buttons";
-import { openPanelIn, PANEL_ATTR, registerShell } from "./toolbar/dropdown";
+import { closePanelIn, openPanelIn, PANEL_ATTR, registerShell } from "./toolbar/dropdown";
+import { setLocked } from "./toolbar/lock";
 import { flushSourceView, setSourceWriter } from "./toolbar/source-view";
 import {
   createDocument,
@@ -163,6 +164,8 @@ const ARIA_SOURCE_ATTRIBUTES = [
   "aria-invalid",
   "required",
   "title",
+  "disabled",
+  "readonly",
 ];
 
 // A label's own text: the hidden textarea's initial markup and the editor inside it are not its name.
@@ -215,6 +218,12 @@ function editableAria(element: HTMLTextAreaElement): Record<string, string> {
   }
   if (element.required) {
     aria["aria-required"] = "true";
+  }
+  if (element.disabled) {
+    aria["aria-disabled"] = "true";
+  } else if (element.readOnly) {
+    aria["aria-readonly"] = "true";
+    aria.tabindex = "0";
   }
   return aria;
 }
@@ -372,9 +381,12 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const extensions = buildExtensions(config, ctx);
   let store: (doc: Doc) => void = () => {};
   let aria = editableAria(element);
+  const isLockedField = (): boolean => element.disabled || element.readOnly;
+  let locked = isLockedField();
   const editor = new Editor({
     element: content,
     extensions,
+    editable: !locked,
     // A function, so ProseMirror owns these attributes and re-reads them on every view update.
     editorProps: { attributes: () => aria },
     content: json ? readInitialContent(element.value, extensions) : element.value || "",
@@ -386,6 +398,7 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   const value = bindValueEvents(element, editor, json);
   store = value.store;
   setSourceWriter(editor, (html) => store(createDocument(html, editor.schema)));
+  setLocked(editor, locked);
   // Make the translator + config resolvable from any onClick(editor) / control.
   setTranslator(editor, t);
   setEditorConfig(editor, config);
@@ -407,6 +420,17 @@ function init(element: HTMLTextAreaElement, config: TipTapConfig = {}): Editor {
   element.setAttribute(BOUND_ATTR, "true");
   const attrObserver = watchTextareaAttributes(element, () => {
     aria = editableAria(element);
+    if (isLockedField() !== locked) {
+      locked = !locked;
+      // Source view's close makes the editor editable, so it closes before the lock.
+      if (locked) {
+        flushSourceView(editor);
+        closePanelIn(shell.el);
+      }
+      setLocked(editor, locked);
+      editor.setEditable(!locked, false);
+      shell.refresh();
+    }
     editor.view.setProps({});
   });
   const detachForm = watchFormSubmit(element, editor);

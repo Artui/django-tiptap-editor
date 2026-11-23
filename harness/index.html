@@ -170,6 +170,28 @@
       </section>
 
       <section class="panel">
+        <h2>Disabled and read-only fields</h2>
+        <p class="lede">
+          A <code>disabled</code> field and a <code>readonly</code> one. Neither takes typing, a
+          shortcut or a toolbar command, and every toolbar button is disabled; the read-only
+          editor stays in the tab order, as a read-only textarea does. The switches set and clear
+          the attribute on each textarea, and the editor follows. The readout lists each
+          editable's state and the value the form would post (a disabled field posts nothing).
+        </p>
+        <label for="harness-disabled">Archived note</label>
+        <textarea id="harness-disabled" name="disabled-note" disabled data-tiptap-config="{}"
+        >&lt;p&gt;This field is &lt;strong&gt;disabled&lt;/strong&gt;.&lt;/p&gt;</textarea>
+        <label for="harness-readonly">Published body</label>
+        <textarea id="harness-readonly" name="readonly-body" readonly data-tiptap-config="{}"
+        >&lt;p&gt;This field is &lt;b&gt;read-only&lt;/b&gt;; its value posts unchanged.&lt;/p&gt;</textarea>
+        <div>
+          <label><input type="checkbox" id="toggle-disabled" checked> disabled</label>
+          <label><input type="checkbox" id="toggle-readonly" checked> readonly</label>
+        </div>
+        <pre id="locked-value"></pre>
+      </section>
+
+      <section class="panel">
         <h2>Scenarios</h2>
         <p id="summary">Not run yet.</p>
         <button id="run" type="button">Run all scenarios</button>
@@ -199,6 +221,31 @@
       };
       // The bundle mounts on DOMContentLoaded while the page is parsing; read after it.
       document.addEventListener("DOMContentLoaded", showAria);
+
+      // --- disabled and read-only fields ---------------------------------
+      const LOCKED = { "harness-disabled": "disabled", "harness-readonly": "readonly" };
+      const lockedValue = document.getElementById("locked-value");
+      const showLocked = () => {
+        lockedValue.textContent = Object.keys(LOCKED).map((id) => {
+          const editor = DjangoTipTap.get(id);
+          const dom = editor?.view.dom;
+          const attrs = ["contenteditable", "tabindex", "aria-disabled", "aria-readonly"]
+            .filter((name) => dom?.hasAttribute(name))
+            .map((name) => `  ${name}="${dom.getAttribute(name)}"`);
+          const field = document.getElementById(id);
+          const posted = field.disabled ? "(not posted)" : field.value;
+          return [`${id} isEditable=${editor?.isEditable}`, ...attrs, `  posts: ${posted}`]
+            .join("\n");
+        }).join("\n\n");
+      };
+      for (const [id, attr] of Object.entries(LOCKED)) {
+        document.getElementById(`toggle-${attr}`).addEventListener("change", (event) => {
+          document.getElementById(id).toggleAttribute(attr, event.target.checked);
+          // The editor follows from a MutationObserver; read once it has run.
+          setTimeout(showLocked, 0);
+        });
+      }
+      document.addEventListener("DOMContentLoaded", showLocked);
 
       // --- colour scheme -------------------------------------------------
       const SCHEMES = ["light", "dark", "system"];
