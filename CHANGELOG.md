@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The editor has the accessible name, description and state of its field (WCAG 2.2
+  4.1.2).** The editable area took focus with no name: the textarea that its `<label for>`
+  points at is hidden, and nothing carried the label, help text or error state across. The
+  editable now names its labels through `aria-labelledby` (a label without an `id` gets
+  `<textarea id>-label`, then `-label-2` and so on by position), or carries the textarea's
+  own `aria-labelledby`, `aria-label` or `title`, in the order the textarea itself was named
+  by. A label that wraps the field is read as text, without the editor's content and
+  toolbar. It also carries the textarea's `aria-describedby` and `aria-invalid`, sets
+  `aria-required="true"` for a `required` field and `aria-multiline="true"`, and follows
+  later changes to those attributes, as a morphing swap or a script makes them. A click on
+  a label now focuses its editor and keeps the selection; the tab order is unchanged.
+
 ## [0.17.1] — 2026-11-23
 
 ### Changed

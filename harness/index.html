@@ -149,6 +149,27 @@
       </section>
 
       <section class="panel">
+        <h2>Labelled field</h2>
+        <p class="lede">
+          The markup Django renders for a required field with help text and an error, then a
+          field whose label wraps it. Each editor takes its name, description, required and
+          invalid state from the textarea and its label; a click on a label puts the caret in
+          its editor and keeps the selection. The readout lists the ARIA each editable carries.
+        </p>
+        <label for="harness-labelled">Article body</label>
+        <textarea id="harness-labelled" name="labelled" required aria-invalid="true"
+          aria-describedby="harness-labelled-help" data-tiptap-config="{}"
+        >&lt;p&gt;Select a word, click the label above, and type.&lt;/p&gt;</textarea>
+        <div id="harness-labelled-help">Plain prose; headings are fine.</div>
+        <label>
+          <span>Summary</span>
+          <textarea id="harness-wrapped" name="wrapped" data-tiptap-config="{}"
+          >&lt;p&gt;This label wraps the editor; its name is only the label's text.&lt;/p&gt;</textarea>
+        </label>
+        <pre id="aria-value"></pre>
+      </section>
+
+      <section class="panel">
         <h2>Scenarios</h2>
         <p id="summary">Not run yet.</p>
         <button id="run" type="button">Run all scenarios</button>
@@ -163,6 +184,21 @@
     <script src="../django_tiptap_editor/static/django_tiptap_editor/tiptap.bundle.js"></script>
     <script>
       const MODES = ["paragraph", "hardBreak", "swap"];
+
+      // --- labelled field ------------------------------------------------
+      const ARIA_NAMES = ["role", "aria-labelledby", "aria-label", "aria-describedby",
+        "aria-invalid", "aria-required", "aria-multiline"];
+      const ariaValue = document.getElementById("aria-value");
+      const showAria = () => {
+        ariaValue.textContent = ["harness-labelled", "harness-wrapped"].map((id) => {
+          const dom = DjangoTipTap.get(id)?.view.dom;
+          const attrs = ARIA_NAMES.filter((name) => dom?.hasAttribute(name))
+            .map((name) => `  ${name}="${dom.getAttribute(name)}"`);
+          return [id, ...attrs].join("\n");
+        }).join("\n\n");
+      };
+      // The bundle mounts on DOMContentLoaded while the page is parsing; read after it.
+      document.addEventListener("DOMContentLoaded", showAria);
 
       // --- colour scheme -------------------------------------------------
       const SCHEMES = ["light", "dark", "system"];
