@@ -9,12 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Ruled tables.** Inside a table, the table menu's **Add table lines** rules it with
+  `1px solid #d0d5dd`, and **Remove table lines** takes the rules off it and every cell
+  (Swedish: *Lägg till tabellinjer* / *Ta bort tabellinjer*). A ruled table is stored as
+  `<table border="1">` with `border-collapse: collapse` merged into its width or min-width,
+  and a literal inline `border` on every `th` and `td`, so it renders ruled with no
+  stylesheet, in email too. Rows and columns added to it come out ruled. The editor
+  commands are `setTableBorder(value)` and `unsetTableBorder()`. Tables start unruled, and
+  an unruled table's markup is unchanged. Markup that arrives ruled now keeps its rules: a
+  `<table border="1">` (any whole number above 0) loads ruled with its first cell's
+  `border`, or the default lines when that cell has none, and a legacy `border="2"` is
+  written back as `border="1"`; a cell's own `border` on an unruled table is kept. A
+  document stored as JSON gains `"border": null` on every table, cell and header it saves.
+- **The sanitiser keeps a table's rules.** The vocabulary gains `table[border]`, kept only
+  as a whole number in ASCII digits (`border="2"` survives, `border="1px"` is dropped),
+  `border-collapse` on `table`, and `border` on `th` and `td`. A `col` keeps only
+  `min-width` and `width`. `render_doc` writes a ruled table as the editor does:
+  `border="1"` and `border-collapse: collapse` on the table and each cell's `border` after
+  its `text-align`.
 - **`--tiptap-content-weight` sets the font weight of the editing area and the source
   view** (default `400`). Bold text is relative to it: `strong` and `b` take the browser's
   `bolder`, so a host that raises the token to `600` gets `900` bold.
 
 ### Changed
 
+- **An unruled table's guide lines in the editor are dashed.** They were solid, which made
+  a table look ruled in the editor that had no lines in the stored HTML. They keep the
+  `--tiptap-content-border` colour, and a ruled table's own solid lines draw over them.
 - **The editing area and the source view no longer inherit the host page's font weight.**
   On a page whose body weight was `500` or `600`, body text took that weight (bold rose to
   `900` at `600`), and headings at `700` barely stood out from `600` text. Both now sit at

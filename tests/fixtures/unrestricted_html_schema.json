@@ -42,7 +42,9 @@
       "strong": [],
       "sub": [],
       "sup": [],
-      "table": [],
+      "table": [
+        "border"
+      ],
       "tbody": [],
       "td": [
         "colspan",
@@ -145,16 +147,19 @@
       "sub": [],
       "sup": [],
       "table": [
+        "border-collapse",
         "min-width",
         "width"
       ],
       "tbody": [],
       "td": [
         "background-color",
+        "border",
         "text-align"
       ],
       "th": [
         "background-color",
+        "border",
         "text-align"
       ],
       "tr": [],
@@ -219,7 +224,9 @@
       "strong": [],
       "sub": [],
       "sup": [],
-      "table": [],
+      "table": [
+        "border"
+      ],
       "tbody": [],
       "td": [
         "colspan",
@@ -323,16 +330,19 @@
       "sub": [],
       "sup": [],
       "table": [
+        "border-collapse",
         "min-width",
         "width"
       ],
       "tbody": [],
       "td": [
         "background-color",
+        "border",
         "text-align"
       ],
       "th": [
         "background-color",
+        "border",
         "text-align"
       ],
       "tr": [],

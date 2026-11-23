@@ -48,6 +48,13 @@ const table = (type: string, attrs: Json): Json =>
     type: "table",
     content: [{ type: "tableRow", content: [{ type, attrs, content: [paragraph(text())] }] }],
   });
+const LINES = "1px solid #d0d5dd";
+const ruled = (type: string, attrs: Json): Json =>
+  doc({
+    type: "table",
+    attrs: { border: LINES },
+    content: [{ type: "tableRow", content: [{ type, attrs: { ...attrs, border: LINES }, content: [paragraph(text())] }] }],
+  });
 const block = (type: string, attrs: Json): Json =>
   doc({ type, attrs, content: [text()] });
 const link = (attrs: Json): Json => doc(paragraph(text([{ type: "link", attrs }])));
@@ -80,6 +87,21 @@ const CASES: Case[] = [
     target: { node: "tableCell" },
     doc: table("tableCell", { align: "justify" }),
   },
+  // render_doc writes no column sizing for any table, so its test drops the
+  // min-width the editor gives this one; the rest is compared as it stands.
+  { name: "ruled table", target: { node: "table" }, doc: ruled("tableCell", {}) },
+  {
+    name: "ruled table sized by width",
+    target: { node: "table" },
+    doc: ruled("tableCell", { colwidth: [120] }),
+  },
+  { name: "ruled table cell", target: { node: "tableCell" }, doc: ruled("tableCell", {}) },
+  {
+    name: "ruled table cell spanning two columns, aligned",
+    target: { node: "tableCell" },
+    doc: ruled("tableCell", { colspan: 2, align: "center" }),
+  },
+  { name: "ruled table header aligned right", target: { node: "tableHeader" }, doc: ruled("tableHeader", { align: "right" }) },
   ...["'Times New Roman', serif", "'Courier New', monospace", "Arial, sans-serif"].map((family) => ({
     name: `font family ${family}`,
     target: { mark: "textStyle" },

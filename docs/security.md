@@ -66,7 +66,7 @@ development dependency only; the package still depends on Django alone.
 | Inline | `strong`, `em`, `u`, `s`, `code`, `sub`, `sup`, `span` (with `color`, `background-color`, `font-family`, `font-size`) |
 | Links | `a` with `href` (allowlisted protocols), `class`, `target` (`_blank`/`_self` only), `rel` (known tokens only), `title` |
 | Images | `img` with `src` (allowlisted protocols), `alt`, `title`, `width`, `height`, and layout `style` (`float`, `display`, `vertical-align`, `margin`/`padding` and their per-side forms, `border`, `border-radius`, `width`, `height`) |
-| Tables | `table`, `colgroup`, `col`, `tbody`, `tr`, `th`/`td` with `colspan`, `rowspan`, `colwidth`, `background-color`, `text-align` |
+| Tables | `table` with `border` (a whole number only) and `min-width`, `width`, `border-collapse`; `colgroup`, `col` (`min-width`, `width`), `tbody`, `tr`, `th`/`td` with `colspan`, `rowspan`, `colwidth`, `background-color`, `border`, `text-align` |
 
 Quoted font-family names, such as `'Times New Roman', serif`, and `var(--name)` items are kept exactly as written. A quoted name that contains a quote of its own kind, `;`, `\`, `<`, `>` or a line break is refused, and so is the whole value.
 

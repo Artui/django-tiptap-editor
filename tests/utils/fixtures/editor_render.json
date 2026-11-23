@@ -100,6 +100,9 @@
         "content": [
           {
             "type": "table",
+            "attrs": {
+              "border": null
+            },
             "content": [
               {
                 "type": "tableRow",
@@ -110,7 +113,8 @@
                       "colspan": 1,
                       "rowspan": 1,
                       "colwidth": null,
-                      "align": "left"
+                      "align": "left",
+                      "border": null
                     },
                     "content": [
                       {
@@ -153,6 +157,9 @@
         "content": [
           {
             "type": "table",
+            "attrs": {
+              "border": null
+            },
             "content": [
               {
                 "type": "tableRow",
@@ -163,7 +170,8 @@
                       "colspan": 1,
                       "rowspan": 1,
                       "colwidth": null,
-                      "align": "center"
+                      "align": "center",
+                      "border": null
                     },
                     "content": [
                       {
@@ -206,6 +214,9 @@
         "content": [
           {
             "type": "table",
+            "attrs": {
+              "border": null
+            },
             "content": [
               {
                 "type": "tableRow",
@@ -216,7 +227,8 @@
                       "colspan": 1,
                       "rowspan": 1,
                       "colwidth": null,
-                      "align": "right"
+                      "align": "right",
+                      "border": null
                     },
                     "content": [
                       {
@@ -259,6 +271,9 @@
         "content": [
           {
             "type": "table",
+            "attrs": {
+              "border": null
+            },
             "content": [
               {
                 "type": "tableRow",
@@ -269,7 +284,8 @@
                       "colspan": 1,
                       "rowspan": 1,
                       "colwidth": null,
-                      "align": "right"
+                      "align": "right",
+                      "border": null
                     },
                     "content": [
                       {
@@ -312,6 +328,9 @@
         "content": [
           {
             "type": "table",
+            "attrs": {
+              "border": null
+            },
             "content": [
               {
                 "type": "tableRow",
@@ -322,7 +341,8 @@
                       "colspan": 2,
                       "rowspan": 1,
                       "colwidth": null,
-                      "align": "center"
+                      "align": "center",
+                      "border": null
                     },
                     "content": [
                       {
@@ -369,6 +389,9 @@
         "content": [
           {
             "type": "table",
+            "attrs": {
+              "border": null
+            },
             "content": [
               {
                 "type": "tableRow",
@@ -379,7 +402,8 @@
                       "colspan": 1,
                       "rowspan": 1,
                       "colwidth": null,
-                      "align": "justify"
+                      "align": "justify",
+                      "border": null
                     },
                     "content": [
                       {
@@ -409,6 +433,305 @@
       "html": "<table style=\"min-width: 25px;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td><p>x</p></td></tr></tbody></table>",
       "tag": "td",
       "attributes": []
+    },
+    {
+      "name": "ruled table",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "attrs": {
+              "border": "1px solid #d0d5dd"
+            },
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": null,
+                      "border": "1px solid #d0d5dd"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null,
+                          "class": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table border=\"1\" style=\"min-width: 25px; border-collapse: collapse;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td style=\"border: 1px solid rgb(208, 213, 221);\"><p>x</p></td></tr></tbody></table>",
+      "tag": "table",
+      "attributes": [
+        [
+          "border",
+          "1"
+        ],
+        [
+          "style",
+          "min-width: 25px; border-collapse: collapse"
+        ]
+      ]
+    },
+    {
+      "name": "ruled table sized by width",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "attrs": {
+              "border": "1px solid #d0d5dd"
+            },
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": [
+                        120
+                      ],
+                      "align": null,
+                      "border": "1px solid #d0d5dd"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null,
+                          "class": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table border=\"1\" style=\"width: 120px; border-collapse: collapse;\"><colgroup><col style=\"width: 120px;\"></colgroup><tbody><tr><td colwidth=\"120\" style=\"border: 1px solid rgb(208, 213, 221);\"><p>x</p></td></tr></tbody></table>",
+      "tag": "table",
+      "attributes": [
+        [
+          "border",
+          "1"
+        ],
+        [
+          "style",
+          "width: 120px; border-collapse: collapse"
+        ]
+      ]
+    },
+    {
+      "name": "ruled table cell",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "attrs": {
+              "border": "1px solid #d0d5dd"
+            },
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": null,
+                      "border": "1px solid #d0d5dd"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null,
+                          "class": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table border=\"1\" style=\"min-width: 25px; border-collapse: collapse;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td style=\"border: 1px solid rgb(208, 213, 221);\"><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": [
+        [
+          "style",
+          "border: 1px solid #d0d5dd"
+        ]
+      ]
+    },
+    {
+      "name": "ruled table cell spanning two columns, aligned",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "attrs": {
+              "border": "1px solid #d0d5dd"
+            },
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableCell",
+                    "attrs": {
+                      "colspan": 2,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "center",
+                      "border": "1px solid #d0d5dd"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null,
+                          "class": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table border=\"1\" style=\"min-width: 50px; border-collapse: collapse;\"><colgroup><col style=\"min-width: 25px;\"><col style=\"min-width: 25px;\"></colgroup><tbody><tr><td colspan=\"2\" style=\"text-align: center; border: 1px solid rgb(208, 213, 221);\"><p>x</p></td></tr></tbody></table>",
+      "tag": "td",
+      "attributes": [
+        [
+          "colspan",
+          "2"
+        ],
+        [
+          "style",
+          "text-align: center; border: 1px solid #d0d5dd"
+        ]
+      ]
+    },
+    {
+      "name": "ruled table header aligned right",
+      "doc": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "table",
+            "attrs": {
+              "border": "1px solid #d0d5dd"
+            },
+            "content": [
+              {
+                "type": "tableRow",
+                "content": [
+                  {
+                    "type": "tableHeader",
+                    "attrs": {
+                      "colspan": 1,
+                      "rowspan": 1,
+                      "colwidth": null,
+                      "align": "right",
+                      "border": "1px solid #d0d5dd"
+                    },
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "attrs": {
+                          "margin": null,
+                          "marginBlockEnd": null,
+                          "paddingLeft": null,
+                          "textAlign": null,
+                          "class": null
+                        },
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "x"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table border=\"1\" style=\"min-width: 25px; border-collapse: collapse;\"><colgroup><col style=\"min-width: 25px;\"></colgroup><tbody><tr><th style=\"text-align: right; border: 1px solid rgb(208, 213, 221);\"><p>x</p></th></tr></tbody></table>",
+      "tag": "th",
+      "attributes": [
+        [
+          "style",
+          "text-align: right; border: 1px solid #d0d5dd"
+        ]
+      ]
     },
     {
       "name": "font family 'Times New Roman', serif",

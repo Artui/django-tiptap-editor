@@ -14,6 +14,7 @@ import { ExtraAttributes, resolveExtraAttributes } from "./extensions/extra-attr
 import { FontSize } from "./extensions/font-size";
 import { ImageResize } from "./extensions/image-resize";
 import { InlineImage } from "./extensions/inline-image";
+import { RuledTable, RuledTableCell, RuledTableHeader } from "./extensions/table-borders";
 import { resolveFeatures } from "./features";
 import { getExtensionFactory } from "./registry";
 import type { ExtensionContext } from "./registry";
@@ -25,9 +26,6 @@ import {
   StarterKit,
   Subscript,
   Superscript,
-  Table,
-  TableCell,
-  TableHeader,
   TableRow,
   TextAlign,
   TextStyle,
@@ -191,10 +189,11 @@ export function buildExtensions(config: TipTapConfig, ctx: ExtensionContext): An
     // three) and never alone: a row whose content names a cell type the schema
     // lacks is a schema error that stops the editor mounting, and none of the
     // three means anything outside a table.
-    [enabled("table"), Table.configure({ resizable: false })],
+    // Ruled: the stock nodes plus a `border` the table menu sets (extensions/table-borders.ts).
+    [enabled("table"), RuledTable.configure({ resizable: false })],
     [enabled("table"), TableRow],
-    [enabled("table"), TableHeader],
-    [enabled("table"), TableCell],
+    [enabled("table"), RuledTableHeader],
+    [enabled("table"), RuledTableCell],
     [enabled("subscript"), Subscript],
     [enabled("superscript"), Superscript],
     [enabled("characterCount"), CharacterCount],

@@ -42,6 +42,10 @@ _VOID_TAGS = frozenset(
 # paste a script's body into the document as visible prose. Dropped whole.
 _DROP_CONTENT_TAGS = frozenset({"script", "style"})
 
+# Attributes kept only as a whole number in ASCII digits: a legacy table@border.
+_WHOLE_NUMBER_ATTRIBUTES = frozenset({("table", "border")})
+_WHOLE_NUMBER = re.compile(r"[0-9]+")
+
 # Attributes carrying a URL, and which protocol allowlist governs each.
 _LINK_URL_ATTRIBUTES = frozenset({"href"})
 _IMAGE_URL_ATTRIBUTES = frozenset({"src"})
@@ -233,6 +237,8 @@ class _Sanitizer(HTMLParser):
             if name not in allowed:
                 continue
             value = target if name == "target" else rel if name == "rel" else raw_value
+            if (tag, name) in _WHOLE_NUMBER_ATTRIBUTES and not _WHOLE_NUMBER.fullmatch(value or ""):
+                continue
             if value is None:
                 rendered.append(f" {name}")
                 continue

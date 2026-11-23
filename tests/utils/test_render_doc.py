@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -322,6 +323,56 @@ def test_table_rendering() -> None:
     )
 
 
+_LINES = "1px solid #d0d5dd"
+
+
+def _ruled(border: object, cell_border: object = _LINES) -> dict:
+    def cell(kind: str, text: str) -> dict:
+        return {"type": kind, "attrs": {"border": cell_border}, "content": [_p_inner(text)]}
+
+    rows = [("tableHeader", "a", "b"), ("tableCell", "c", "d")]
+    return {
+        "type": "doc",
+        "content": [
+            {
+                "type": "table",
+                "attrs": {"border": border},
+                "content": [
+                    {"type": "tableRow", "content": [cell(kind, x), cell(kind, y)]}
+                    for kind, x, y in rows
+                ],
+            }
+        ],
+    }
+
+
+def test_a_ruled_table_renders_its_rules_on_the_table_and_every_cell() -> None:
+    lines = f' style="border: {_LINES}"'
+    assert render_doc(_ruled(_LINES)) == (
+        '<table border="1" style="border-collapse: collapse"><tbody>'
+        f"<tr><th{lines}><p>a</p></th><th{lines}><p>b</p></th></tr>"
+        f"<tr><td{lines}><p>c</p></td><td{lines}><p>d</p></td></tr>"
+        "</tbody></table>"
+    )
+
+
+@pytest.mark.parametrize("border", [None, "", 1, ["x"], {"a": 1}])
+def test_a_table_border_that_is_not_a_non_empty_string_leaves_the_table_unruled(
+    border: object,
+) -> None:
+    assert render_doc(_ruled(border, None)).startswith("<table><tbody><tr><th><p>a</p></th>")
+
+
+def test_a_cell_border_renders_after_its_alignment() -> None:
+    doc = _ruled(None)
+    doc["content"][0]["content"][0]["content"][0]["attrs"]["align"] = "center"
+    assert '<th style="text-align: center; border: 1px solid #d0d5dd">' in render_doc(doc)
+
+
+def test_an_unsafe_cell_border_is_dropped() -> None:
+    assert "<td><p>c</p></td>" in render_doc(_ruled(None, "url(javascript:x)"))
+
+
 @pytest.mark.parametrize("align", [["left"], {"left": True}])
 def test_cell_alignment_that_is_not_a_string_renders_no_style(align: object) -> None:
     # The stored JSON is untrusted, and the alignment is read straight out of it.
@@ -505,11 +556,39 @@ class _FirstElementAttributes(HTMLParser):
             self.found = attrs
 
 
+def _expected(case: dict[str, Any]) -> list[tuple[str, str]]:
+    """The editor's attributes, less the column sizing render_doc writes for no table."""
+    pairs = [tuple(pair) for pair in case["attributes"]]
+    if case["tag"] != "table":
+        return pairs
+    return [
+        (name, "; ".join(d for d in value.split("; ") if not re.match(r"(min-)?width:", d)))
+        if name == "style"
+        else (name, value)
+        for name, value in pairs
+    ]
+
+
 @pytest.mark.parametrize("case", _EDITOR_RENDER, ids=[case["name"] for case in _EDITOR_RENDER])
 def test_renders_an_element_with_the_attributes_the_editor_gives_it(case: dict[str, Any]) -> None:
     parser = _FirstElementAttributes(case["tag"])
     parser.feed(str(render_doc(case["doc"], extra_attributes=_EDITOR_GRANT)))
-    assert parser.found == [tuple(pair) for pair in case["attributes"]]
+    assert parser.found == _expected(case)
+
+
+def test_the_editor_render_cases_cover_a_ruled_table() -> None:
+    by_name = {case["name"]: case for case in _EDITOR_RENDER}
+    assert by_name["ruled table sized by width"]["attributes"] == [
+        ["border", "1"],
+        ["style", "width: 120px; border-collapse: collapse"],
+    ]
+    assert _expected(by_name["ruled table"]) == [
+        ("border", "1"),
+        ("style", "border-collapse: collapse"),
+    ]
+    assert ("style", "text-align: right; border: 1px solid #d0d5dd") in _expected(
+        by_name["ruled table header aligned right"]
+    )
 
 
 def test_the_editor_render_cases_cover_both_attributes_tiptap_3_added() -> None:

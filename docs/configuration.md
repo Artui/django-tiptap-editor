@@ -107,6 +107,17 @@ so one bad field does not stop the rest of the page mounting.
 A group is an inner array; groups render with separators. Register your own buttons with
 [`ui.registerButton`](extending.md#toolbar-buttons).
 
+Inside a table, the `table` menu adds rows and columns, rules the table or removes its
+rules (**Add table lines** / **Remove table lines**), and deletes rows, columns or the
+table. A ruled table is stored as `<table border="1">` with `border-collapse: collapse`
+beside its width, and a literal `border: 1px solid #d0d5dd` on every `th` and `td`, so it
+shows its lines wherever the HTML is rendered, an email client included, with no
+stylesheet. Rows and columns added to it are ruled too. A table starts unruled. In code,
+`editor.commands.setTableBorder("2px solid #000")` rules the table at the selection with
+any border shorthand and `editor.commands.unsetTableBorder()` clears it and its cells.
+Markup that arrives ruled, such as a hand-written `<table border="1">`, loads ruled, with
+its first cell's `border` (or the default lines when that cell has none) on every cell.
+
 ### Restricting features
 
 `toolbar` decides which buttons a field shows; `features` decides what its editor can do.

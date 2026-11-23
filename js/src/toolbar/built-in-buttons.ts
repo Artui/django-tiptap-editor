@@ -7,6 +7,7 @@
 // (config.features) can show. Buttons without one run core commands (undo,
 // paragraph, clearing formatting) that exist on every field.
 import { configFor } from "../editor-config";
+import { DEFAULT_TABLE_BORDER } from "../extensions/table-borders";
 import { translatorFor } from "../i18n";
 import { openImagePicker } from "../image-picker";
 import type { Editor } from "../tiptap-runtime";
@@ -239,6 +240,13 @@ const BUILTIN: Record<string, ButtonSpec> = {
           { label: "addRowAfter", run: () => e.chain().focus().addRowAfter().run() },
           { label: "addColumnBefore", run: () => e.chain().focus().addColumnBefore().run() },
           { label: "addColumnAfter", run: () => e.chain().focus().addColumnAfter().run() },
+          "separator",
+          e.getAttributes("table").border
+            ? { label: "tableLinesOff", run: () => e.chain().focus().unsetTableBorder().run() }
+            : {
+                label: "tableLinesOn",
+                run: () => e.chain().focus().setTableBorder(DEFAULT_TABLE_BORDER).run(),
+              },
           "separator",
           { label: "deleteRow", run: () => e.chain().focus().deleteRow().run() },
           { label: "deleteColumn", run: () => e.chain().focus().deleteColumn().run() },

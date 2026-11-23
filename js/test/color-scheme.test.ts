@@ -376,10 +376,10 @@ describe("use sites jsdom cannot resolve through var()", () => {
     ]);
   });
 
-  it("borders table cells with the content border, which has a default in every scheme", () => {
+  it("guides table cells with the content border, which has a default in every scheme", () => {
     for (const cell of [".django-tiptap .ProseMirror th", ".django-tiptap .ProseMirror td"]) {
       expect(declaredOn(cell, "border")).toEqual([
-        "1px solid var(--tiptap-content-border, var(--tiptap-border))",
+        "1px dashed var(--tiptap-content-border, var(--tiptap-border))",
       ]);
     }
   });

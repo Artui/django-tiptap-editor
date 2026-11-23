@@ -126,7 +126,8 @@ ENTER_KEY_MODES = frozenset({"paragraph", "hardBreak", "swap"})
 # text-align, the TextStyle family writes colour / font declarations on a span,
 # the inline image keeps its layout style, and the table view sizes columns.
 # A table cell carries text-align from Tiptap 3 on, which parses a cell's inline
-# text-align (or a legacy align attribute) and renders it back as a style.
+# text-align (or a legacy align attribute) and renders it back as a style. A
+# ruled table adds border-collapse to its own size, and a literal border to each cell.
 BLOCK_STYLE_PROPERTIES = ("margin", "margin-block-end", "padding-left")
 TEXT_ALIGN_PROPERTIES = ("text-align",)
 TEXT_STYLE_PROPERTIES = ("background-color", "color", "font-family", "font-size")
@@ -149,8 +150,9 @@ IMAGE_STYLE_PROPERTIES = (
     "vertical-align",
     "width",
 )
-TABLE_STYLE_PROPERTIES = ("min-width", "width")
-CELL_STYLE_PROPERTIES = ("background-color", "text-align")
+COLUMN_STYLE_PROPERTIES = ("min-width", "width")
+TABLE_STYLE_PROPERTIES = (*COLUMN_STYLE_PROPERTIES, "border-collapse")
+CELL_STYLE_PROPERTIES = ("background-color", "border", "text-align")
 
 # Values a link's ``target`` may take, and the ``rel`` tokens that survive. A
 # stored ``rel="opener"`` re-enables the ``window.opener`` handle that
@@ -205,9 +207,9 @@ EXTENSION_HTML_VOCABULARY: dict[str, dict[str, dict[str, tuple[str, ...]]]] = {
         }
     },
     "table": {
-        "table": {"styles": TABLE_STYLE_PROPERTIES},
+        "table": {"attrs": ("border",), "styles": TABLE_STYLE_PROPERTIES},
         "colgroup": {},
-        "col": {"styles": TABLE_STYLE_PROPERTIES},
+        "col": {"styles": COLUMN_STYLE_PROPERTIES},
         "tbody": {},
     },
     "tableRow": {"tr": {}},

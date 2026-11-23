@@ -214,8 +214,11 @@
       "styles": []
     },
     "table": {
-      "attributes": [],
+      "attributes": [
+        "border"
+      ],
       "styles": [
+        "border-collapse",
         "min-width",
         "width"
       ]
@@ -232,6 +235,7 @@
       ],
       "styles": [
         "background-color",
+        "border",
         "text-align"
       ]
     },
@@ -243,6 +247,7 @@
       ],
       "styles": [
         "background-color",
+        "border",
         "text-align"
       ]
     },
@@ -508,8 +513,11 @@
         "styles": []
       },
       "table": {
-        "attributes": [],
+        "attributes": [
+          "border"
+        ],
         "styles": [
+          "border-collapse",
           "min-width",
           "width"
         ]
@@ -528,6 +536,7 @@
         ],
         "styles": [
           "background-color",
+          "border",
           "text-align"
         ]
       }
@@ -541,6 +550,7 @@
         ],
         "styles": [
           "background-color",
+          "border",
           "text-align"
         ]
       }

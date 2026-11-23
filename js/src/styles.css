@@ -559,7 +559,8 @@
 
 .django-tiptap .ProseMirror th,
 .django-tiptap .ProseMirror td {
-  border: 1px solid var(--tiptap-content-border, var(--tiptap-border));
+  /* Dashed: only a guide for editing. A ruled table's inline cell borders win. */
+  border: 1px dashed var(--tiptap-content-border, var(--tiptap-border));
   padding: 4px 8px;
   font-size: inherit;
   line-height: inherit;
