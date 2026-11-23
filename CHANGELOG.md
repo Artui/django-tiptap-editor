@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.1] — 2026-11-23
+
 ### Changed
 
 - **The image library picker is a native `<dialog>` opened with `showModal()`.** It sits
@@ -1336,7 +1338,8 @@ before.
 - **Quality**: a TinyMCE-corpus round-trip fidelity test, 100% line+branch
   Python coverage, and full documentation.
 
-[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.1...HEAD
+[0.17.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/Artui/django-tiptap-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/Artui/django-tiptap-editor/compare/v0.15.0...v0.16.0
