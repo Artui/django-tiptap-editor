@@ -1317,7 +1317,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 </tr>
 <tr>
 <td><code>--tiptap-modal-shadow-color</code> / <code>--tiptap-overlay-bg</code></td>
-<td>Image-picker modal shadow and the overlay behind it</td>
+<td>Image-picker modal shadow and the dimmed overlay around it</td>
 </tr>
 <tr>
 <td><code>--tiptap-color-scheme</code></td>
@@ -1325,7 +1325,7 @@ custom properties. Set them in CSS or via JS; near-zero churn risk across minor 
 </tr>
 <tr>
 <td><code>--tiptap-modal-z</code></td>
-<td><code>z-index</code> of the image-picker overlay, and of the open dropdown panels in a browser without the popover API (default <code>2000</code>)</td>
+<td><code>z-index</code> of the open dropdown panels in a browser without the popover API (default <code>2000</code>); the image picker sits in the top layer and takes none</td>
 </tr>
 </tbody>
 </table>
@@ -1357,9 +1357,12 @@ the host element, so a token set on the document's <code>:root</code> (including
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
 </span></code></pre></div>
 <h3 id="stacking-the-picker-over-host-modals">Stacking the picker over host modals<a class="headerlink" href="#stacking-the-picker-over-host-modals" title="Permanent link">&para;</a></h3>
-<p>The image-picker overlay is portaled to <code>&lt;body&gt;</code>, so it sits outside the editor's
-stacking context, at <code>z-index: 2000</code>, which clears common modal stacks (Bootstrap 3/4/5
-use 1050–1060).</p>
+<p>The image picker is a native <code>&lt;dialog&gt;</code> appended to <code>&lt;body&gt;</code> and opened with
+<code>showModal()</code>, so it sits in the browser's top layer, above any host modal whatever its
+<code>z-index</code>, and the page behind it is inert. The <code>&lt;dialog&gt;</code>
+(<code>.django-tiptap__modal-overlay</code>) fills the viewport and carries the dimmed overlay
+colour; <code>.django-tiptap__modal</code> is the box inside it. A press on the overlay outside the
+box closes the picker.</p>
 <p>An open toolbar dropdown (font size, colour, table and the rest) stays inside the editor,
 right after its trigger, and is shown as a popover in the browser's top layer, so the
 shell's rounded, clipped edge cannot cut it off on a narrow or short field and no
@@ -1369,21 +1372,21 @@ modal. It is placed beside its trigger, flips above it or aligns to its end wher
 viewport runs out, and follows it on scroll and resize. In a browser without the popover
 API (before Chrome 114, Safari 17, Firefox 125) the panel is portaled instead: into the
 nearest <code>dialog[open]</code>, <code>[role=dialog]</code>, <code>[aria-modal=true]</code> or <code>.modal</code> around the editor,
-else to <code>&lt;body&gt;</code> or the shadow root that holds the editor, and there it takes the same
-<code>z-index</code> as the picker. A native <code>&lt;dialog&gt;</code> scrolls its own overflow, so a portaled
+else to <code>&lt;body&gt;</code> or the shadow root that holds the editor, and there it takes
+<code>z-index: var(--tiptap-modal-z, 2000)</code>. A native <code>&lt;dialog&gt;</code> scrolls its own overflow, so a portaled
 panel near the dialog's edge can be clipped there. Escape on an open panel closes the
 panel only, not the modal around it.</p>
-<p>If your app embeds the editor inside a modal that stacks even higher, raise the knob —
-no <code>!important</code> needed:</p>
+<p>If your app embeds the editor inside a modal that stacks above <code>2000</code>, raise the knob for
+the portaled panels — no <code>!important</code> needed:</p>
 <div class="language-css highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">:</span><span class="nd">root</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nv">--tiptap-modal-z</span><span class="p">:</span><span class="w"> </span><span class="mi">12000</span><span class="p">;</span><span class="w"> </span><span class="c">/* above your host modal&#39;s z-index */</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="p">}</span>
 </span></code></pre></div>
-<p>Set <code>--tiptap-modal-z</code> on <code>:root</code> (or <code>html</code>/<code>body</code>), <strong>not</strong> on <code>.django-tiptap</code>:
-because the overlay is appended to <code>&lt;body&gt;</code>, it does not inherit custom properties
-declared on the editor element. The same holds for the overlay's colours, border and
-radius: a token set on <code>:root</code> themes the picker as well as the editors, one set on
-<code>.django-tiptap</code> only the editors.</p>
+<p>Set <code>--tiptap-modal-z</code> on <code>:root</code> (or <code>html</code>/<code>body</code>), <strong>not</strong> on <code>.django-tiptap</code>: a
+panel portaled to <code>&lt;body&gt;</code> does not inherit custom properties declared on the editor
+element. The same holds for the picker's colours, border and radius, since it is
+appended to <code>&lt;body&gt;</code> too: a token set on <code>:root</code> themes the picker as well as the
+editors, one set on <code>.django-tiptap</code> only the editors.</p>
 <p>The dropdown panels are themed like the editor they belong to: a panel inherits the
 editor's tokens, font, direction and language from the element it sits in, so a token
 set on <code>.django-tiptap</code> or on a wrapper reaches the panel too. Where a panel is portaled
@@ -1569,6 +1572,12 @@ input: the swatches are buttons with <code>aria-pressed</code> on the current co
 </tr>
 </tbody>
 </table>
+<p>"From library…" in the image menu opens the picker as a modal dialog (<code>role="dialog"</code>
+from the native <code>&lt;dialog&gt;</code>, <code>aria-modal="true"</code>, named by its heading). Focus goes to its
+close button, then to the first image once the list has loaded. Tab and Shift+Tab cycle
+through the close button and the images without leaving the picker; Enter or Space on an
+image inserts it. Escape, the close button, a press on the overlay or a pick closes the
+picker and puts focus back in the editor.</p>
 <p>A menu keeps one item tabbable at a time (roving <code>tabindex</code>). Opening a panel with the
 mouse leaves focus, and the editor's visible selection, where it was. A focused item
 or swatch shows a <code>:focus-visible</code> ring in <code>--tiptap-accent</code> or <code>--tiptap-fg</code>, unlike the
