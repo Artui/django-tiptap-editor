@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A `disabled` or `readonly` field mounts an editor that cannot be edited, and says so
   (WCAG 2.2 4.1.2).** Both attributes were ignored: the editor took typing, shortcuts and
   toolbar commands, and announced an ordinary editable textbox. Such a field now mounts with
-  `isEditable` false, every toolbar control carries `disabled`, and the editable carries
+  `isEditable` false, every control in the built-in toolbar carries `disabled` (a custom
+  toolbar region or shell reads `editor.isEditable`), and the editable carries
   `aria-disabled="true"` for a disabled field or `aria-readonly="true"` for a read-only one
   (a field that is both is announced as disabled). A read-only editor stays in the tab order,
   as a read-only textarea does; a disabled one leaves it. Setting or clearing either

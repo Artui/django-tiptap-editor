@@ -118,14 +118,20 @@ describe("a later disabled or readonly change is followed both ways", () => {
 
   it("keeps the field's name, description and multiline across setEditable", async () => {
     const field = mount("");
+    field.editor.setEditable(false);
+    field.editor.setEditable(true);
+    expect(field.editable.getAttribute("aria-labelledby")).toBe(`${field.textarea.id}-label`);
+    expect(field.editable.getAttribute("aria-multiline")).toBe("true");
     field.textarea.disabled = true;
     await settle();
+    expect(field.editor.isEditable).toBe(false);
     expect(field.editable.getAttribute("aria-labelledby")).toBe(`${field.textarea.id}-label`);
     expect(field.editable.getAttribute("aria-describedby")).toBe(`${field.textarea.id}-help`);
     expect(field.editable.getAttribute("aria-multiline")).toBe("true");
     expect(field.editable.getAttribute("role")).toBe("textbox");
     field.textarea.disabled = false;
     await settle();
+    expect(field.editor.isEditable).toBe(true);
     expect(field.editable.getAttribute("aria-labelledby")).toBe(`${field.textarea.id}-label`);
     expect(field.editable.getAttribute("aria-multiline")).toBe("true");
   });
