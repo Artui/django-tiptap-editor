@@ -42,7 +42,7 @@ class TipTapModelAdminMixin:
 
     def check(self, **kwargs: Any) -> list[checks.CheckMessage]:
         return [
-            *super().check(**kwargs),  # ty: ignore[unresolved-attribute]
+            *super().check(**kwargs),  # ty: ignore[missing-attribute]
             *self._check_tiptap_fields(),
             *self._check_json_storage(),
         ]
@@ -166,6 +166,6 @@ class TipTapModelAdminMixin:
                     kwargs.setdefault("widget", AdminTipTapWidget)
                 if not self._overrides_form_class(db_field):
                     kwargs.setdefault("form_class", TipTapFormField)
-        return super().formfield_for_dbfield(  # ty: ignore[unresolved-attribute]
+        return super().formfield_for_dbfield(  # ty: ignore[missing-attribute]
             db_field, request, **kwargs
         )
